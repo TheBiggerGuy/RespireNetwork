@@ -22,58 +22,77 @@ along with pyBusPirate.  If not, see <http://www.gnu.org/licenses/>.
 
 from .BitBang import *
 
+from struct import pack
+from time import sleep
+
 class SPISpeed:
-	_30KHZ = 0b000
-	_125KHZ = 0b001
-	_250KHZ = 0b010
-	_1MHZ = 0b011
-	_2MHZ = 0b100
-	_2_6MHZ = 0b101
-	_4MHZ = 0b110
-	_8MHZ = 0b111
+  _30KHZ = 0b000
+  _125KHZ = 0b001
+  _250KHZ = 0b010
+  _1MHZ = 0b011
+  _2MHZ = 0b100
+  _2_6MHZ = 0b101
+  _4MHZ = 0b110
+  _8MHZ = 0b111
 
 class SPICfg:
-	OUT_TYPE = 0x8
-	IDLE = 0x4
-	CLK_EDGE = 0x2
-	SAMPLE = 0x1
+  OUT_TYPE = 0x8
+  IDLE = 0x4
+  CLK_EDGE = 0x2
+  SAMPLE = 0x1
 
 class SPI_OUT_TYPE:
-	HIZ = 0
-	_3V3 = 1
+  HIZ = 0
+  _3V3 = 1
 
 class SPI(BBIO):
-	bulk_read = None
-	def __init__(self, port, speed):
-		BBIO.__init__(self, port, speed)
+  bulk_read = None
 
-	def CS_Low(self):
-		self.port.write("\x02")
-		self.timeout(0.1)
-		return self.response(1, True)
-
-	def CS_High(self):
-		self.port.write("\x03")
-		self.timeout(0.1)
-		return self.response(1, True)
-
-	def low_nibble(self, nibble):
-		self.port.write(chr(0x20 | nibble))
-		self.timeout(0.1)
-		return self.response(1, True)
-
-	def high_nibble(self, nibble):
-		self.port.write(chr(0x30 | nibble))
-		self.timeout(0.1)
-		return self.response(1, True)
-
-	def cfg_spi(self, spi_cfg):
-		self.port.write(chr(0x80 | spi_cfg))
-		self.timeout(0.1)
-		return self.response()
-
-	def read_spi_cfg(self):
-		self.port.write("\x90")
-		self.timeout(0.1)
-		return self.response(1, True)
-
+  def __init__(self, port, speed):
+    BBIO.__init__(self, port, speed)
+  
+  def setCS(self, state):
+    if state:
+      self.port.write('\03')
+    else:
+      self.port.write('\02')
+    self.timeout(0.1)
+    return self.response(1, True)
+  
+  def setCfg(self, spi_cfg):
+    self.port.write(chr(0x80 | spi_cfg))
+    self.timeout(0.1)
+    return self.response()
+  
+  def getCfg(self):
+    self.port.write('\x90')
+    self.timeout(0.1)
+    return self.response(1, True)
+  
+  def writeAndRead(self, data, readLen, withCS=True):
+    writeLen = len(data)
+    msg = bytearray()
+    if withCS:
+      msg.append(0x04)
+    else:
+      msg.append(0x05)
+    msg.append((writeLen >> 8) & 0xff)
+    msg.append(       writeLen & 0xff)
+    msg.append((readLen >> 8)  & 0xff)
+    msg.append(       readLen  & 0xff)
+    print 'DEBUG: ' + str(map(hex, msg)) + str(map(hex, map(ord, data)))
+    self.port.flushInput()
+    self.port.flushOutput()
+    self.port.write(msg)
+    self.port.flush()
+    sleep(0.1)
+    if self.port.inWaiting() != 0:
+      raise IOError('Invalid read/write lenghts')
+    self.port.write(data)
+    data = self.port.read(readLen+1)
+    #print len(data)
+    print 'DEBUG: ' + str(map(hex, map(ord, data)))
+    #print type(data)
+    if ord(data[0]) != 0x01:
+      raise IOError('Unknown IO error')
+    return data[1:]

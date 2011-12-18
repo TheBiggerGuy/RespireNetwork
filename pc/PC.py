@@ -1,8 +1,8 @@
-from BusPirateRadio import BusPirateRadio
+import RespireNRF
 
 if __name__ == '__main__':
   
-  radio = BusPirateRadio('/dev/ttyUSB0')
+  radio = RespireNRF.BusPirateNRF('/dev/ttyUSB0')
   
   #for i in range(1, 10):
   #  print map(ord, radio.getStatus(old=True))

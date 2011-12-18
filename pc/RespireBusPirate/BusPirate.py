@@ -26,9 +26,17 @@ class BusPirateSPISpeed:
   _8MHZ   = 0x07
 
 class BusPirate(object):
+  
+  STATE_TEXT = 1
+  STATE_BB   = 2
+  STATE_SPI  = 3
+  
   def __init__(self, port):
     self._currentPins = 0
     self._spi = None
+    self._state = self.STATE_TEXT
+    self._spiSettings = 0
+    self._spiSpeed = BusPirateSPISpeed._30KHZ
     
     self.connect(port)
   
@@ -37,38 +45,56 @@ class BusPirate(object):
     # Open serial port
     try:
       self._port = serial.Serial(port, 115200, timeout=1)
+      self._port.write('i\n')
+      self._port.flush()
+      sleep(1)
+      self._port.flushInput()
+      self._port.flushOutput()
     except SerialException as ex:
       raise IOError('Unable to open serial port')
     
-    # Enter binmode
-    # and raw SPI mode
-    self.enterBB()
+    # Enter raw SPI mode
     self.enterSPI()
     
     # Configuring SPI peripherals
     self.setPin(BusPiratePins.POWER, True)
     self.setPin(BusPiratePins.CS, True)
     
-    # Configure SPI speed
-    self.setSpiSpeed(BusPirateSPISpeed._1MHZ)
-    
-    # Configure SPI configuration
-    self.setSpiConfig(BusPirateSPI.OUT_TYPE)
+    # Configure SPI configuration and speed
+    self.setSpiConfig(BusPirateSPI.OUT_TYPE, BusPirateSPISpeed._1MHZ)
     
     # Waiting 1s 
     sleep(1)
   
   """ Enter BitBang mode """
   def enterBB(self):
+    print 'enterBB'
+    if self._state == self.STATE_BB:
+      return
+    
     self._port.flushInput()
     self._port.flushOutput()
-    self._port.write('\x00'*20)
+    if self._state == self.STATE_SPI:
+      self._port.write('\x00')
+    else: # TEXT
+      self._port.write('\x00'*20)
     self._port.flush()
     
     if self._port.read(5) != 'BBIO1':
       raise IOError('Unable to start BitBang mode')
+    sleep(1)
+    self._port.flushInput()
+    
+    self._state = self.STATE_BB
 
   def enterSPI(self):
+    print 'enterSPI'
+    if self._state == self.STATE_SPI:
+      return
+    
+    if self._state == self.STATE_TEXT:
+      self.enterBB()
+    
     self._port.flushInput()
     self._port.flushOutput()
     self._port.write('\x01')
@@ -76,6 +102,22 @@ class BusPirate(object):
     
     if self._port.read(4) != 'SPI1':
       raise IOError('Unable to enter SPI mode')
+    
+    self.setSpiConfig(self._spiSettings, self._spiSpeed)
+    
+    self._state = self.STATE_SPI
+  
+  def enterText(self):
+    if self._state == self.STATE_TEXT:
+      return
+    self._port.write('\x0f')
+    self._port.flush()
+    
+    # As the UART is rest you get rubish on the line
+    sleep(1)
+    self._port.flushInput()
+    
+    self._state == self.STATE_TEXT
   
   """ Sets a BusPirate Pins on or off """
   def setPin(self, pin, state):
@@ -93,26 +135,40 @@ class BusPirate(object):
       raise IOError('Could not set pins')
   
   """ Sets the configuration of the SPI port """
-  def setSpiConfig(self, settings):
+  def setSpiConfig(self, settings, speed):
     self._port.flushInput()
     self._port.flushOutput()
     self._port.write(chr(0x80 | settings))
+    self._port.write(chr(0x60 | speed))
     self._port.flush()
     
     status = self._port.read(1)
     if ord(status) != 0x1:
       raise IOError('Could not set SPI config')
-
-  """ Sets the configuration of the SPI port """
-  def setSpiSpeed(self, settings):
+    
+    self._spiSettings = settings
+    self._spiSpeed = speed
+  
+  """ Get the voltage over the ADC pin """
+  def getADC(self):
+    state = self._state
+    #self.enterBB()
+    
     self._port.flushInput()
     self._port.flushOutput()
-    self._port.write(chr(0x60 | settings))
+    self._port.write(chr(0x14))
     self._port.flush()
     
-    status = self._port.read(1)
-    if ord(status) != 0x1:
-      raise IOError('Could not set SPI Speed')
+    value = self._port.read(2)
+    value = (ord(value[0]) << 8) & ord(value[1])
+    value = (value/1024)*3.3*2
+    
+    #if state == self.STATE_TEXT:
+    #  self.enterText()
+    #elif state == self.STATE_SPI:
+    #  self.enterSPI()
+    
+    return value
   
   """ Writes data and then reads a lenght of data with correct CS """
   def writeAndRead(self, data, readLen, withCS=True):
@@ -142,6 +198,13 @@ class BusPirate(object):
     if ord(data[0]) != 0x01:
       raise IOError('Unknown IO error')
     return data[1:]
+  
+  def __del__(self):
+    if self._port != None:
+      self._port.write('\x0f')
+      self._port.flush()
+      self._port.close()
+      self._port = None
 
 if __name__ == '__main__':
   raise RuntimeError('Unable to run module as main')

@@ -10,3 +10,4 @@ if __name__ == '__main__':
     
   for i in range(1, 14):
     print str(i) + ': ' + str(radio.getReg(i))
+    print 'IRQ: ' + str(radio.getIRQ())

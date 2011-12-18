@@ -9,4 +9,4 @@ if __name__ == '__main__':
   #  print map(ord, radio.getConfig(old=True))
     
   for i in range(1, 14):
-    print str(i) + ': ' + str(ord(radio.getReg(i, old=False)))
+    print str(i) + ': ' + str(radio.getReg(i))

@@ -146,6 +146,7 @@ class BusPirateBase(object):
 
 class BusPirateRadio(Radio):
   
+  # SPI commands
   R_REGISTER         = 0x00
   W_REGISTER         = 0x20
   R_RX_PAYLOAD       = 0x61
@@ -158,16 +159,16 @@ class BusPirateRadio(Radio):
   W_TX_PAYLOAD_NOACK = 0xB0
   NOP                = 0xFF
   
-  CONFIG = 0x00
+  # Reg addresses
+  CONFIG             = 0x00
+  RX_PW_P0           = 0x11
+  RX_PW_P1           = 0x12
+  RX_PW_P5           = 0x16
+  FEATURE            = 0x1D
   
-  RX_PW_P0 = 0x11
-  RX_PW_P1 = 0x12
-  RX_PW_P5 = 0x16
-  
-  FEATURE = 0x1D
-  
-  PWR_UP  = 0x02
-  PRIM_RX = 0x01
+  # Reg sub addresses
+  PWR_UP             = 0x02
+  PRIM_RX            = 0x01
   
   def __init__(self, port):
     Radio.__init__(self)    

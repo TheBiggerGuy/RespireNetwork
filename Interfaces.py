@@ -1,25 +1,44 @@
+"""
 
+
+
+"""
+
+"""
+Object for a 'meesge' sent over the radio, ie a packet
+"""
 class Message(object):
   def __init__(self):
-    pass
+    raise NotImplementedError()
   
   def getFrom(self):
-    pass
+    raise NotImplementedError()
   
   def getTo(self):
-    pass
+    raise NotImplementedError()
   
   def getPayload(self):
-    pass
+    raise NotImplementedError()
 
+"""
+Interface for any radio
+"""
 class Radio(object):
   def __init__(self):
-    pass
+    raise NotImplementedError()
   
   def regNewMsgCallback(self, callback):
-    pass
+    raise NotImplementedError()
   
   def sendMsg(self, msg):
-    pass
+    raise NotImplementedError()
 
-
+"""
+Interface for the nRF24L01+ radio
+"""
+class NRF24L01P(Radio):
+  def __init__(sef):
+    raise NotImplementedError()
+  
+  def connect(self):
+    raise NotImplementedError()

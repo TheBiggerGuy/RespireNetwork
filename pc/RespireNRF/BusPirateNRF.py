@@ -1,4 +1,5 @@
 from time import sleep
+import logging
 
 from RespireBusPirate import BusPirate
 from RespireBusPirate import BusPiratePins
@@ -17,20 +18,17 @@ class BusPirateNRF(RespireNRF):
     RespireNRF.__init__(self)
     self._nrf = BusPirate(port)
     self._currentState = NrfStates.POWER_DOWN
-    #self.setReg(self.STATUS, 0x70) # reset STATUS
-    self.setReg(self.CONFIG, self.CRCO | self.EN_CRC | self.MASK_RX_DR) # reset STATUS
+    
+    self.__logger = logging.getLogger('BusPirateNRF')
   
   def setCE(self, state):
     self._nrf.setPin(BusPiratePins.AUX, state)
   
   def getIRQ(self):
     # The BusPirate cannot read the IRQ pin !!
-    # so we read the status and config reg and return are calc of it    
+    # so we read the status and config reg and return are calc of it
     status = self.getReg(self.STATUS)
     config = self.getReg(self.CONFIG)
-    
-    print 'S: ' + int2bin(status)
-    print 'C: ' + int2bin(config)
     
     rx_dr  = (status & self.RX_DR ) != 0
     tx_ds  = (status & self.TX_DS ) != 0
@@ -40,7 +38,13 @@ class BusPirateNRF(RespireNRF):
     mask_tx_ds  = (config & self.MASK_TX_DS ) != 0
     mask_max_rt = (config & self.MASK_MAX_RT) != 0
     
-    return (mask_rx_dr and rx_dr) or (mask_tx_ds and tx_ds) or (mask_max_rt and max_rt)
+    irq = (mask_rx_dr and rx_dr) or (mask_tx_ds and tx_ds) or (mask_max_rt and max_rt)
+        
+    self.__logger.info('S  : ' + int2bin(status))
+    self.__logger.info('C  : ' + int2bin(config))
+    self.__logger.info('IRQ: ' + str(irq))
+    
+    return irq
 
 if __name__ == '__main__':
   raise RuntimeError('Unable to run module as main')

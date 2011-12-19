@@ -1,4 +1,4 @@
-import serial
+from serial import Serial
 from serial.serialutil import SerialException
 
 from time import sleep
@@ -44,7 +44,7 @@ class BusPirate(object):
   def connect(self, port):
     # Open serial port
     try:
-      self._port = serial.Serial(port, 115200, timeout=1)
+      self._port = Serial(port, 115200, timeout=1)
       self._port.write('\x00\x0F')
       self._port.flush()
       sleep(1)
@@ -162,7 +162,7 @@ class BusPirate(object):
     self._port.flushOutput()
     self._port.write(msg)
     self._port.flush()
-    sleep(0.1)
+    sleep(0.001)
     if self._port.inWaiting() != 0:
       raise IOError('Invalid read/write lenghts')
     self._port.write(data)

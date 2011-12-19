@@ -1,7 +1,7 @@
+from time import sleep
+import logging
 from serial import Serial
 from serial.serialutil import SerialException
-
-from time import sleep
 
 class BusPiratePins:
   POWER   = 0x8
@@ -38,6 +38,9 @@ class BusPirate(object):
     self._spiSettings = 0
     self._spiSpeed = BusPirateSPISpeed._30KHZ
     
+    self.__logger = logging.getLogger('BusPirate')
+    self.__logger.info('__init__("' + str(port) + '")')
+    
     self.connect(port)
   
   """ Connect to the BP """
@@ -50,6 +53,7 @@ class BusPirate(object):
       sleep(1)
       self._port.flushInput()
     except SerialException as ex:
+      self.__logger.error(str(ex))
       raise IOError('Unable to open serial port')
     
     # Enter raw SPI mode

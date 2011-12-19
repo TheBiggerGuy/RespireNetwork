@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+
 from time import sleep
 import logging
 
@@ -20,9 +22,11 @@ class BusPirateNRF(RespireNRF):
     self._currentState = NrfStates.POWER_DOWN
     
     self.__logger = logging.getLogger('BusPirateNRF')
+    self.__logger.info('__init__("' + str(port) + '")')
   
   def setCE(self, state):
     self._nrf.setPin(BusPiratePins.AUX, state)
+    self.__logger.info('CE: ' + str(state))
   
   def getIRQ(self):
     # The BusPirate cannot read the IRQ pin !!

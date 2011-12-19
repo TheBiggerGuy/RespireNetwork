@@ -8,15 +8,18 @@ import RespireNRF
 
 from gi.repository import Gtk, Gio
 
-class HelloWorldApp(Gtk.Application):
+class RespireMain(Gtk.Application):
+  
+  """ Start the app """
   def __init__(self):
     Gtk.Application.__init__(
         self,
-        application_id="apps.test.helloworld",
+        application_id="com.thebiggerguy.uni.respire.main",
         flags=Gio.ApplicationFlags.FLAGS_NONE
       )
     self.connect("activate", self.on_activate)
   
+  """ Called when app is ready for a window """
   def on_activate(self, data=None):
     window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
     window.set_title("Respire Netowrk")
@@ -31,7 +34,8 @@ class HelloWorldApp(Gtk.Application):
     name_combo.connect("changed", self.on_com_changed)
     
     com_button = Gtk.Button('Connect')
-    
+    com_button.connect("clicked", self.on_com_click)
+        
     hbox_com = Gtk.HBox()
     hbox_com.pack_start(name_combo, False, False, 0)
     hbox_com.pack_start(com_button, False, False, 0)
@@ -51,6 +55,7 @@ class HelloWorldApp(Gtk.Application):
     window.show_all()
     self.add_window(window)
   
+  """ Called on COM port drop down is chnaged """
   def on_com_changed(self, data=None):
     if data == None:
       return
@@ -63,17 +68,17 @@ class HelloWorldApp(Gtk.Application):
       entry = data.get_child()
       print 'Entered: ' + entry.get_text()
   
+  """ Called on COM port 'connect' button """
+  def on_com_click(self, data=None):
+    print 'click'
+  
+  """ TODO """
   def _destroy(self, data=None):
     gtk.main_quit()
 
-
-def int2bin(n, count=8):
-  """returns the binary of integer n, using count number of digits"""
-  return "".join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
-
 if __name__ == '__main__':
   
-  app = HelloWorldApp()
+  app = RespireMain()
   app.run(None)
   
   logging.basicConfig(

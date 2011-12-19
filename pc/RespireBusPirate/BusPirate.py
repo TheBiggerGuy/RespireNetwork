@@ -45,11 +45,10 @@ class BusPirate(object):
     # Open serial port
     try:
       self._port = serial.Serial(port, 115200, timeout=1)
-      self._port.write('i\n')
+      self._port.write('\x00\x0F')
       self._port.flush()
       sleep(1)
       self._port.flushInput()
-      self._port.flushOutput()
     except SerialException as ex:
       raise IOError('Unable to open serial port')
     
@@ -68,7 +67,6 @@ class BusPirate(object):
   
   """ Enter BitBang mode """
   def enterBB(self):
-    print 'enterBB'
     if self._state == self.STATE_BB:
       return
     
@@ -88,7 +86,6 @@ class BusPirate(object):
     self._state = self.STATE_BB
 
   def enterSPI(self):
-    print 'enterSPI'
     if self._state == self.STATE_SPI:
       return
     
@@ -110,7 +107,7 @@ class BusPirate(object):
   def enterText(self):
     if self._state == self.STATE_TEXT:
       return
-    self._port.write('\x0f')
+    self._port.write('\x0F')
     self._port.flush()
     
     # As the UART is rest you get rubish on the line
@@ -149,29 +146,8 @@ class BusPirate(object):
     self._spiSettings = settings
     self._spiSpeed = speed
   
-  """ Get the voltage over the ADC pin """
-  def getADC(self):
-    state = self._state
-    #self.enterBB()
-    
-    self._port.flushInput()
-    self._port.flushOutput()
-    self._port.write(chr(0x14))
-    self._port.flush()
-    
-    value = self._port.read(2)
-    value = (ord(value[0]) << 8) & ord(value[1])
-    value = (value/1024)*3.3*2
-    
-    #if state == self.STATE_TEXT:
-    #  self.enterText()
-    #elif state == self.STATE_SPI:
-    #  self.enterSPI()
-    
-    return value
-  
   """ Writes data and then reads a lenght of data with correct CS """
-  def writeAndRead(self, data, readLen, withCS=True):
+  def writeAndRead(self, data, readLen, withCS=True, withInitialByte=False):
     writeLen = len(data)
     msg = bytearray()
     if withCS:
@@ -182,7 +158,6 @@ class BusPirate(object):
     msg.append(       writeLen & 0xff)
     msg.append((readLen >> 8)  & 0xff)
     msg.append(       readLen  & 0xff)
-    print 'DEBUG: ' + str(map(hex, msg)) + str(map(hex, map(ord, data)))
     self._port.flushInput()
     self._port.flushOutput()
     self._port.write(msg)
@@ -192,12 +167,12 @@ class BusPirate(object):
       raise IOError('Invalid read/write lenghts')
     self._port.write(data)
     data = self._port.read(readLen+1)
-    #print len(data)
-    #print 'DEBUG: ' + str(map(hex, map(ord, data)))
-    #print type(data)
     if ord(data[0]) != 0x01:
       raise IOError('Unknown IO error')
-    return data[1:]
+    if withInitialByte:
+      return data
+    else:
+      return data[1:]
   
   def __del__(self):
     if self._port != None:

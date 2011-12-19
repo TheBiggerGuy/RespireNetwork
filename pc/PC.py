@@ -6,23 +6,21 @@ import serial.tools.list_ports
 
 import RespireNRF
 
-from gi.repository import Gtk, Gio
+from gi.repository import Gtk, Gio, GObject
 
-class RespireMain(Gtk.Application):
+class RespireWindow(Gtk.Window):
   
-  """ Start the app """
-  def __init__(self):
-    Gtk.Application.__init__(
+  def __init__(self, app):
+    Gtk.Window.__init__(
         self,
-        application_id="com.thebiggerguy.uni.respire.main",
-        flags=Gio.ApplicationFlags.FLAGS_NONE
+        type=Gtk.WindowType.TOPLEVEL
       )
-    self.connect("activate", self.on_activate)
-  
-  """ Called when app is ready for a window """
-  def on_activate(self, data=None):
-    window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
-    window.set_title("Respire Netowrk")
+    self.set_title("Respire Netowrk")
+    
+    self._app = app
+    
+    self.connect("delete-event", self.destroy)
+    
     #window.set_border_width(24)
     
     # make the COM port drop down list
@@ -50,10 +48,8 @@ class RespireMain(Gtk.Application):
     vbox.pack_start(label2, False, False, 0)
     vbox.pack_start(hbox_com, False, False, 0)
     
-    window.add(vbox)
-    
-    window.show_all()
-    self.add_window(window)
+    self.add(vbox)
+    self.show_all()
   
   """ Called on COM port drop down is chnaged """
   def on_com_changed(self, data=None):
@@ -73,31 +69,56 @@ class RespireMain(Gtk.Application):
     print 'click'
   
   """ TODO """
-  def _destroy(self, data=None):
-    gtk.main_quit()
+  def destroy(self, widget=None, data=None):
+    pass
+
+class RespireApp(Gtk.Application):
+  
+  """ Start the app """
+  def __init__(self):
+    Gtk.Application.__init__(
+        self,
+        application_id="com.thebiggerguy.uni.respire.main",
+        flags=Gio.ApplicationFlags.FLAGS_NONE
+      )
+    self.connect("activate", self.on_activate)
+    
+    self._radio = RadioController(app)
+  
+  """ Called when app is ready for a window """
+  def on_activate(self, data=None):
+    self.add_window(RespireWindow(self))
+
+class RadioController(object):
+  
+  def __init__(self, app):
+    self._app = app
+    radio = RespireNRF.BusPirateNRF('/dev/ttyUSB0')
+    
+    radio.setState(RespireNRF.NrfStates.STANDBY1)
+    
+    radio.setReg(radio.STATUS, radio.RX_DR | radio.TX_DS | radio.MAX_RT)     # reset STATUS
+    radio.setReg(radio.CONFIG, radio.CRCO | radio.EN_CRC | radio.MASK_RX_DR) # config CONFIG
+  
+  def main(self):
+    while True:
+      if not radio.getIRQ():
+        print '.',
+        sleep(1)
+        continue
+      
+      print str(i) + ': ' + int2bin(radio.getReg(i))
+      print 'IRQ: ' + str(radio.getIRQ())
 
 if __name__ == '__main__':
   
-  app = RespireMain()
-  app.run(None)
-  
   logging.basicConfig(
-      filename='pylogger.log',
-      level=logging.INFO
-    )
+    filename='pylogger.log',
+    level=logging.INFO
+  )
   
-  radio = RespireNRF.BusPirateNRF('/dev/ttyUSB0')
-  
-  radio.setState(RespireNRF.NrfStates.STANDBY1)
-  
-  radio.setReg(radio.STATUS, radio.RX_DR | radio.TX_DS | radio.MAX_RT)     # reset STATUS
-  radio.setReg(radio.CONFIG, radio.CRCO | radio.EN_CRC | radio.MASK_RX_DR) # config CONFIG
-  
-  while True:
-    if not radio.getIRQ():
-      print '.',
-      sleep(1)
-      continue
-    
-    print str(i) + ': ' + int2bin(radio.getReg(i))
-    print 'IRQ: ' + str(radio.getIRQ())
+  app = RespireApp()  
+  # run Gtk main loop
+  app.run(None)
+
+

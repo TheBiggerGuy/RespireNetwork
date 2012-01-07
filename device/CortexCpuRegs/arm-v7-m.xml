@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE feature SYSTEM "gdb-target.dtd">
+<feature name="org.gnu.gdb.arm.v7-m">
+  <reg name="sp_main" bitsize="32" group="system"/>
+  <reg name="sp_process" bitsize="32" group="system"/>
+  <reg name="apsr" bitsize="32" group="system"/>
+  <reg name="ipsr" bitsize="32" group="system"/>
+  <reg name="epsr" bitsize="32" group="system"/>
+  <reg name="primask" bitsize="32" group="system"/>
+  <reg name="basepri" bitsize="32" group="system"/>
+  <reg name="faultmask" bitsize="32" group="system"/>
+  <reg name="control" bitsize="32" group="system"/>
+</feature>

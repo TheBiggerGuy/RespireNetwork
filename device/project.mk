@@ -3,6 +3,7 @@
 ####################################################################
 
 DEVICE = EFM32G890F128
+#DEVICE = EFM32G210F128
 PROJECTNAME = RespireNetwork
 
 SRC_DIR = src
@@ -13,6 +14,7 @@ LST_DIR = lst
 CMSIS_DIR       = lib/CMSIS
 EFM32LIB_DIR    = lib/efm32lib
 BOARDDRIVER_DIR = lib/drivers
+GCC_DIR         = lib/gcc
 
 TOOLDIR = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
 
@@ -69,6 +71,7 @@ INCLUDEPATHS += -I $(CMSIS_DIR)/CM3/CoreSupport
 INCLUDEPATHS += -I $(CMSIS_DIR)/CM3/DeviceSupport/EnergyMicro/EFM32
 INCLUDEPATHS += -I $(EFM32LIB_DIR)/inc
 INCLUDEPATHS += -I $(BOARDDRIVER_DIR)/inc
+INCLUDEPATHS += -I $(GCC_DIR)/inc
 
 ####################################################################
 # Files                                                            #

@@ -1,0 +1,5 @@
+<?xml version="1.0"?><!DOCTYPE target SYSTEM "gdb-target.dtd">
+<target>
+<xi:include href="arm-core-m.xml"/>
+<!-- <xi:include href="arm-v7-m.xml"/> -->
+</target>

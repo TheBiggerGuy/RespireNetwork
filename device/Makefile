@@ -19,7 +19,7 @@ debug:    internal_build
 release:  CFLAGS += -DNDEBUG -O3
 release:  internal_build
 
-internal_build:    makeDirs $(EXE_DIR)/$(PROJECTNAME).bin
+internal_build:    makeDirs $(EXE_DIR)/$(PROJECTNAME)
 
 # print all the vars out
 showInfo:
@@ -28,9 +28,6 @@ showInfo:
 	@echo "C_FILES     : "$(C_FILES)
 	@echo "S_SRC       : "$(S_SRC)
 	@echo "S_FILES     : "$(S_FILES)
-	@echo
-	@echo "*.c         : "$(SRC_DIR)/*.c
-	@echo "*.c         : "$(wildcard $(SRC_DIR)/*.c)
 
 # Create directories
 makeDirs:
@@ -54,18 +51,20 @@ $(OBJ_DIR)/%.o: %.s
 	$(CC) $(ASMFLAGS) $(INCLUDEPATHS) -c -o $@ $<
 
 # Link
-$(EXE_DIR)/$(PROJECTNAME).out: $(C_OBJS) $(S_OBJS)
+$(EXE_DIR)/$(PROJECTNAME).elf: $(C_OBJS) $(S_OBJS)
 	@echo
 	@echo "Linking target: $@"
-	$(CC) $(LDFLAGS) $(C_OBJS) $(S_OBJS) $(LIBS) -o $(EXE_DIR)/$(PROJECTNAME).out
+	$(CC) $(LDFLAGS) $(C_OBJS) $(S_OBJS) $(LIBS) -o $(EXE_DIR)/$(PROJECTNAME).elf
 
 # Create binary file
 # and
 # produce assembly listing of entire program
-$(EXE_DIR)/$(PROJECTNAME).bin: $(EXE_DIR)/$(PROJECTNAME).out
-	@echo "Creating binary file"
-	$(OBJCOPY) -O binary $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/$(PROJECTNAME).bin
-	$(DUMP) $(EXE_DIR)/$(PROJECTNAME).out > $(LST_DIR)/$(PROJECTNAME)out.lst
+$(EXE_DIR)/$(PROJECTNAME): $(EXE_DIR)/$(PROJECTNAME).elf
+	@echo "Creating flash file"
+	$(OBJCOPY) --output-target=ihex   $(EXE_DIR)/$(PROJECTNAME).elf $(EXE_DIR)/$(PROJECTNAME).hex
+	$(OBJCOPY) --output-target=binary $(EXE_DIR)/$(PROJECTNAME).elf $(EXE_DIR)/$(PROJECTNAME).bin
+	@echo "Creating list file"
+	$(DUMP) -h -S $(EXE_DIR)/$(PROJECTNAME).elf > $(LST_DIR)/$(PROJECTNAME).lst
 
 clean:
 	rm -r $(OBJ_DIR)
@@ -74,8 +73,3 @@ clean:
 	@echo "Removing executable directory."
 	rm -r $(LST_DIR)
 	@echo "Removing list directory."
-
-# include auto-generated dependency files (explicit rules)
-ifneq (clean,$(findstring clean, $(MAKECMDGOALS)))
--include $(C_DEPS)
-endif

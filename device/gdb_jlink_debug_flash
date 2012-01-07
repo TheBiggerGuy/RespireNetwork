@@ -1,0 +1,14 @@
+#*************************************************
+#
+# Connect to J-Link and debug application in flash on Cortex-M3
+#
+# no download is performed.
+#
+# Connect to the J-Link gdb server
+target remote localhost:2331
+monitor speed 1000
+# Can not load into flash if device is not specified. load ST_MB525_FLASH.elf
+# Initializing PC and stack pointer
+monitor reg r13 = (0x00000000)
+monitor reg pc = (0x00000004)
+

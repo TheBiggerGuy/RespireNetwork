@@ -1,7 +1,17 @@
+# Python Compiled
 *.py[co]
 
+# Hidden Files
 .*
 !.gitignore
+
+# Text editors
 *~
 
+# Bad tools
 .svn/
+
+# Other
+device/build
+device/exe
+device/lst

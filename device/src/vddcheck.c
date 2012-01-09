@@ -1,6 +1,6 @@
 /**************************************************************************//**
  * @file
- * @brief Simple LCD blink demo for EFM32_Gxxx_STK
+ * @brief VDD Voltage Check, using Voltage Comparator API
  * @author Energy Micro AS
  * @version 2.1.3
  ******************************************************************************
@@ -26,73 +26,69 @@
  *
  *****************************************************************************/
 
-// STK
-#ifndef EFM32G890F128
-#define EFM32G890F128
-#endif
-// Respire
-//#ifndef EFM32G210F128
-//define EFM32G210F128
-//#endif
+/***************************************************************************//**
+ * @addtogroup Drivers
+ * @{
+ ******************************************************************************/
 
 #include <stdint.h>
-#include <unistd.h>
-#include <stdio.h>
-
-#include "efm32.h"
-#include "efm32_chip.h"
-#include "efm32_dbg.h"
-
-#include "dbg.h"
-
-volatile uint32_t msTicks; /* counts 1ms timeTicks */
+#include <stdbool.h>
+#include "efm32_cmu.h"
+#include "efm32_vcmp.h"
+#include "vddcheck.h"
 
 /**************************************************************************//**
- * @brief SysTick_Handler
- * Interrupt Service Routine for system tick counter
+ * @brief VCMP initialization routine
  *****************************************************************************/
-void
-SysTick_Handler(void)
+void VddCheckInit(void)
 {
-  msTicks++; /* increment counter necessary in Delay()*/
+  /* Enable LE peripherals */
+  CMU_ClockEnable(cmuClock_CORELE, true);
+
+  /* Enable VCMP clock */
+  CMU_ClockEnable(cmuClock_VCMP, true);
 }
 
 /**************************************************************************//**
- * @brief Delays number of msTick Systicks (typically 1 ms)
- * @param dlyTicks Number of ticks to delay
+ * @brief VCMP deinitialization routine
  *****************************************************************************/
-void
-Delay(uint32_t dlyTicks)
+void VddCheckDisable(void)
 {
-  uint32_t curTicks;
+  /* Disable VCMP */
+  VCMP_Disable();
 
-  curTicks = msTicks;
-  while ((msTicks - curTicks) < dlyTicks)
-    ;
+  /* Disable clock to VCMP */
+  CMU_ClockEnable(cmuClock_VCMP, false);
 }
 
 /**************************************************************************//**
- * @brief  Main function
+ * @brief Check if voltage is higher than indicated
+ *
+ * @param vdd
+ *        The voltage level to compare against.
+ * @return 
+ *        Returns true if voltage is lower, false otherwise
  *****************************************************************************/
-int
-main(void)
+bool VddCheckLowVoltage(float vdd)
 {
-  /* Chip errata */
-  CHIP_Init();
+  VCMP_Init_TypeDef vcmp = VCMP_INIT_DEFAULT;
 
-  /* Ensure core frequency has been updated */
-  SystemCoreClockUpdate();
-  /* Setup SysTick Timer for 1 msec interrupts  */
-  if (SysTick_Config(SystemCoreClock / 1000))
-    while (1)
-      ;
+  /* Configure VCMP */
+  vcmp.triggerLevel = VCMP_VoltageToLevel(vdd);
+  vcmp.warmup = vcmpWarmTime128Cycles;
+  vcmp.lowPowerRef = false;
+  vcmp.enable = true;
 
-  DBG_Init();
+  VCMP_Init(&vcmp);
+  
+  /* Delay until warm up ready */
+  while (!VCMP_Ready()) ;
 
-  while (1)
-    {
-      printf("hello\n");
-    }
+  /* If zero result, voltage is lower */
+  if (VCMP_VDDHigher()) return false;
 
-  NVIC_SystemReset();
+  /* Otherwise return false */
+  return true;
 }
+
+/** @} (end group Drivers) */

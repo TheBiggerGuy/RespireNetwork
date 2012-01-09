@@ -25,13 +25,56 @@
  * arising from your use of this Software.
  *
  *****************************************************************************/
+
+// STK
+#ifndef EFM32G890F128
+#define EFM32G890F128
+#endif
+// Respire
+//#ifndef EFM32G210F128
+//define EFM32G210F128
+//#endif
+
 #include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+
 #include "efm32.h"
 #include "efm32_chip.h"
 #include "efm32_dbg.h"
 
+#include "dbg.h"
+
+#ifdef EFM32G890F128
 /* LED driver */
 #include "leds.h"
+#else
+void
+LED_Init(void)
+  {
+  }
+;
+void
+LED_Set(int led)
+  {
+  }
+;
+void
+LED_Clear(int led)
+  {
+  }
+;
+void
+LED_Toggle(int led)
+  {
+  }
+;
+void
+LED_Value(int value)
+  {
+  }
+;
+#endif
 
 volatile uint32_t msTicks; /* counts 1ms timeTicks */
 
@@ -39,114 +82,53 @@ volatile uint32_t msTicks; /* counts 1ms timeTicks */
  * @brief SysTick_Handler
  * Interrupt Service Routine for system tick counter
  *****************************************************************************/
-void SysTick_Handler(void)
+void
+SysTick_Handler(void)
 {
-  msTicks++;       /* increment counter necessary in Delay()*/
+  msTicks++; /* increment counter necessary in Delay()*/
 }
 
 /**************************************************************************//**
  * @brief Delays number of msTick Systicks (typically 1 ms)
  * @param dlyTicks Number of ticks to delay
  *****************************************************************************/
-void Delay(uint32_t dlyTicks)
+void
+Delay(uint32_t dlyTicks)
 {
   uint32_t curTicks;
 
   curTicks = msTicks;
-  while ((msTicks - curTicks) < dlyTicks) ;
-}
-
-/*
-include <unistd.h>
-int main () {
-	write (STDERR_FILENO, "Hello, world!\n", 14);
-	return 0;
-}
- */
-
-
-void setupSWO(void)
-{
-  uint32_t *dwt_ctrl       = (uint32_t *) 0xE0001000;
-  uint32_t *tpiu_prescaler = (uint32_t *) 0xE0040010;
-  uint32_t *tpiu_protocol  = (uint32_t *) 0xE00400F0;
-
-  CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_GPIO;
-  /* Enable Serial wire output pin */
-  GPIO->ROUTE |= GPIO_ROUTE_SWOPEN;
-  /* Set location 1 */
-  GPIO->ROUTE = (GPIO->ROUTE & ~(_GPIO_ROUTE_SWLOCATION_MASK)) | GPIO_ROUTE_SWLOCATION_LOC1;
-  /* Enable output on pin */
-  GPIO->P[2].MODEH &= ~(_GPIO_P_MODEH_MODE15_MASK);
-  GPIO->P[2].MODEH |= GPIO_P_MODEH_MODE15_PUSHPULL;
-  /* Enable debug clock AUXHFRCO */
-  CMU->OSCENCMD = CMU_OSCENCMD_AUXHFRCOEN;
-
-  while(!(CMU->STATUS & CMU_STATUS_AUXHFRCORDY));
-
-  /* Enable trace in core debug */
-  CoreDebug->DHCSR |= 1;
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-
-  /* Enable PC and IRQ sampling output */
-  *dwt_ctrl = 0x400113FF;
-  /* Set TPIU prescaler to 16. */
-  *tpiu_prescaler = 0xf;
-  /* Set protocol to NRZ */
-  *tpiu_protocol = 2;
-  /* Unlock ITM and output data */
-  ITM->LAR = 0xC5ACCE55;
-  ITM->TCR = 0x10009;
-
-  ITM->TER = 1UL;
+  while ((msTicks - curTicks) < dlyTicks)
+    ;
 }
 
 /**************************************************************************//**
  * @brief  Main function
  *****************************************************************************/
-int main(void)
+int
+main(void)
 {
-  uint8_t count = 0;
-  uint16_t i = 10;
-
   /* Chip errata */
   CHIP_Init();
-
-//  if (DBG_Connected()) {
-//	  DBG_SWOEnable(1);
-//  }
-
-  setupSWO();
 
   /* Ensure core frequency has been updated */
   SystemCoreClockUpdate();
   /* Setup SysTick Timer for 1 msec interrupts  */
-  if (SysTick_Config(SystemCoreClock / 1000)) while (1) ;
+  if (SysTick_Config(SystemCoreClock / 1000))
+    while (1)
+      ;
+
+  setupSWO();
 
   /* Initialize LED driver */
   LED_Init();
 
   loopme:
 
-  /* Infinite loop */
-  while (i)
-  {
-    count++;
-    ITM_SendChar('A');
-    ITM_SendChar('B');
-    i--;
-  }
+  //ITM_SendChar('A');
+  //ITM_SendChar2('A');
 
-  i = 10;
-
-  while (i)
-  {
-    LED_Value(count);
-    count++;
-    Delay(100);
-    ITM_SendChar('z'-count);
-    i--;
-  }
+  printf("hello\n");
 
   goto loopme;
 

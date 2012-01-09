@@ -13,7 +13,6 @@ LST_DIR = lst
 
 CMSIS_DIR       = lib/CMSIS
 EFM32LIB_DIR    = lib/efm32lib
-BOARDDRIVER_DIR = lib/drivers
 GCC_DIR         = lib/gcc
 
 TOOLDIR = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
@@ -70,7 +69,6 @@ INCLUDEPATHS += -I $(SRC_DIR)
 INCLUDEPATHS += -I $(CMSIS_DIR)/CM3/CoreSupport
 INCLUDEPATHS += -I $(CMSIS_DIR)/CM3/DeviceSupport/EnergyMicro/EFM32
 INCLUDEPATHS += -I $(EFM32LIB_DIR)/inc
-INCLUDEPATHS += -I $(BOARDDRIVER_DIR)/inc
 INCLUDEPATHS += -I $(GCC_DIR)/inc
 
 ####################################################################
@@ -82,8 +80,6 @@ C_SRC += $(CMSIS_DIR)/CM3/CoreSupport/core_cm3.c
 C_SRC += $(CMSIS_DIR)/CM3/DeviceSupport/EnergyMicro/EFM32/system_efm32.c
 # EFM32Lib
 C_SRC += $(wildcard $(EFM32LIB_DIR)/src/*.c)
-# board driver
-C_SRC += $(wildcard $(BOARDDRIVER_DIR)/src/*.c)
 # src program
 C_SRC += $(wildcard $(SRC_DIR)/*.c)
 

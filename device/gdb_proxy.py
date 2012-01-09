@@ -14,7 +14,29 @@ from time import sleep
 import traceback
 import sys
 
-magic = '$qSeggerSWO:start:0 f4240+#14'
+# UART 19,200
+MAGIC_U_19    = '$qSeggerSWO:start:0 4b00+#DA'
+# UART 1,000,000
+MAGIC_U_1000  = '$qSeggerSWO:start:0 f4240+#14'
+# Manchester 19,200
+MAGIC_M_19    = '$qSeggerSWO:start:1 4b00+#DB'
+# Manchester 250kbps
+MAGIC_M_250K  = '$qSeggerSWO:start:1 3d090+#15'
+# Manchester 1,000kbps
+MAGIC_M_1000K = '$qSeggerSWO:start:1 f4240+#15'
+# Stop SWO
+magic      = '$qSeggerSWO:stop+#F2'
+magicReply = '+$OK#9a'
+
+ENABLE_SWO = True
+ENABLE_SWV = True
+SWO_SETTING = MAGIC_U_1000
+
+#GDB_SERVER = ('192.168.1.14', 2331)
+GDB_SERVER = ('127.0.0.1',    2331)
+
+#SWO_SERVER = ('192.168.1.14', 2332)
+SWO_SERVER = ('127.0.0.1',    2332)
 
 class SwoThread(threading.Thread):
   
@@ -28,7 +50,7 @@ class SwoThread(threading.Thread):
     self._run = True
   
     self._io = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._io.connect(('192.168.1.14', 2332))
+    self._io.connect(SWO_SERVER)
     self._io.setblocking(0)
     
     threading.Thread.__init__(self)
@@ -39,6 +61,7 @@ class SwoThread(threading.Thread):
     buf = ''
     
     print ' '*40, 'SWO: started'
+    f  = open('log.swo.log', 'w')
     while self._run:
       try:
         buf += self._io.recv(4096)
@@ -103,13 +126,13 @@ class SwoThread(threading.Thread):
             # we have SWIT
             if len(buf) < 4:
               continue
-            print ord(buf[0])
             plen = ord(buf[0]) & 0x03
             buf = buf[1:]
             msg = buf[:plen]
             buf = buf[plen:]
             print ' '*40, '>SWIT'
             print ' '*44, 'len: ' + str(plen) + ' (' + str(map(ord, msg)) + ')'
+            f.write(msg)
       
       except Exception as e:
         if e.args[0] != 11:
@@ -153,14 +176,21 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     
     # get the gdb server
     self._output = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._output.connect(('192.168.1.14', 2331))
-    self._output.setblocking(1)
-    self._output.sendall(magic)
-    self._output.recv(7)
+    self._output.connect(GDB_SERVER)
     self._output.setblocking(0)
-    print 'Sent maigc and burnt reply'
     
-    self._swo = SwoThread()
+    # SWO?
+    if ENABLE_SWO:
+      # send the magic
+      self._output.setblocking(1)
+      self._output.sendall(SWO_SETTING)
+      self._output.recv(len(magicReply))
+      print 'Sent maigc and burnt reply'
+      if ENABLE_SWV:
+        # start SWO reciver
+        self._swo = SwoThread()
+      # reset socket
+      self._output.setblocking(0)
     
     # clean up the input socket
     self._input = self.request
@@ -189,9 +219,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         outbuf += self._output.recv(4096)
         if len(outbuf) > 0:
           if len(outbuf) > 30:
-            print '>: ' + outbuf[:26] + ' ...'
+            print '<: ' + outbuf[:26] + ' ...'
           else:
-            print '>: ' + outbuf
+            print '<: ' + outbuf
       except Exception as e:
         if e.args[0] != 11:
           raise e

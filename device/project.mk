@@ -15,7 +15,7 @@ CMSIS_DIR       = lib/CMSIS
 EFM32LIB_DIR    = lib/efm32lib
 GCC_DIR         = lib/gcc
 
-TOOLDIR = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
+TOOLDIR = /opt/CodeSourcery/arm-2011.09
 
 ####################################################################
 # Definitions of toolchain.                                        #

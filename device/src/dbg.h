@@ -23,4 +23,6 @@ void DBG_LED_On(void);
 void DBG_LED_Off(void);
 void DBG_LED_Toggle(void);
 
+#define LOG_DEBUG(x) printf(x)
+
 #endif // __RESPIRENETWORK_DBG_H

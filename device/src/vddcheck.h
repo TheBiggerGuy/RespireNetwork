@@ -28,26 +28,11 @@
 #ifndef __VDDCHECK_H
 #define __VDDCHECK_H
 
-/***************************************************************************//**
- * @addtogroup Drivers
- * @{
- ******************************************************************************/
-
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void VddCheckInit(void);
 void VddCheckDisable(void);
 bool VddCheckLowVoltage(float vdd);
 
-#ifdef __cplusplus
-}
-#endif
-
-/** @} (end group Drivers) */
-
-#endif
+#endif // __VDDCHECK_H

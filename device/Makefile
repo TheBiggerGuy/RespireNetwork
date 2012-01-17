@@ -2,13 +2,12 @@
 # Makefile                                                         #
 ####################################################################
 
-.SUFFIXES:				# ignore builtin rules
-.PHONY: all debug release internal_build makeDir clean
-.SILENT:
-
 # ALL THE PROJECT SPECIFIC CODE
 include project.mk
 
+.SUFFIXES:				# ignore builtin rules
+.PHONY: all debug release internal_build makeDir clean
+.SILENT: # get it to be less verbose
 
 # Default build is debug build
 all:      debug

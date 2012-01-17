@@ -28,27 +28,13 @@
 #ifndef __RTC_H
 #define __RTC_H
 
-/***************************************************************************//**
- * @addtogroup Drivers
- * @{
- ******************************************************************************/
-
 #include "efm32.h"
 #include "efm32_cmu.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void RTC_Delay(uint32_t msec);
 void RTC_IRQHandler(void);
 void RTC_Trigger(uint32_t msec, void (*cb)(void));
 void RTC_Setup(CMU_Select_TypeDef osc);
 
-#ifdef __cplusplus
-}
-#endif
+#endif // __RTC_H
 
-/** @} (end group Drivers) */
-
-#endif

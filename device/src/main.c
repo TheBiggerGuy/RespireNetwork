@@ -32,6 +32,7 @@ main(void)
 
   /* Ensure core frequency has been updated */
   SystemCoreClockUpdate();
+
   /* Setup SysTick Timer for 1 msec interrupts  */
   if (SysTick_Config(SystemCoreClock / 1000))
     exit(-1);
@@ -42,8 +43,8 @@ main(void)
 
   while (1)
     {
-	  LOG_DEBUG("loop\n");
-      Radio_Send("bob");
+	  // LOG_DEBUG("loop\n");
+      Radio_Send((uint8_t*) "bob", 0, 3);
     }
 
   exit(0);

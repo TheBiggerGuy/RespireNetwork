@@ -1,10 +1,12 @@
 #include <stdint.h>
+#include <string.h>
 
 #include "efm32.h"
 #include "efm32_cmu.h"
 #include "efm32_gpio.h"
 #include "efm32_usart.h"
 
+#include "main.h"
 #include "radio.h"
 
 uint8_t Radio_read_reg(uint8_t loc);
@@ -29,12 +31,30 @@ void Radio_write_lreg(uint8_t loc, uint8_t val[5]);
 #define RADIO_SPI_NUMBER   1
 #define RADIO_SPI_LOCATION 1
 
-#define RADIO_CMD_R_REG 0x00
-#define RADIO_CMD_W_REG 0x20
+#define RADIO_CMD_R_REG        0x00
+#define RADIO_CMD_W_REG        0x20
+#define RADIO_CMD_R_RX_PAYLOAD 0x61
+#define RADIO_CMD_W_TX_PAYLOAD 0xA0
+#define RADIO_CMD_FLUSH_RX     0xE1
+#define RADIO_CMD_FLUSH_TX     0xE2
+#define RADIO_CMD_NOP          0xFF
 
+
+#define RADIO_CONFIG     0x00
+#define RADIO_SETUP_RETR 0x04
 #define RADIO_RX_ADDR_P0 0x0A
+#define RADIO_RX_ADDR_P1 0x0B
 #define RADIO_TX_ADDR    0x10
-#define RADIO_RX_PW_P1   0x11
+#define RADIO_RX_PW_P0   0x11
+#define RADIO_RX_PW_P1   0x12
+
+#define RADIO_BROADCAST_ADDR 0x55AAFFAA55
+
+void Radio_clearIRQ(void);
+void USART_Rx_Clear(USART_TypeDef * usart);
+void Radio_write_reg(uint8_t loc, uint8_t val);
+void Radio_write_reg(uint8_t loc, uint8_t val);
+void Radio_write_lreg(uint8_t loc, uint8_t val[5]);
 
 uint8_t lastStatus = 0;
 
@@ -71,28 +91,91 @@ void Radio_init(void)
 	RADIO_USART->IFC = _USART_IFC_MASK;
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_TX, gpioModePushPull, 0); /* MOSI */
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_RX, gpioModeInput, 0); /* MISO */
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CS, gpioModePushPull, 0); /* CS */
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CLK, gpioModePushPull, 0); /* Clock */
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_TX,  gpioModePushPull, 0);  // MOSI
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_RX,  gpioModeInput, 0);     // MISO
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CS,  gpioModePushPull, 0);  // CS
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CLK, gpioModePushPull, 0); // Clock
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CE,  gpioModePushPull, 0); // CE
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
 
 	/* Config Radio ///////////////////////////////////////////////////// */
-	// TODO
-	uint8_t addr0[5];
-	addr0[0] = 0x00;
-	addr0[1] = (DEVINFO->UNIQUEL >> 0)  & 0xff;
-	addr0[2] = (DEVINFO->UNIQUEL >> 8)  & 0xff;
-	addr0[3] = (DEVINFO->UNIQUEL >> 16) & 0xff;
-	addr0[4] = (DEVINFO->UNIQUEL >> 24) & 0xff;
-	Radio_write_lreg(RADIO_RX_ADDR_P0, addr0);
-	Radio_write_lreg(RADIO_TX_ADDR, addr0);
+	uint8_t addr[5];
+	addr[0] = 0x00;
+	addr[1] = (DEVINFO->UNIQUEL >> 0)  & 0xff;
+	addr[2] = (DEVINFO->UNIQUEL >> 8)  & 0xff;
+	addr[3] = (DEVINFO->UNIQUEL >> 16) & 0xff;
+	addr[4] = (DEVINFO->UNIQUEL >> 24) & 0xff;
+	Radio_write_lreg(RADIO_RX_ADDR_P0, addr); // set RX address 0
 	Radio_write_reg(RADIO_RX_PW_P1, 32);
 
+	Radio_write_lreg(RADIO_TX_ADDR, addr); // equal to RADIO_RX_ADDR_P0
+
+	addr[0] = (RADIO_BROADCAST_ADDR >> 0)  & 0xff;
+	addr[1] = (RADIO_BROADCAST_ADDR >> 8)  & 0xff;
+	addr[2] = (RADIO_BROADCAST_ADDR >> 16) & 0xff;
+	addr[3] = (RADIO_BROADCAST_ADDR >> 24) & 0xff;
+	addr[4] = (RADIO_BROADCAST_ADDR >> 32) & 0xff;
+	Radio_write_lreg(RADIO_RX_ADDR_P1, addr); // set RX address 0
+	Radio_write_reg(RADIO_RX_PW_P1, 32);
+
+	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
+
+	Radio_clearIRQ();
+
 	/* Config IRQ //////////////////// */
-	// GPIO_IntConfig(RADIO_PORT, RADIO_IRQ, false, true, true);
-	// NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
-	// NVIC_EnableIRQ(GPIO_ODD_IRQn);
+	GPIO_IntConfig(RADIO_PORT, RADIO_PIN_IRQ, false, true, true);
 }
+
+void GPIO_EVEN_IRQHandler(void) {
+	if (GPIO_IntGet() & (1 << RADIO_PIN_IRQ)) {
+		GPIO_IntClear(1 << RADIO_PIN_IRQ);
+	}
+}
+
+/**************************************************************************//**
+ * @brief Send a msg
+ *****************************************************************************/
+int Radio_send(uint8_t* data, uint8_t start, uint8_t length)
+{
+	uint8_t buf[32];
+
+	EFM_ASSERT(length <= 32);
+
+	memcpy(buf, data+(sizeof(uint8_t)*start), length);
+	memset(buf+length, 0x00, 32-length); // TODO: set to 0xAA or 0x55
+
+	// clear RX buffer
+	USART_Rx_Clear(USART1);
+	// send cmd and data
+	USART_TxDouble(USART1, (0xff << data[start+0]) | RADIO_CMD_W_TX_PAYLOAD);
+	for(int i=1; i<32; i+=2) {
+		USART_TxDouble(USART1, (0xff << data[start+i]) | data[start+i+1]);
+	}
+	// clear RX buffer
+	USART_Rx_Clear(USART1);
+	// set chip enable hight
+	GPIO_PinOutSet(RADIO_PORT, RADIO_PIN_CE);
+	delay(10); // TODO
+	GPIO_PinOutClear(RADIO_PORT, RADIO_PIN_CE);
+
+	return length;
+}
+
+/**************************************************************************//**
+ * @brief How meany bytes are available
+ *****************************************************************************/
+int Radio_available(void) {
+	return -1;
+}
+
+/**************************************************************************//**
+ * @brief Read upto maxLenght bytes
+ *****************************************************************************/
+int Radio_recive(uint8_t* data, uint8_t maxLenght){
+	return -1;
+}
+
+/* private ///////////////////////////////////////////////////////////////// */
 
 void USART_Rx_Clear(USART_TypeDef * usart)
 {
@@ -104,6 +187,11 @@ void USART_Rx_Clear(USART_TypeDef * usart)
 	}
 }
 
+void Radio_clearIRQ(void)
+{
+	Radio_write_reg(RADIO_CONFIG, 0x0E);
+}
+
 uint8_t Radio_read_reg(uint8_t loc)
 {
 	uint16_t buf;
@@ -113,7 +201,7 @@ uint8_t Radio_read_reg(uint8_t loc)
 	// clear RX buffer
 	USART_Rx_Clear(USART1);
 	// send cmd and NOP
-	USART_TxDouble(USART1, (0xff << 16) | RADIO_CMD_R_REG | loc);
+	USART_TxDouble(USART1, (RADIO_CMD_NOP << 16) | RADIO_CMD_R_REG | loc);
 	// read both status and cmd
 	buf = USART_RxDouble(USART1);
 	// save status
@@ -153,11 +241,3 @@ void Radio_write_lreg(uint8_t loc, uint8_t val[5])
 	USART_Rx_Clear(USART1);
 }
 
-int Radio_Send(uint8_t* data, uint8_t start, uint8_t length)
-{
-	EFM_ASSERT(length < 32);
-
-	// TODO
-
-	return -1;
-}

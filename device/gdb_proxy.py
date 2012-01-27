@@ -5,6 +5,7 @@ http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.htm
 
 http://infocenter.arm.com/help/topic/com.arm.doc.ddi0314h/DDI0314H_coresight_components_trm.pdf
 
+http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.html
 """
 
 import socket
@@ -14,29 +15,51 @@ from time import sleep
 import traceback
 import sys
 
-# UART 19,200
-MAGIC_U_19    = '$qSeggerSWO:start:0 4b00+#DA'
-# UART 1,000,000
-MAGIC_U_1000  = '$qSeggerSWO:start:0 f4240+#14'
-# Manchester 19,200
-MAGIC_M_19    = '$qSeggerSWO:start:1 4b00+#DB'
-# Manchester 250kbps
-MAGIC_M_250K  = '$qSeggerSWO:start:1 3d090+#15'
-# Manchester 1,000kbps
-MAGIC_M_1000K = '$qSeggerSWO:start:1 f4240+#15'
-# Stop SWO
-magic      = '$qSeggerSWO:stop+#F2'
-magicReply = '+$OK#9a'
-
 ENABLE_SWO = True
-ENABLE_SWV = True
-SWO_SETTING = MAGIC_U_1000
 
-GDB_SERVER = ('192.168.0.107', 2331)
-#GDB_SERVER = ('127.0.0.1',    2331)
+SWO_PROTO = 'UART'
+SWO_SPEED = 19200 #875000
 
-SWO_SERVER = ('192.168.0.107', 2332)
-#SWO_SERVER = ('127.0.0.1',    2332)
+#GDB_SERVER = ('192.168.0.107', 2331)
+GDB_SERVER = ('127.0.0.1',    2331)
+
+#SWO_SERVER = ('192.168.0.107', 2332)
+SWO_SERVER = ('127.0.0.1',    2332)
+
+class SeggerGdb(object):
+  
+  SWO_REPLY = '+$OK#9a'
+  
+  PROTOCOL_JTAG = 'JTAG'
+  PROTOCOL_SWD  = 'SWD'
+  
+  PROTOCOL_UART = 'UART'
+  PROTOCOL_MAN  = 'Manchester'
+  
+  def __init__(self, protocol):
+    if protocol not in [self.PROTOCOL_JTAG, self.PROTOCOL_SWD]:
+      raise ValueError('Invalid protocol')
+    self._protocol = protocol
+  
+  def _formGdbMsg(self, msg):
+    msg = reduce(lambda x, y: x+y, map(lambda x: x in '#$}' and '}'+chr(ord(x)^0x20) or x, msg))
+    chksum =sum(map(ord, msg))%256
+    return '${msg}#{chksum:02X}'.format(msg=msg, chksum=chksum)
+
+  def swoStart(self, protocol, speed):
+    if self._protocol != self.PROTOCOL_SWD:
+      raise RuntimeError('Can not start SWO when not in SWD')
+    if protocol == self.PROTOCOL_UART:
+      protocol = '0'
+    elif protocol == self.PROTOCOL_MAN:
+      protocol = '1'
+    else:
+      raise ValueError('Invalid protocol')
+    msg = 'qSeggerSWO:start:{protocol} {speed:x}+'.format(protocol=protocol, speed=speed)
+    return self._formGdbMsg(msg)
+
+  def swoStop(self):
+    return self._formGdbMsg('qSeggerSWO:stop+')
 
 class SwoThread(threading.Thread):
   
@@ -143,6 +166,10 @@ class SwoThread(threading.Thread):
   
   def stop(self):
     self._run = False
+  
+  def __del__(self):
+    if self._io != None:
+      self._io.close()
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
   """
@@ -182,13 +209,16 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     # SWO?
     if ENABLE_SWO:
       # send the magic
+      
+      segger = SeggerGdb(SeggerGdb.PROTOCOL_SWD)
+      
       self._output.setblocking(1)
-      self._output.sendall(SWO_SETTING)
-      self._output.recv(len(magicReply))
+      print segger.swoStart(SWO_PROTO, SWO_SPEED)
+      self._output.sendall(segger.swoStart(SWO_PROTO, SWO_SPEED))
+      self._output.recv(len(segger.SWO_REPLY))
       print 'Sent maigc and burnt reply'
-      if ENABLE_SWV:
-        # start SWO reciver
-        self._swo = SwoThread()
+      # start SWO reciver
+      self._swo = SwoThread()
       # reset socket
       self._output.setblocking(0)
     
@@ -259,7 +289,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
   def close(self):
     self._run = False
   
-  def finish(self):    
+  def finish(self):
     if self._input != None:
       self._input.close()
     if self._output != None:
@@ -269,6 +299,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     if self.currentHandle != None:
       self.currentHandle = None
     print 'Connection closed'
+  
+  def __del__(self):
+    self.finish()
 
 if __name__ == "__main__":
   HOST, PORT = "localhost", 9999

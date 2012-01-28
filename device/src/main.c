@@ -42,6 +42,7 @@ void delay(uint32_t dlyTicks)
   uint32_t till = msTicks + dlyTicks;
   while (msTicks < till) {
   	__WFI();
+  	__NOP();
   }
 }
 
@@ -68,14 +69,15 @@ main(void)
 
   Radio_init();
 
+  while (1) {
+
   for(int i=0; i< 5; i++) {
-  //while (1) {
   		Radio_send((uint8_t*) "bob", 0, 3);
       if(Radio_available() > 0) {
       	Radio_recive(data, 16);
     	  LOG_DEBUG("data: %s\n", data);
       }
     }
-
+  }
   exit(0);
 }

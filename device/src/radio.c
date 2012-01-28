@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "efm32.h"
@@ -10,13 +11,13 @@
 #include "radio.h"
 
 void Radio_clearIRQ(void);
-void USART_Rx_Clear(USART_TypeDef * usart);
 
 uint8_t Radio_read_reg(uint8_t loc);
 uint8_t Radio_read_payload(uint8_t* buffer);
 
 void Radio_write_reg(uint8_t loc, uint8_t val);
 void Radio_write_lreg(uint8_t loc, uint8_t val[5]);
+void Radio_write_packet(uint8_t data[32]);
 
 uint8_t lastStatus = 0;
 uint8_t state = RADIO_STATE_POWER_DOWN;
@@ -57,7 +58,8 @@ void Radio_init(void)
 	// Set to master and to control the CS line
 	// Enabling Master, TX and RX
 	RADIO_USART->CMD = USART_CMD_MASTEREN | USART_CMD_TXEN | USART_CMD_RXEN;
-	RADIO_USART->CTRL |= USART_CTRL_AUTOCS;
+	//RADIO_USART->CTRL |= USART_CTRL_AUTOCS;
+	RADIO_USART->CTRL ^= USART_CTRL_AUTOCS;
 
 	// Clear previous interrupts
 	RADIO_USART->IFC = _USART_IFC_MASK;
@@ -68,9 +70,10 @@ void Radio_init(void)
 	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CS,  gpioModePushPull, 0);  // CS
 	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CLK, gpioModePushPull, 0); // Clock
 	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CE,  gpioModePushPull, 0); // CE
+
 	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
 
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ+1, gpioModePushPull, 0);    // DBG
+	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ+1, gpioDriveModeStandard, 1);    // DBG
 	GPIO_PinOutClear(RADIO_PORT, RADIO_PIN_IRQ+1);
 
 	/* Config Radio ///////////////////////////////////////////////////// */
@@ -140,6 +143,8 @@ int Radio_send(uint8_t* data, uint8_t start, uint8_t length)
 
 	EFM_ASSERT(length <= 32);
 
+	Radio_DBG(true);
+
 	Radio_CE(false);
 
 	state = RADIO_STATE_TX;
@@ -148,28 +153,19 @@ int Radio_send(uint8_t* data, uint8_t start, uint8_t length)
 	memcpy(buf, data+(sizeof(uint8_t)*start), length);
 	memset(buf+length, 0x00, 32-length); // TODO: set to 0xAA or 0x55
 
-	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
-	// send cmd and data
-	USART_TxDouble(RADIO_USART, (0xff << data[start+0]) | RADIO_CMD_W_TX_PAYLOAD);
-	for(int i=1; i<32; i+=2) {
-		USART_TxDouble(RADIO_USART, (0xff << data[start+i]) | data[start+i+1]);
-	}
-	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
-	// set chip enable hight
+	Radio_write_packet(buf);
+
+	Radio_DBG(false);
 	Radio_CE(true);
+	delay(50);
+	Radio_DBG(true);
 	GPIO_PinOutSet(RADIO_PORT, RADIO_PIN_IRQ+1);
-	delay(2);
-	Radio_CE(false);
-	__NOP();
-	Radio_CE(true);
-	__NOP();
-	Radio_CE(false);
-	state = RADIO_STATE_TX;
+
+	state = RADIO_STATE_RX;
 	Radio_clearIRQ();
 	Radio_CE(true);
-	GPIO_PinOutClear(RADIO_PORT, RADIO_PIN_IRQ+1);
+
+	Radio_DBG(false);
 
 	return length;
 }
@@ -204,16 +200,6 @@ int Radio_recive(uint8_t* data, uint8_t maxLenght){
 
 /* private ///////////////////////////////////////////////////////////////// */
 
-void USART_Rx_Clear(USART_TypeDef * usart)
-{
-	// Make sure compiler keeps it in and stops it warning
-	volatile uint8_t buf __attribute__((unused));
-
-	while ((usart->STATUS & USART_STATUS_RXDATAV)) {
-		buf = usart->RXDATA;
-	}
-}
-
 void Radio_clearIRQ(void)
 {
 	uint8_t val = RADIO_CONFIG_DEFAULT;
@@ -234,18 +220,17 @@ uint8_t Radio_read_reg(uint8_t loc)
 	EFM_ASSERT(loc < 128);
 
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
+
+	Radio_CS(false);
 	// send cmd and NOP
 	USART_TxDouble(RADIO_USART, (RADIO_CMD_NOP << 8) | RADIO_CMD_R_REG | loc);
 	// read both status and cmd
 	buf = USART_RxDouble(RADIO_USART);
+	Radio_CS(true);
+
 	// save status
 	lastStatus = buf & 0xff;
-
-	// wait for spi to finish
-	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
-	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
 
 	// return cmd
 	return ((buf >> 8) & 0xff);
@@ -255,6 +240,10 @@ uint8_t Radio_read_payload(uint8_t* buffer)
 {
 	EFM_ASSERT(loc < 128);
 
+	// clear RX buffer
+	Radio_Rx_Clear();
+
+	Radio_CS(false);
 	// send cmd and NOP
 	USART_TxDouble(RADIO_USART, (RADIO_CMD_NOP << 8) | RADIO_CMD_R_RX_PAYLOAD);
 	// read both status and cmd
@@ -263,11 +252,12 @@ uint8_t Radio_read_payload(uint8_t* buffer)
 		buffer[i] = USART_Rx(RADIO_USART);
 		USART_Tx(RADIO_USART, RADIO_CMD_NOP);
 	}
-
 	// wait for spi to finish
 	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
+	Radio_CS(true);
+
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
 
 	// return length
 	return 32;
@@ -278,7 +268,9 @@ void Radio_write_reg(uint8_t loc, uint8_t val)
 	EFM_ASSERT(loc < 128);
 
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
+
+	Radio_CS(false);
 	// send cmd and NOP
 	USART_TxDouble(RADIO_USART, (val << 8) | RADIO_CMD_W_REG | loc);
 	// read both status and cmd
@@ -286,8 +278,10 @@ void Radio_write_reg(uint8_t loc, uint8_t val)
 
 	// wait for spi to finish
 	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
+	Radio_CS(true);
+
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
 }
 
 void Radio_write_lreg(uint8_t loc, uint8_t val[5])
@@ -295,7 +289,9 @@ void Radio_write_lreg(uint8_t loc, uint8_t val[5])
 	EFM_ASSERT(loc < 128);
 
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
+
+	Radio_CS(false);
 	// send cmd and NOP
 	USART_TxDouble(RADIO_USART, (val[0] << 8) | RADIO_CMD_W_REG | loc);
 	USART_TxDouble(RADIO_USART, (val[2] << 8) | val[1]);
@@ -305,7 +301,32 @@ void Radio_write_lreg(uint8_t loc, uint8_t val[5])
 
 	// wait for spi to finish
 	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
+	Radio_CS(true);
+
 	// clear RX buffer
-	USART_Rx_Clear(RADIO_USART);
+	Radio_Rx_Clear();
+}
+
+void Radio_write_packet(uint8_t data[32])
+{
+	EFM_ASSERT(loc < 128);
+
+	// clear RX buffer
+	Radio_Rx_Clear();
+
+	Radio_CS(false);
+	// send cmd and data
+	USART_TxDouble(RADIO_USART, (data[0] << 8) | RADIO_CMD_W_TX_PAYLOAD);
+	for(int i=1; i<31; i+=2) {
+		USART_TxDouble(RADIO_USART, (data[i] << 8) | data[i+1]);
+	}
+	USART_Tx(RADIO_USART, data[31]);
+
+	// wait for spi to finish
+	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
+	Radio_CS(true);
+
+	// clear RX buffer
+	Radio_Rx_Clear();
 }
 

@@ -41,8 +41,7 @@ DEPFLAGS = -MMD -MP -MF $(@:.o=.d)
 
 # Add -Wa,-ahld=$(LST_DIR)/$(@F:.o=.lst) to CFLAGS to produce assembly list files
 CFLAGS += -D$(DEVICE)
-CFLAGS += -mcpu=cortex-m3
-CFLAGS += -mthumb
+CFLAGS += -mcpu=cortex-m3 -mthumb
 CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
 CFLAGS += -mfix-cortex-m3-ldrd

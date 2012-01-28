@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "core_cm3.h"
+
 #include "efm32.h"
 #include "efm32_gpio.h"
 
@@ -80,11 +82,43 @@ int Radio_available(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
 
-static __INLINE void Radio_CE(bool state) {
+
+static __INLINE void Radio_CE(bool state)
+{
 	if (state) {
-		GPIO_PinOutSet(RADIO_PORT, RADIO_PIN_CE);
+		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_CE;
 	} else {
-		GPIO_PinOutClear(RADIO_PORT, RADIO_PIN_CE);
+		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
+}
+
+static __INLINE void Radio_CS(bool state) {
+	if (state) {
+		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_CS;
+	} else {
+		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_CS;
+	}
+}
+
+static __INLINE void Radio_DBG(bool state) {
+	if (state) {
+		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_IRQ+1;
+	} else {
+		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_IRQ+1;
+	}
+}
+
+#if defined(__GNUC__)
+  #define __UNUSED __attribute__((unused))
+#endif
+
+static __INLINE void Radio_Rx_Clear(void)
+{
+	// Make sure compiler keeps it in and stops it warning
+	volatile uint8_t buf __UNUSED;
+
+	while ((RADIO_USART->STATUS & USART_STATUS_RXDATAV)) {
+		buf = RADIO_USART->RXDATA;
 	}
 }
 

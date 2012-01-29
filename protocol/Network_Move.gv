@@ -1,0 +1,11 @@
+digraph {
+  labelloc="t";
+  label="Client Move";
+  
+  node [style="bold"]
+  "Connected" "Disconected"
+  node [style=""];
+  
+  "Connected" -> "Disconected" [label="Move"]
+  "Disconected" -> "Connected" [label="Client Connect"]
+}

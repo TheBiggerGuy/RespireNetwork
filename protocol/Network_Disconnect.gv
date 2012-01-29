@@ -1,0 +1,15 @@
+digraph {
+  labelloc="t";
+  label="Client Disconnect";
+  
+  node [style="bold"]
+  "Connected" "Disconected"
+  node [style=""];
+  
+  "Connected" -> "Wait for timeslot" [label="Disconect"]
+  
+  "Wait for timeslot" -> "Wait for accept" [label="Send disconnect"]
+  
+  "Wait for accept" -> "Disconected" [label="Accept"]
+  "Wait for accept" -> "Disconected" [label="Timeout", style=dashed]
+}

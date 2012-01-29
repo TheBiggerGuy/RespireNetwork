@@ -18,9 +18,9 @@
 #define RADIO_PIN_CLK   2
 #define RADIO_PIN_CS    3
 #define RADIO_PIN_CE    4
-#define RADIO_PIN_IRQ   6
+#define RADIO_PIN_IRQ   5
 
-#define RADIO_CHANNEL 0x7F
+#define RADIO_CHANNEL 0x16
 
 /* Defines */
 #define HFRCO_FREQUENCY         14000000
@@ -49,12 +49,18 @@
 #define RADIO_RX_PW_P0   0x11
 #define RADIO_RX_PW_P1   0x12
 
-#define RADIO_CONFIG_PRIM_RX    0x01
-#define RADIO_CONFIG_PWR_UP     0x02
-#define RADIO_CONFIG_MASK_RX_RT 0x10
-#define RADIO_CONFIG_MASK_RX_DR 0x20
-#define RADIO_CONFIG_MASK_RX_DS 0x40
-#define RADIO_CONFIG_DEFAULT 0x0C
+#define RADIO_CONFIG_MASK_RX_DR (1 << 6)
+#define RADIO_CONFIG_MASK_RX_DS (1 << 5)
+#define RADIO_CONFIG_MASK_RX_RT (1 << 4)
+#define RADIO_CONFIG_EN_CRC     (1 << 3)
+#define RADIO_CONFIG_CRCCO      (1 << 2)
+#define RADIO_CONFIG_PWR_UP     (1 << 1)
+#define RADIO_CONFIG_PRIM_RX    (1 << 0)
+#define RADIO_CONFIG_DEFAULT    (RADIO_CONFIG_PRIM_RX | RADIO_CONFIG_PWR_UP | RADIO_CONFIG_CRCCO | RADIO_CONFIG_EN_CRC)
+
+#define RADIO_STATUS_RX_DR   (1 << 6)
+#define RADIO_STATUS_TX_DS   (1 << 5)
+#define RADIO_STATUS_MAX_RT  (1 << 4)
 
 #define RADIO_BROADCAST_ADDR 0x55AAFFAA55
 
@@ -102,9 +108,9 @@ static __INLINE void Radio_CS(bool state) {
 
 static __INLINE void Radio_DBG(bool state) {
 	if (state) {
-		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_IRQ+1;
+		GPIO->P[RADIO_PORT].DOUTSET = 1 << (RADIO_PIN_IRQ+1);
 	} else {
-		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_IRQ+1;
+		GPIO->P[RADIO_PORT].DOUTCLR = 1 << (RADIO_PIN_IRQ+1);
 	}
 }
 

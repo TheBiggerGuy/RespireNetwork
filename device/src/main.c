@@ -41,7 +41,7 @@ void delay(uint32_t dlyTicks)
 {
   uint32_t till = msTicks + dlyTicks;
   while (msTicks < till) {
-  	__WFI();
+  	//__WFI();
   	__NOP();
   }
 }
@@ -62,7 +62,7 @@ main(void)
   SystemCoreClockUpdate();
 
   /* Setup SysTick Timer for 1 msec interrupts  */
-  if (SysTick_Config(SystemCoreClock / 1000))
+  if (SysTick_Config(SystemCoreClock / 1400))
     exit(-1);
 
   DBG_Init();
@@ -70,14 +70,14 @@ main(void)
   Radio_init();
 
   while (1) {
-
-  for(int i=0; i< 5; i++) {
-  		Radio_send((uint8_t*) "bob", 0, 3);
-      if(Radio_available() > 0) {
-      	Radio_recive(data, 16);
-    	  LOG_DEBUG("data: %s\n", data);
-      }
-    }
+	  for(int i=0; i< 5; i++) {
+		  Radio_send((uint8_t*) "bob\x01\x02", 0, 5);
+		  if(Radio_available() > 0) {
+			  Radio_recive(data, 16);
+			  LOG_DEBUG("data: %s\n", data);
+		  }
+	  }
+	  delay(5*1000);
   }
   exit(0);
 }

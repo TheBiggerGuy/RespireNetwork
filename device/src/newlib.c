@@ -29,7 +29,6 @@ unsigned char heap[HEAP_SIZE];
  * Exit a program without cleaning up files.
  * If your system doesn't provide this, it is best to avoid linking with subroutines that require it (exit, system).
  */
-void _exit(int code) __attribute__ ((noreturn));
 void _exit(int code) {
 	NVIC_SystemReset();
 }

@@ -15,3 +15,6 @@
 device/build
 device/exe
 device/lst
+
+protocol/*.png
+protocol/*.pdf

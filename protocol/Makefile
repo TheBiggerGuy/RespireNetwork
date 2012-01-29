@@ -1,7 +1,18 @@
-all: Network_Connect.png Network_Disconnect.png Network_Move.png
+DOT = dot
+
+GV_FILES := $(wildcard *.gv)
+
+all: $(patsubst %.gv,%.png,$(GV_FILES))
 
 clean:
-  rm *.png
+	@rm -f *.png
 
-%.png:
-	dot -Tpng -o $*.png $*.gv;
+%.png: %.gv
+	@echo "Making PNG for $*.gv"
+	@$(DOT) -Tpng -o $@ $<
+
+%.pdf: %.gv
+	@echo "Making PNG for $*.gv"
+	@$(DOT) -Tpdf -o $@ $<
+
+.PHONY: clean all

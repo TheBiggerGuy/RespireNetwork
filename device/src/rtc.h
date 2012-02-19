@@ -4,10 +4,11 @@
 #include <time.h>
 
 // User defined
-#define RTC_PRESC CMU_LFAPRESC0_RTC_DIV32768
+#define RTC_PRESC CMU_LFAPRESC0_RTC_DIV1
 
 // Computed defines
-#define RTC_MAX_VALUE (1 << (9+RTC_PRESC))
+#define RTC_MAX_VALUE (1 << (RTC_PRESC + (24-16+1))) // TODO
+#define RTC_1S (1 << 12) // TODO
 
 // Prototypes
 void RTC_init(void);

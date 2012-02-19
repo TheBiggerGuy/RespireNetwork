@@ -18,10 +18,10 @@
 //#define RADIO_PIN_RX    1
 //#define RADIO_PIN_CLK   2
 //#define RADIO_PIN_CS    3
-#define RADIO_PORT_CE   gpioPortB
+#define RADIO_PORT_CE   gpioPortB // LETIMER0 out 0 loc 1
 #define RADIO_PIN_CE    11
 #define RADIO_PORT_IRQ  gpioPortD
-#define RADIO_PIN_IRQ   5
+#define RADIO_PIN_IRQ   4
 
 #define RADIO_CHANNEL 0x16
 

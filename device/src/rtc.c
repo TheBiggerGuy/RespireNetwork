@@ -10,7 +10,8 @@
 
 volatile time_t baseTime = -1;
 
-void RTC_init(void) {
+void RTC_init(void)
+{
 	/* Config the clocks ////////////////////////////////////////////////// */
 	//CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
 	CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
@@ -23,20 +24,23 @@ void RTC_init(void) {
 	// lock RTC config update (as it is in the low frequency area it is slow to write to)
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_FREEZE;
 
-	/* Config the RTC ////////////////////////////////////////////// */
-	CMU->LFAPRESC0 |= RTC_PRESC;
-	RTC->CTRL = RTC_CTRL_EN | RTC_CTRL_DEBUGRUN;
+	/* Config the RTC ////////////////////////////////////////////// */CMU->LFAPRESC0 |=
+	        RTC_PRESC;
+	RTC->CTRL = RTC_CTRL_EN; // | RTC_CTRL_DEBUGRUN;
 
-	/* Enable interrupts /////////////////////////////////////// */
-	RTC->COMP0 = RTC->CNT+3;
-	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0;
+	RTC->COMP1 = RTC_1S;
+	RTC->COMP1 = RTC_1S + (RTC_1S >> 1);
+
+	/* Enable interrupts /////////////////////////////////////// */RTC->IEN =
+	        RTC_IEN_OF | RTC_IEN_COMP0 | RTC_IEN_COMP1;
 
 	NVIC_ClearPendingIRQ(RTC_IRQn);
-    NVIC_EnableIRQ(RTC_IRQn);
+	NVIC_EnableIRQ(RTC_IRQn);
 
-    // Write the changes out and wait
-    RTC->FREEZE = RTC_FREEZE_REGFREEZE_UPDATE;
-    while (RTC->SYNCBUSY);
+	// Write the changes out and wait
+	RTC->FREEZE = RTC_FREEZE_REGFREEZE_UPDATE;
+	while (RTC->SYNCBUSY)
+		;
 }
 
 time_t RTC_getTime(void)
@@ -57,21 +61,30 @@ void RTC_setTime(time_t newTime)
 
 void RTC_IRQHandler(void)
 {
-	if (RTC->IF & RTC_IF_OF) {
+	if (RTC->IF & RTC_IF_OF)
+	{
 		// RTC overflow
 		if (baseTime >= 1)
 			baseTime += RTC_MAX_VALUE;
 		RTC->IFC = RTC_IFC_OF;
 	}
-	if (RTC->IF & RTC_IF_COMP0) {
-		// RTC overflow
-		RTC->COMP0 = RTC->CNT+3;
+	if (RTC->IF & RTC_IF_COMP0)
+	{
+		// RTC every 1s
+		RTC->COMP0 = (RTC->COMP0 + RTC_1S) % (1 << 24);
 		RTC->IFC = RTC_IFC_COMP0;
+	}
+	if (RTC->IF & RTC_IF_COMP1)
+	{
+		// RTC every xms after COMP0
+		RTC->COMP1 = (RTC->COMP0 + (RTC_1S >> 1)) % (1 << 24);
+		RTC->IFC = RTC_IFC_COMP1;
 	}
 
 }
 
-void RTC_deinit(void){
-  CMU_ClockEnable(cmuClock_RTC, false);
+void RTC_deinit(void)
+{
+	CMU_ClockEnable(cmuClock_RTC, false);
 }
 

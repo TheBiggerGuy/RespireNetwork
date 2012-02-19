@@ -25,7 +25,7 @@ void DBG_deinit(void);
 //#define DBG_LED_PIN 0
 
 #define DBG_LED_PORT gpioPortD
-#define DBG_LED_PIN 6
+#define DBG_LED_PIN  5
 
 void DBG_LED_On(void);
 void DBG_LED_Off(void);

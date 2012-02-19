@@ -8,10 +8,10 @@
 
 struct net_base_broadcast {
 	time_t time;
-	uint8_t x;
 };
 
 void net_base_broadcast(void);
+void net_base_tx(void);
 
 void net_base_init(void){
 	radio_address local;
@@ -32,18 +32,32 @@ void net_base_init(void){
 	// local and broadcast recive adresses and tx on local address
 	Radio_init(&local, &broadcast, &broadcast);
 
+
+	struct letimer_config letimer;
+	letimer.broadcast_period = 1 << 12;
+	letimer.broadcast_end = &net_base_broadcast;
+	letimer.wait = 0;
+	letimer.tx_period = (1 << 12) * 128;
+	letimer.tx_end = &net_base_tx;
+
 	// every 1s on the second for 238ns
-	letimer_init(1<<15, 0, 1<<7, net_base_broadcast);
+	letimer_init(&letimer);
 
 }
 
 void net_base_broadcast(void){
+	// convert back to rx mode
+	Radio_setMode(Radio_Mode_RX);
+}
+
+void net_base_tx(void){
 	struct net_base_broadcast packet;
 
+	// convet to tx mode and load packet
 	packet.time = RTC_getTime();
-	packet.x = 33;
-
 	Radio_loadbuf((uint8_t *) &packet, sizeof(packet));
+
+	Radio_setMode(Radio_Mode_TX);
 }
 
 void net_base_deinit(void){

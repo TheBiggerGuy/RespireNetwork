@@ -4,28 +4,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "efm32.h"
+
 #include "core_cm3.h"
 
-#include "efm32.h"
 #include "efm32_gpio.h"
 
 
-#define RADIO_USART_NUM 1
-#define RADIO_LOCATION  1
+//#define RADIO_USART_NUM 1
+//#define RADIO_LOCATION  1
 #define RADIO_PORT      gpioPortD
-#define RADIO_PIN_TX    0
-#define RADIO_PIN_RX    1
-#define RADIO_PIN_CLK   2
-#define RADIO_PIN_CS    3
-#define RADIO_PIN_CE    4
+//#define RADIO_PIN_TX    0
+//#define RADIO_PIN_RX    1
+//#define RADIO_PIN_CLK   2
+//#define RADIO_PIN_CS    3
+#define RADIO_PORT_CE   gpioPortB
+#define RADIO_PIN_CE    11
+#define RADIO_PORT_IRQ  gpioPortD
 #define RADIO_PIN_IRQ   5
 
 #define RADIO_CHANNEL 0x16
-
-/* Defines */
-#define HFRCO_FREQUENCY         14000000
-#define SPI_PERCLK_FREQUENCY    HFRCO_FREQUENCY
-#define SPI_BAUDRATE            1000000
 
 #define RADIO_CMD_R_REG        0x00
 #define RADIO_CMD_W_REG        0x20
@@ -70,62 +68,69 @@
 #define RADIO_STATE_TX         4
 
 
-#if   RADIO_USART_NUM == 0
-#define RADIO_USART USART0
-#elif RADIO_USART_NUM == 1
-#define RADIO_USART USART1
-#elif RADIO_USART_NUM == 2
-#define RADIO_USART USART2
+#if RADIO_PORT == gpioPortD
+#if RADIO_PIN_IRQ == 0
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL0_PORTD
+#elif RADIO_PIN_IRQ == 1
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL1_PORTD
+#elif RADIO_PIN_IRQ == 2
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL2_PORTD
+#elif RADIO_PIN_IRQ == 3
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL3_PORTD
+#elif RADIO_PIN_IRQ == 4
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL4_PORTD
+#elif RADIO_PIN_IRQ == 5
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL5_PORTD
+#elif RADIO_PIN_IRQ == 6
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL6_PORTD
+#elif RADIO_PIN_IRQ == 7
+#define RADIO_IRQ_SELM GPIO_EXTIPSELL_EXTIPSEL7_PORTD
 #else
-#error "Invalid 'RADIO_USART'"
+#error "Invalid 'RADIO_PIN_IRQ'"
+#endif
+#else
+#error "TODO"
 #endif
 
-void Radio_init(void);
+#if RADIO_PIN_IRQ < 8
+#define RADIO_IRQ_SEL GPIO->EXTIPSELL
+#elif RADIO_PIN_IRQ < 16
+#define RADIO_IRQ_SEL GPIO->EXTIPSELH
+#else
+#error "Invalid 'RADIO_PIN_IRQ'"
+#endif
 
-int Radio_send(uint8_t* data, uint8_t start, uint8_t length);
+#if RADIO_PIN_IRQ % 2 == 0
+#define RADIO_IRQH GPIO_EVEN_IRQn
+#define RADIO_IRQHF GPIO_EVEN_IRQHandler
+#else
+#define RADIO_IRQH GPIO_ODD_IRQn
+#define RADIO_IRQHF GPIO_ODD_IRQHandler
+#endif
+
+typedef struct {
+	uint8_t b0;
+	uint8_t b1;
+	uint8_t b2;
+	uint8_t b3;
+	uint8_t b4;
+} radio_address;
+
+typedef enum {
+	Radio_Mode_RX,
+	Radio_Mode_TX
+} Radio_Modes_typdef;
+
+void Radio_init(radio_address *local, radio_address *broadcast, radio_address *send);
+
+int Radio_send(uint8_t* data, uint8_t length);
+
+int Radio_loadbuf(uint8_t* data, uint8_t length);
 
 int Radio_available(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
 
-
-static __INLINE void Radio_CE(bool state)
-{
-	if (state) {
-		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_CE;
-	} else {
-		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_CE;
-	}
-}
-
-static __INLINE void Radio_CS(bool state) {
-	if (state) {
-		GPIO->P[RADIO_PORT].DOUTSET = 1 << RADIO_PIN_CS;
-	} else {
-		GPIO->P[RADIO_PORT].DOUTCLR = 1 << RADIO_PIN_CS;
-	}
-}
-
-static __INLINE void Radio_DBG(bool state) {
-	if (state) {
-		GPIO->P[RADIO_PORT].DOUTSET = 1 << (RADIO_PIN_IRQ+1);
-	} else {
-		GPIO->P[RADIO_PORT].DOUTCLR = 1 << (RADIO_PIN_IRQ+1);
-	}
-}
-
-#if defined(__GNUC__)
-  #define __UNUSED __attribute__((unused))
-#endif
-
-static __INLINE void Radio_Rx_Clear(void)
-{
-	// Make sure compiler keeps it in and stops it warning
-	volatile uint8_t buf __UNUSED;
-
-	while ((RADIO_USART->STATUS & USART_STATUS_RXDATAV)) {
-		buf = RADIO_USART->RXDATA;
-	}
-}
+void Radio_deinit(void);
 
 #endif // __RESPIRENETWORK_RADIO_H

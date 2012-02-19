@@ -3,122 +3,87 @@
 #include <string.h>
 
 #include "efm32.h"
+
 #include "efm32_cmu.h"
 #include "efm32_gpio.h"
-#include "efm32_usart.h"
 
 #include "main.h"
 #include "radio.h"
+#include "spi.h"
+#include "dbg.h"
+
+
+#define PACKET_LEN  16
+#define ADDRESS_LEN 5
 
 void Radio_clearIRQ(void);
-void Radio_setRxTxMode(bool tx);
+void Radio_setMode(Radio_Modes_typdef mode);
 
 uint8_t Radio_read_reg(uint8_t loc);
 uint8_t Radio_read_payload(uint8_t* buffer);
 
 void Radio_write_reg(uint8_t loc, uint8_t val);
-void Radio_write_lreg(uint8_t loc, uint8_t val[5]);
-void Radio_write_packet(uint8_t data[32]);
+void Radio_write_lreg(uint8_t loc, uint8_t val[ADDRESS_LEN]);
+void Radio_write_packet(uint8_t data[PACKET_LEN]);
 
-uint8_t lastStatus = 0;
+void Radio_CE(bool state);
+
 uint8_t state = RADIO_STATE_POWER_DOWN;
 bool dataReady = false;
-
-
-#define PACKET_LEN 16
 
 /**************************************************************************//**
  * @brief Setup a USART as SPI
  *****************************************************************************/
-void Radio_init(void)
+void Radio_init(radio_address *local, radio_address *broadcast, radio_address *send)
 {
 	/* Config the clocks ///////////////////////////////////////////////////// */
 	// Enable GPIO clock
 	CMU_ClockEnable(cmuClock_GPIO, true);
-	// Enable USART clock
-#if   RADIO_USART_NUM == 0
-	CMU_ClockEnable(cmuClock_USART0, true);
-#elif RADIO_USART_NUM == 1
-	CMU_ClockEnable(cmuClock_USART1, true);
-#elif RADIO_USART_NUM == 2
-	CMU_ClockEnable(cmuClock_USART2, true);
-#else
-#error "Invalid 'RADIO_USART'"
-#endif
-
-	/* Config the USART ///////////////////////////////////////////////////// */
-	// Setting baudrate
-	RADIO_USART->CLKDIV = 128 * (SPI_PERCLK_FREQUENCY / SPI_BAUDRATE - 2);
-
-	// Use synchronous (SPI) mode 3 with MSB first
-	RADIO_USART->CTRL = USART_CTRL_SYNC | USART_CTRL_MSBF | USART_CTRL_CLKPOL_IDLEHIGH | USART_CTRL_CLKPHA_SAMPLETRAILING;
-	// Clear old transfers/receptions, and disabling interrupts
-	RADIO_USART->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
-	RADIO_USART->IEN = 0;
-	// Enable pins and setting location
-	RADIO_USART->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN
-			| USART_ROUTE_CLKPEN | USART_ROUTE_CSPEN | (RADIO_LOCATION << 8);
-
-	// Set to master and to control the CS line
-	// Enabling Master, TX and RX
-	RADIO_USART->CMD = USART_CMD_MASTEREN | USART_CMD_TXEN | USART_CMD_RXEN;
-	//RADIO_USART->CTRL |= USART_CTRL_AUTOCS;
-	RADIO_USART->CTRL ^= USART_CTRL_AUTOCS;
-
-	// Clear previous interrupts
-	RADIO_USART->IFC = _USART_IFC_MASK;
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_TX,  gpioModePushPull, 0);  // MOSI
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_RX,  gpioModeInput, 0);     // MISO
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CS,  gpioModePushPull, 0);  // CS
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CLK, gpioModePushPull, 0); // Clock
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_CE,  gpioModePushPull, 0); // CE
+	//GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE,  gpioModePushPull, 0); // CE
+	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
+	//GPIO_PinOutClear(RADIO_PORT_CE, RADIO_PIN_CE);
+	/* Enable the SPI ////////////////////////////////////////////////////// */
+	spi_init();
 
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
-
-	GPIO_PinModeSet(RADIO_PORT, RADIO_PIN_IRQ+1, gpioModePushPull, 1);    // DBG
-	Radio_DBG(false);
-
-	/* Config Radio ///////////////////////////////////////////////////// */
-	uint8_t addr[5];
-	addr[0] = (0x00             >> 0)  & 0xff;
-	addr[1] = (DEVINFO->UNIQUEL >> 0)  & 0xff;
-	addr[2] = (DEVINFO->UNIQUEL >> 8)  & 0xff;
-	addr[3] = (DEVINFO->UNIQUEL >> 16) & 0xff;
-	addr[4] = (DEVINFO->UNIQUEL >> 24) & 0xff;
-	Radio_write_lreg(RADIO_RX_ADDR_P0, addr); // set RX address 0
+	/* Config Radio /////////////////////////////////////////////////////// */
+	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local); // set RX address 0
 	Radio_write_reg(RADIO_RX_PW_P0, PACKET_LEN);
 
-	addr[0] = (RADIO_BROADCAST_ADDR >> 0)  & 0xff;
-	addr[1] = (RADIO_BROADCAST_ADDR >> 8)  & 0xff;
-	addr[2] = (RADIO_BROADCAST_ADDR >> 16) & 0xff;
-	addr[3] = (RADIO_BROADCAST_ADDR >> 24) & 0xff;
-	addr[4] = (RADIO_BROADCAST_ADDR >> 32) & 0xff;
-	Radio_write_lreg(RADIO_RX_ADDR_P1, addr); // set RX address 1
+	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast); // set RX address 1
 	Radio_write_reg(RADIO_RX_PW_P1, PACKET_LEN);
 
-	Radio_write_lreg(RADIO_TX_ADDR, addr); // equal to RADIO_RX_ADDR_P1
+	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) send); // equal to RADIO_RX_ADDR_P1
 
 	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
 	Radio_write_reg(RADIO_RF_CH, RADIO_CHANNEL); // set RF channel
 
 	/* Config IRQ //////////////////// */
-	GPIO_IntConfig(RADIO_PORT, RADIO_PIN_IRQ, false, true, true);
+	// select the port and pin
+	RADIO_IRQ_SEL |= RADIO_IRQ_SELM;
+	// Enable falling edge (this enables on all same numbered pins accross the ports)
+    GPIO->EXTIFALL |= 1 << RADIO_PIN_IRQ;
+    // Clear any pending interrupt
+    GPIO->IFC = 1 << RADIO_PIN_IRQ;
+    // Enable
+    GPIO->IEN = 1 << RADIO_PIN_IRQ;
+    NVIC_ClearPendingIRQ(RADIO_IRQH);
+	NVIC_EnableIRQ(RADIO_IRQH);
 
 	/* power up //////////////////////////////////////////////////// */
-	Radio_setRxTxMode(false);
+	Radio_setMode(Radio_Mode_RX);
 	Radio_clearIRQ();
 	Radio_CE(true);
 }
 
-void GPIO_EVEN_IRQHandler(void) {
-	if (GPIO_IntGet() & (1 << RADIO_PIN_IRQ)) {
+void RADIO_IRQHF(void) {
+	if (GPIO->IF & (1 << RADIO_PIN_IRQ)) {
 
 		// read and clear radio irq
-		uint8_t radioIRQ = Radio_read_reg(RADIO_CONFIG);
+		uint8_t radioIRQ = Radio_read_reg(RADIO_STATUS);
 		Radio_clearIRQ();
-		GPIO_IntClear(1 << RADIO_PIN_IRQ);
+		GPIO->IFC = (1 << RADIO_PIN_IRQ);
 
 		if(radioIRQ & RADIO_CONFIG_MASK_RX_RT) {
 			// Retransmitting
@@ -141,36 +106,51 @@ void GPIO_EVEN_IRQHandler(void) {
 /**************************************************************************//**
  * @brief Send a msg
  *****************************************************************************/
-int Radio_send(uint8_t* data, uint8_t start, uint8_t length)
+int Radio_send(uint8_t* data, uint8_t length)
 {
 	uint8_t buf[PACKET_LEN];
 
 	EFM_ASSERT(length <= PACKET_LEN);
 
-	Radio_DBG(true);
+	DBG_LED_On();
 
 	Radio_CE(false);
-	Radio_setRxTxMode(true);
+	Radio_setMode(Radio_Mode_TX);
 
-	memcpy(buf, data+(sizeof(uint8_t)*start), length);
+	memcpy(buf, data, length);
 	memset(buf+length, 0x00, PACKET_LEN-length); // TODO: set to 0xAA or 0x55
 
 	Radio_write_packet(buf);
 
-	Radio_DBG(false);
+	DBG_LED_Off();
 	Radio_CE(true);
 	memset(buf, 0x00, PACKET_LEN); // time waste 10us
 	memset(buf, 0xFF, PACKET_LEN); //
 	memset(buf, 0x00, PACKET_LEN); // this 16byte 14Mhz is 5us per round
-	Radio_DBG(true);
+	DBG_LED_On();
 	Radio_CE(false);
 
-	delay(1000);
-
-	Radio_setRxTxMode(false);
+	Radio_setMode(Radio_Mode_RX);
 	Radio_CE(true);
 
-	Radio_DBG(false);
+	DBG_LED_Off();
+
+	return length;
+}
+
+/**************************************************************************//**
+ * @brief Send a msg
+ *****************************************************************************/
+int Radio_loadbuf(uint8_t* data, uint8_t length)
+{
+	uint8_t buf[PACKET_LEN];
+
+	EFM_ASSERT(length <= PACKET_LEN);
+
+	memcpy(buf, data, length);
+	memset(buf+length, 0x00, PACKET_LEN-length); // TODO: set to 0xAA or 0x55
+
+	Radio_write_packet(buf);
 
 	return length;
 }
@@ -192,7 +172,7 @@ int Radio_available(void) {
 int Radio_recive(uint8_t* data, uint8_t maxLenght){
 	uint8_t buf;
 
-	EFM_ASSERT(length >= PACKET_LEN);
+	EFM_ASSERT(maxLenght >= PACKET_LEN);
 
 	if(!data) {
 		buf = Radio_read_reg(RADIO_STATUS);
@@ -205,11 +185,11 @@ int Radio_recive(uint8_t* data, uint8_t maxLenght){
 
 /* private ///////////////////////////////////////////////////////////////// */
 
-void Radio_setRxTxMode(bool tx)
+void Radio_setMode(Radio_Modes_typdef mode)
 {
 	uint8_t val = RADIO_CONFIG_DEFAULT;
 
-	if(tx) {
+	if(mode == Radio_Mode_TX) {
 		val ^= RADIO_CONFIG_PRIM_RX;
 	}
 	Radio_write_reg(RADIO_CONFIG, val);
@@ -224,52 +204,43 @@ void Radio_clearIRQ(void)
 
 uint8_t Radio_read_reg(uint8_t loc)
 {
-	uint8_t buf;
+	uint8_t buf[2];
 
 	EFM_ASSERT(loc < 128);
 
+	buf[0] = RADIO_CMD_R_REG | loc;
+
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 
-	Radio_CS(false);
-	// send cmd and NOP
-	USART_Tx(RADIO_USART, RADIO_CMD_R_REG | loc);
-	USART_Tx(RADIO_USART, RADIO_CMD_NOP);
+	spi_cs(false);
+	// send cmd
+	spi_write(buf, 1);
 	// read both status and cmd
-	lastStatus = USART_Rx(RADIO_USART);
-	buf = USART_Rx(RADIO_USART);
-	Radio_CS(true);
+	spi_read(buf, 2, RADIO_CMD_NOP);
+	spi_cs(true);
 
-	// save status
-	lastStatus = buf & 0xff;
-
-	// return cmd
-	return buf;
+	// return reg
+	return buf[1];
 }
 
 uint8_t Radio_read_payload(uint8_t* buffer)
 {
-	EFM_ASSERT(loc < 128);
+	uint8_t buf = RADIO_CMD_R_RX_PAYLOAD;
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 
-	Radio_CS(false);
+	spi_cs(false);
 	// send cmd and NOP
-	USART_Tx(RADIO_USART, RADIO_CMD_R_RX_PAYLOAD);
-	USART_Tx(RADIO_USART, RADIO_CMD_NOP);
+	spi_write(&buf, 1);
 	// read both status and cmd
-	lastStatus = USART_Rx(RADIO_USART);
-	for(int i=0; i<PACKET_LEN; i++) {
-		buffer[i] = USART_Rx(RADIO_USART);
-		USART_Tx(RADIO_USART, RADIO_CMD_NOP);
-	}
-	// wait for spi to finish
-	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
-	Radio_CS(true);
+	spi_read(buffer, 1, RADIO_CMD_NOP);
+	spi_read(buffer, PACKET_LEN, RADIO_CMD_NOP);
+	spi_cs(true);
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 
 	// return length
 	return PACKET_LEN;
@@ -277,69 +248,81 @@ uint8_t Radio_read_payload(uint8_t* buffer)
 
 void Radio_write_reg(uint8_t loc, uint8_t val)
 {
+	uint8_t buf[2];
+
 	EFM_ASSERT(loc < 128);
 
-	// clear RX buffer
-	Radio_Rx_Clear();
+	// Generate the packet
+	buf[0] = RADIO_CMD_W_REG | loc;
+	buf[1] = val;
 
-	Radio_CS(false);
+	// clear RX buffer
+	spi_clear_rx();
+
+	spi_cs(false);
 	// send cmd and NOP
-	USART_Tx(RADIO_USART, RADIO_CMD_W_REG | loc);
-	USART_Tx(RADIO_USART, val);
-	// read both status and cmd
-	lastStatus = USART_Rx(RADIO_USART);
-
+	spi_write(buf, 2);
 	// wait for spi to finish
-	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
-	Radio_CS(true);
+	spi_flush_tx();
+	spi_cs(true);
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 }
 
-void Radio_write_lreg(uint8_t loc, uint8_t val[5])
+void Radio_write_lreg(uint8_t loc, uint8_t val[ADDRESS_LEN])
 {
+	uint8_t buf = RADIO_CMD_W_REG | loc;
+
 	EFM_ASSERT(loc < 128);
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 
-	Radio_CS(false);
+	spi_cs(false);
 	// send cmd and NOP
-	USART_Tx(RADIO_USART, RADIO_CMD_W_REG | loc);
-	for(uint8_t i=0; i<5; i++) {
-		USART_Tx(RADIO_USART, val[i]);
-	}
-	// read both status and cmd
-	lastStatus = USART_Rx(RADIO_USART);
-
+	spi_write(&buf, 1);
+	spi_write(val, ADDRESS_LEN);
 	// wait for spi to finish
-	while (!(RADIO_USART->STATUS & USART_STATUS_TXC))
-	Radio_CS(true);
+	spi_flush_tx();
+	spi_cs(true);
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 }
 
-void Radio_write_packet(uint8_t data[32])
+void Radio_write_packet(uint8_t data[PACKET_LEN])
 {
-	EFM_ASSERT(loc < 128);
+	uint8_t buf = RADIO_CMD_W_TX_PAYLOAD;
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
 
-	Radio_CS(false);
+	spi_cs(false);
 	// send cmd and data
-	USART_Tx(RADIO_USART, RADIO_CMD_W_TX_PAYLOAD);
-	for(int i=0; i<32; i++) {
-		USART_Tx(RADIO_USART, data[i]);
-	}
-
+	spi_write(&buf, 1);
+	spi_write(data, PACKET_LEN);
 	// wait for spi to finish
-	while (!(RADIO_USART->STATUS & USART_STATUS_TXC));
-	Radio_CS(true);
+	spi_flush_tx();
+	spi_cs(true);
 
 	// clear RX buffer
-	Radio_Rx_Clear();
+	spi_clear_rx();
+}
+
+void Radio_CE(bool state)
+{
+	/*
+	if (state) {
+		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
+	} else {
+		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
+	*/
+}
+
+
+void Radio_deinit(void) {
+	// TODO
 }
 

@@ -12,7 +12,7 @@ include project.mk
 # Default build is debug build
 all:      debug
 
-debug:    CFLAGS += -DDEBUG -O0 -g3
+debug:    CFLAGS += -DDEBUG -DDEBUG_EFM -O0 -g3
 debug:    internal_build
 
 release:  CFLAGS += -DNDEBUG -O3

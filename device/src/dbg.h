@@ -4,6 +4,10 @@
 #include "efm32.h"
 #include "efm32_gpio.h"
 
+/* Config */
+#define DBG_ENABLE_LED
+
+
 /* TPIU protocal types */
 #define PROTOCOL_TRACEPORT      0x00;
 #define PROTOCOL_SERIALWIRE_MAN 0x01;
@@ -14,10 +18,14 @@
 
 #define DEBUG_LOCATION 0x00
 
-void DBG_Init(void);
+void DBG_init(void);
+void DBG_deinit(void);
 
-#define DBG_LED_PORT gpioPortC
-#define DBG_LED_PIN 0
+//#define DBG_LED_PORT gpioPortC
+//#define DBG_LED_PIN 0
+
+#define DBG_LED_PORT gpioPortD
+#define DBG_LED_PIN 6
 
 void DBG_LED_On(void);
 void DBG_LED_Off(void);

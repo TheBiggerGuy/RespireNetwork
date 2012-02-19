@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +8,10 @@
 #include <sys/times.h>
 
 #include "efm32.h"
+
+#include "efm32_emu.h"
+
+#include "rtc.h"
 
 #undef errno
 extern int errno;
@@ -30,7 +35,13 @@ unsigned char heap[HEAP_SIZE];
  * If your system doesn't provide this, it is best to avoid linking with subroutines that require it (exit, system).
  */
 void _exit(int code) {
-	NVIC_SystemReset();
+	if (code == EXIT_SUCCESS) {
+		EMU_EnterEM4();
+		NVIC_SystemReset();
+	} else {
+		NVIC_SystemReset();
+	}
+	while(true);
 }
 
 /**
@@ -235,5 +246,15 @@ int _write(int file, char *ptr, int len) {
 	default:
 		return -1;
 	}
+}
+
+time_t time(time_t *timer){
+	time_t temp;
+
+	temp = RTC_getTime();
+	if (timer != NULL && temp >= 0){
+		*timer = temp;
+	}
+	return temp;
 }
 

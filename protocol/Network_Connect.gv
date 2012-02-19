@@ -6,15 +6,15 @@ digraph {
   "Disconected" "Connected"
   node [style=""];
   
-  "Disconected" -> "Wait for becon" [label="Find and join"]
+  "Disconected" -> "Wait for becon" [label="Connect"]
   
-  "Wait for becon" -> "Wait for becon" [label="Timeout - Wait exponential", style=dashed]
-  "Wait for becon" -> "Wait for second becon" [label="Becon"]
+  "Wait for becon" -> "Wait for becon" [label="Timeout\n(wait exponential)", style=dashed]
+  "Wait for becon" -> "Wait for 1 to 16 becons\n(random)" [label="Becon"]
   
-  "Wait for second becon" -> "Wait for becon" [label="Timeout", style=dashed]
-  "Wait for second becon" -> "Wait for accept" [label="Becon, send registration request"]
+  "Wait for 1 to 16 becons\n(random)" -> "Wait for becon" [label="Timeout", style=dashed]
+  "Wait for 1 to 16 becons\n(random)" -> "Wait for accept" [label="Connection request"]
   
   "Wait for accept" -> "Connected" [label="Accept"]
   "Wait for accept" -> "Wait for becon" [label="Timeout", style=dashed]
-  "Wait for accept" -> "Wait for becon" [label="Deny\n(blacklist root if necacery)"]
+  "Wait for accept" -> "Wait for becon" [label="Deny\n(may blacklist relay)"]
 }

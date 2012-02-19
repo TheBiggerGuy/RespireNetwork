@@ -299,6 +299,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     if self.currentHandle != None:
       self.currentHandle = None
     print 'Connection closed'
+    print 'Waiting for other end ...',
+    sleep(1)
+    print '.. OK'
   
   def __del__(self):
     self.finish()

@@ -7,11 +7,14 @@
 
 #include "dbg.h"
 
-//#define DBG_ENABLE_LED
-
 char debug_string[128];
 
-void DBG_Init(void)
+/**
+ * AUXCLK is a 14 MHz clock driven by a separate RC oscillator, AUXHFRCO.
+ * This clock is used for flash programming and Serial Wire Output (SWO).
+ *
+ */
+void DBG_init(void)
 {
 	uint32_t *dwt_ctrl = (uint32_t *) 0xE0001000;
 	uint32_t *tpiu_prescaler = (uint32_t *) 0xE0040010;
@@ -90,4 +93,8 @@ void DBG_LED_Toggle(void)
 	GPIO_PinOutToggle(DBG_LED_PORT, DBG_LED_PIN);
 #endif
 }
+
+void DBG_deinit(void){
+	// TODO
+};
 

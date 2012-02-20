@@ -10,6 +10,7 @@
 #include "rtc.h"
 #include "radio.h"
 #include "dbg.h"
+#include "config.h"
 
 volatile time_t baseTime = -1;
 
@@ -29,7 +30,10 @@ void RTC_init(void)
 
 	// Config the RTC /////////////////////////////////////////////////////////
 	CMU->LFAPRESC0 |= RTC_PRESC;
-	RTC->CTRL = RTC_CTRL_EN; // | RTC_CTRL_DEBUGRUN;
+	RTC->CTRL = RTC_CTRL_EN;
+#if defined(CONFIG_CLOCKS_ON_DEBUG)
+	RTC->CTRL |= RTC_CTRL_DEBUGRUN;
+#endif
 
 	RTC->COMP0 = RTC_1S;
 	RTC->COMP1 = RTC_1S + (128 * 3);
@@ -67,14 +71,14 @@ void RTC_IRQHandler(void)
 	if (RTC->IF & RTC_IF_OF)
 	{
 		// RTC overflow
-		if (baseTime >= 1)
+		if (baseTime > -1)
 			baseTime += RTC_MAX_VALUE;
 		RTC->IFC = RTC_IFC_OF;
 	}
 	if (RTC->IF & RTC_IF_COMP0)
 	{
 		// RTC every 1s
-		Radio_enable(true);
+		//Radio_enable(true);
 		DBG_LED_On();
 		RTC->COMP0 = (RTC->COMP0 + RTC_1S) % (1 << 24);
 		RTC->IFC = RTC_IFC_COMP0;
@@ -82,7 +86,7 @@ void RTC_IRQHandler(void)
 	if (RTC->IF & RTC_IF_COMP1)
 	{
 		// RTC every 238ns after COMP0
-		Radio_enable(false);
+		//Radio_enable(false);
 		DBG_LED_Off();
 		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);
 		RTC->IFC = RTC_IFC_COMP1;
@@ -92,6 +96,8 @@ void RTC_IRQHandler(void)
 
 void RTC_deinit(void)
 {
+	NVIC_ClearPendingIRQ(RTC_IRQn);
+	NVIC_DisableIRQ(RTC_IRQn);
 	CMU_ClockEnable(cmuClock_RTC, false);
 }
 

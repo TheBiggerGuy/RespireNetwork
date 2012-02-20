@@ -20,11 +20,11 @@ void DBG_init(void)
 	uint32_t *tpiu_prescaler = (uint32_t *) 0xE0040010;
 	uint32_t *tpiu_protocol  = (uint32_t *) 0xE00400F0;
 
-	/* Config the clocks ///////////////////////////////////////////////////// */
+	// Config the clocks //////////////////////////////////////////////////////
 	// Enable GPIO clock
 	CMU_ClockEnable(cmuClock_GPIO, true);
-	// Enable debug clock AUXHFRCO
-	CMU_ClockEnable(cmuClock_DBG, true);
+	// Enable debug ocillator branch AUXHFRCO
+	CMU_OscillatorEnable(cmuOsc_AUXHFRCO, true, true);
 
 	// Enable Serial wire output pin
 	GPIO->ROUTE |= GPIO_ROUTE_SWOPEN;
@@ -60,28 +60,28 @@ void DBG_init(void)
 	//ITM->TER = 0xFFFFFFFF; // ITM Trace Privilege Register
 	/* End */
 
-#ifdef DBG_ENABLE_LED
+#if defined(DBG_ENABLE_LED)
 	GPIO_PinModeSet(DBG_LED_PORT, DBG_LED_PIN, gpioModePushPull, 0);
 #endif
 }
 
 void DBG_LED_On(void)
 {
-#ifdef DBG_ENABLE_LED
+#if defined(DBG_ENABLE_LED)
 	GPIO_PinOutSet(DBG_LED_PORT, DBG_LED_PIN);
 #endif
 }
 
 void DBG_LED_Off(void)
 {
-#ifdef DBG_ENABLE_LED
+#if defined(DBG_ENABLE_LED)
 	GPIO_PinOutClear(DBG_LED_PORT, DBG_LED_PIN);
 #endif
 }
 
 void DBG_LED_Toggle(void)
 {
-#ifdef DBG_ENABLE_LED
+#if defined(DBG_ENABLE_LED)
 	GPIO_PinOutToggle(DBG_LED_PORT, DBG_LED_PIN);
 #endif
 }

@@ -8,7 +8,7 @@
 
 // Computed defines
 #define RTC_MAX_VALUE (1 << (RTC_PRESC + (24-16+1))) // TODO
-#define RTC_1S (1 << 12) // TODO
+#define RTC_1S (1 << 15) // TODO
 
 // Prototypes
 void RTC_init(void);

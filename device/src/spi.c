@@ -12,7 +12,7 @@
  * TODO:
  *  * Change to use of BITBAND_Peripheral where needed.
  *  * Change to __INLINE where needed.
- *  * Improve IRQ handleing.
+ *  * Improve IRQ handling.
  *  * Change to __wfi and sleeping where needed.
  */
 

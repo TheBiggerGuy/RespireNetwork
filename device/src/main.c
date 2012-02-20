@@ -25,7 +25,7 @@
 
 #include "main.h"
 #include "dbg.h"
-#ifdef IS_BASE
+#if defined(IS_BASE)
 #include "net_base.h"
 #else
 #include "net_node.h"
@@ -42,7 +42,7 @@
  * E15 CE
  */
 
-#ifdef IS_BASE
+#if defined(IS_BASE)
 void (*init_list[])(void)   = {DBG_init, net_base_init, RTC_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_base_deinit, DBG_deinit, NULL};
 #else
@@ -93,18 +93,20 @@ int main(void) {
 
 	/* Run the module initilizers */
 	i = 0;
-	while(init_list[i] != NULL) {
-		init_list[i]();
-		i++;
-	}
+	//while(init_list[i] != NULL) {
+	//	init_list[i]();
+	//	i++;
+	//}
+	DBG_init();
+	RTC_init();
 
-	printf("Finished Init\n");
+	// printf("Finished Init\n");
 
 	// TODO
 	RTC_setTime(1328288470);
 
 	while (DO_MAIN_LOOP == true) {
-		delay(2);
+		// DBG_LED_Toggle();
 	}
 
 	printf("Starting DeInit\n");

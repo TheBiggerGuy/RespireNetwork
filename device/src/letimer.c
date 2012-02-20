@@ -10,6 +10,7 @@
 #include "radio.h"
 #include "dbg.h"
 #include "pins_and_ports.h"
+#include "config.h"
 
 void(*letimer_tx_end)(void);
 
@@ -36,7 +37,10 @@ void letimer_init(uint16_t wait, uint16_t period, void(*tx_end)(void))
 
 	// Config the LETIMER /////////////////////////////////////////////////////
 	CMU->LFAPRESC0 |= CMU_LFACLKEN0_LETIMER0;
-	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_PWM | LETIMER_CTRL_RTCC1TEN | LETIMER_CTRL_REPMODE_ONESHOT; // | LETIMER_CTRL_DEBUGRUN;
+	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_PWM | LETIMER_CTRL_RTCC1TEN | LETIMER_CTRL_REPMODE_ONESHOT;
+#if defined(CONFIG_CLOCKS_ON_DEBUG)
+	LETIMER0->CTRL |= LETIMER_CTRL_DEBUGRUN;
+#endif
 
 	//  + --> COMP0 ---> COMP1 ---> UNDERFLOW -+
 	//  |                                      |

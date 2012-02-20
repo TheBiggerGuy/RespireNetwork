@@ -10,18 +10,7 @@
 
 #include "efm32_gpio.h"
 
-
-//#define RADIO_USART_NUM 1
-//#define RADIO_LOCATION  1
-#define RADIO_PORT      gpioPortD
-//#define RADIO_PIN_TX    0
-//#define RADIO_PIN_RX    1
-//#define RADIO_PIN_CLK   2
-//#define RADIO_PIN_CS    3
-#define RADIO_PORT_CE   gpioPortB // LETIMER0 out 0 loc 1
-#define RADIO_PIN_CE    11
-#define RADIO_PORT_IRQ  gpioPortD
-#define RADIO_PIN_IRQ   4
+#include "pins_and_ports.h"
 
 #define RADIO_CHANNEL 0x16
 
@@ -130,6 +119,10 @@ int Radio_loadbuf(uint8_t* data, uint8_t length);
 int Radio_available(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
+
+void Radio_setMode(Radio_Modes_typdef mode);
+
+void Radio_enable(bool state);
 
 void Radio_deinit(void);
 

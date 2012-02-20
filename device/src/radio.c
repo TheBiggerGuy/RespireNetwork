@@ -26,8 +26,6 @@ void Radio_write_reg(uint8_t loc, uint8_t val);
 void Radio_write_lreg(uint8_t loc, uint8_t val[ADDRESS_LEN]);
 void Radio_write_packet(uint8_t data[PACKET_LEN]);
 
-void Radio_CE(bool state);
-
 uint8_t state = RADIO_STATE_POWER_DOWN;
 bool dataReady = false;
 
@@ -41,9 +39,9 @@ void Radio_init(radio_address *local, radio_address *broadcast, radio_address *s
 	CMU_ClockEnable(cmuClock_GPIO, true);
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	//GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE,  gpioModePushPull, 0); // CE
+	GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE,  gpioModeInputPull, 0);  // CE
 	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
-	//GPIO_PinOutClear(RADIO_PORT_CE, RADIO_PIN_CE);
+
 	/* Enable the SPI ////////////////////////////////////////////////////// */
 	spi_init();
 
@@ -74,7 +72,6 @@ void Radio_init(radio_address *local, radio_address *broadcast, radio_address *s
 	/* power up //////////////////////////////////////////////////// */
 	Radio_setMode(Radio_Mode_RX);
 	Radio_clearIRQ();
-	Radio_CE(true);
 }
 
 void RADIO_IRQHF(void) {
@@ -108,32 +105,16 @@ void RADIO_IRQHF(void) {
  *****************************************************************************/
 int Radio_send(uint8_t* data, uint8_t length)
 {
-	uint8_t buf[PACKET_LEN];
-
-	EFM_ASSERT(length <= PACKET_LEN);
-
-	DBG_LED_On();
-
-	Radio_CE(false);
+	Radio_enable(false);
 	Radio_setMode(Radio_Mode_TX);
 
-	memcpy(buf, data, length);
-	memset(buf+length, 0x00, PACKET_LEN-length); // TODO: set to 0xAA or 0x55
+	Radio_loadbuf(data, length);
 
-	Radio_write_packet(buf);
-
-	DBG_LED_Off();
-	Radio_CE(true);
-	memset(buf, 0x00, PACKET_LEN); // time waste 10us
-	memset(buf, 0xFF, PACKET_LEN); //
-	memset(buf, 0x00, PACKET_LEN); // this 16byte 14Mhz is 5us per round
-	DBG_LED_On();
-	Radio_CE(false);
+	Radio_enable(true);
+	delay(2);
+	Radio_enable(false);
 
 	Radio_setMode(Radio_Mode_RX);
-	Radio_CE(true);
-
-	DBG_LED_Off();
 
 	return length;
 }
@@ -183,8 +164,6 @@ int Radio_recive(uint8_t* data, uint8_t maxLenght){
 	return Radio_read_payload(data);
 }
 
-/* private ///////////////////////////////////////////////////////////////// */
-
 void Radio_setMode(Radio_Modes_typdef mode)
 {
 	uint8_t val = RADIO_CONFIG_DEFAULT;
@@ -193,8 +172,24 @@ void Radio_setMode(Radio_Modes_typdef mode)
 		val ^= RADIO_CONFIG_PRIM_RX;
 	}
 	Radio_write_reg(RADIO_CONFIG, val);
-	delay(1);
+	// TODO: may need delay
 }
+
+void Radio_enable(bool state)
+{
+	if (state) {
+		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
+	} else {
+		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
+}
+
+void Radio_deinit(void) {
+	Radio_enable(false);
+	spi_deinit();
+}
+
+/* private ///////////////////////////////////////////////////////////////// */
 
 void Radio_clearIRQ(void)
 {
@@ -309,20 +304,3 @@ void Radio_write_packet(uint8_t data[PACKET_LEN])
 	// clear RX buffer
 	spi_clear_rx();
 }
-
-void Radio_CE(bool state)
-{
-	/*
-	if (state) {
-		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
-	} else {
-		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
-	}
-	*/
-}
-
-
-void Radio_deinit(void) {
-	// TODO
-}
-

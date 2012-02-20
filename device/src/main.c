@@ -98,11 +98,16 @@ int main(void) {
 		i++;
 	}
 
+	printf("Finished Init\n");
+
 	// TODO
 	RTC_setTime(1328288470);
 
 	while (DO_MAIN_LOOP == true) {
+		delay(2);
 	}
+
+	printf("Starting DeInit\n");
 
 	/* Run the module de-initilizers */
 	i = 0;

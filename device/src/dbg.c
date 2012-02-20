@@ -16,40 +16,34 @@ char debug_string[128];
  */
 void DBG_init(void)
 {
-	uint32_t *dwt_ctrl = (uint32_t *) 0xE0001000;
+	uint32_t *dwt_ctrl       = (uint32_t *) 0xE0001000;
 	uint32_t *tpiu_prescaler = (uint32_t *) 0xE0040010;
-	uint32_t *tpiu_protocol = (uint32_t *) 0xE00400F0;
+	uint32_t *tpiu_protocol  = (uint32_t *) 0xE00400F0;
 
+	/* Config the clocks ///////////////////////////////////////////////////// */
 	// Enable GPIO clock
-	CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_GPIO;
+	CMU_ClockEnable(cmuClock_GPIO, true);
 	// Enable debug clock AUXHFRCO
-	CMU->OSCENCMD |= CMU_OSCENCMD_AUXHFRCOEN;
-	while (!(CMU->STATUS & CMU_STATUS_AUXHFRCORDY))
-		;
+	CMU_ClockEnable(cmuClock_DBG, true);
 
 	// Enable Serial wire output pin
 	GPIO->ROUTE |= GPIO_ROUTE_SWOPEN;
 
-#if DEBUG_LOCATION == 0
+#if DBG_SWO_LOC == 0
 	//Set location 0 (PF2)
-	GPIO->ROUTE = (GPIO->ROUTE
-			& ~(_GPIO_ROUTE_SWLOCATION_MASK)) | GPIO_ROUTE_SWLOCATION_LOC0;
+	GPIO->ROUTE |= GPIO_ROUTE_SWLOCATION_LOC0;
 	// Enable output on pin
-	GPIO->P[4].MODEH &= ~(_GPIO_P_MODEL_MODE2_MASK);
-	GPIO->P[4].MODEH |= GPIO_P_MODEL_MODE2_PUSHPULL;
-#elif DEBUG_LOCATION == 1
+	GPIO_PinModeSet(gpioPortF, 2,  gpioModePushPull, 0);
+#elif DBG_SWO_LOC == 1
 	// Set location 1 (PC15)
-	GPIO->ROUTE = (GPIO->ROUTE & ~(_GPIO_ROUTE_SWLOCATION_MASK)) | GPIO_ROUTE_SWLOCATION_LOC1;
+	GPIO->ROUTE |= GPIO_ROUTE_SWLOCATION_LOC1;
 	// Enable output on pin
-	GPIO->P[2].MODEH &= ~(_GPIO_P_MODEH_MODE15_MASK);
-	GPIO->P[2].MODEH |= GPIO_P_MODEH_MODE15_PUSHPULL;
-#else
-#error "Invalid DEBUG_LOCATION"
+	GPIO_PinModeSet(gpioPortC, 15,  gpioModePushPull, 0);
 #endif
 
 	// Enable trace in core debug
-	CoreDebug->DHCSR |= 1;
-	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk | CoreDebug_DEMCR_MON_EN_Msk;
 
 	// Enable PC and IRQ sampling output
 	*dwt_ctrl = 0x400113FF;
@@ -67,8 +61,6 @@ void DBG_init(void)
 	/* End */
 
 #ifdef DBG_ENABLE_LED
-	/* Configure GPIO port 'DBG_LED_PORT' 'DBG_LED_PIN' as LED control outputs */
-	/* Disable the LED by default */
 	GPIO_PinModeSet(DBG_LED_PORT, DBG_LED_PIN, gpioModePushPull, 0);
 #endif
 }

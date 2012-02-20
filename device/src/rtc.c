@@ -5,15 +5,17 @@
 #include "efm32.h"
 
 #include "efm32_cmu.h"
+#include "efm32_gpio.h"
 
 #include "rtc.h"
+#include "radio.h"
+#include "dbg.h"
 
 volatile time_t baseTime = -1;
 
 void RTC_init(void)
 {
-	/* Config the clocks ////////////////////////////////////////////////// */
-	//CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
+	// Config the clocks //////////////////////////////////////////////////////
 	CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
 	CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
 
@@ -21,23 +23,24 @@ void RTC_init(void)
 
 	CMU_ClockEnable(cmuClock_CORELE, true);
 
-	// lock RTC config update (as it is in the low frequency area it is slow to write to)
+	// lock RTC config update /////////////////////////////////////////////////
+	// as it is in the low frequency area it is slow to write to
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_FREEZE;
 
-	/* Config the RTC ////////////////////////////////////////////// */CMU->LFAPRESC0 |=
-	        RTC_PRESC;
+	// Config the RTC /////////////////////////////////////////////////////////
+	CMU->LFAPRESC0 |= RTC_PRESC;
 	RTC->CTRL = RTC_CTRL_EN; // | RTC_CTRL_DEBUGRUN;
 
-	RTC->COMP1 = RTC_1S;
-	RTC->COMP1 = RTC_1S + (RTC_1S >> 1);
+	RTC->COMP0 = RTC_1S;
+	RTC->COMP1 = RTC_1S + (128 * 3);
 
-	/* Enable interrupts /////////////////////////////////////// */RTC->IEN =
-	        RTC_IEN_OF | RTC_IEN_COMP0 | RTC_IEN_COMP1;
+	// Enable interrupts //////////////////////////////////////////////////////
+	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0 | RTC_IEN_COMP1;
 
 	NVIC_ClearPendingIRQ(RTC_IRQn);
 	NVIC_EnableIRQ(RTC_IRQn);
 
-	// Write the changes out and wait
+	// Write the changes out and wait /////////////////////////////////////////
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_UPDATE;
 	while (RTC->SYNCBUSY)
 		;
@@ -71,13 +74,17 @@ void RTC_IRQHandler(void)
 	if (RTC->IF & RTC_IF_COMP0)
 	{
 		// RTC every 1s
+		Radio_enable(true);
+		DBG_LED_On();
 		RTC->COMP0 = (RTC->COMP0 + RTC_1S) % (1 << 24);
 		RTC->IFC = RTC_IFC_COMP0;
 	}
 	if (RTC->IF & RTC_IF_COMP1)
 	{
-		// RTC every xms after COMP0
-		RTC->COMP1 = (RTC->COMP0 + (RTC_1S >> 1)) % (1 << 24);
+		// RTC every 238ns after COMP0
+		Radio_enable(false);
+		DBG_LED_Off();
+		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);
 		RTC->IFC = RTC_IFC_COMP1;
 	}
 

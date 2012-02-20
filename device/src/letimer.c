@@ -8,10 +8,12 @@
 
 #include "letimer.h"
 #include "radio.h"
+#include "dbg.h"
+#include "pins_and_ports.h"
 
-struct letimer_config letimer_configuration;
+void(*letimer_tx_end)(void);
 
-void letimer_init(struct letimer_config *config)
+void letimer_init(uint16_t wait, uint16_t period, void(*tx_end)(void))
 {
 	// Config the clocks //////////////////////////////////////////////////////
 	//CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
@@ -25,23 +27,24 @@ void letimer_init(struct letimer_config *config)
 	CMU_ClockEnable(cmuClock_GPIO, true);
 
 	// Config the IO pins /////////////////////////////////////////////////////
-	GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE, gpioModePushPull, 0);
+	GPIO_PinModeSet(LETIMER_PORT_CE, LETIMER_PIN_CE, gpioModePushPull, 0);
 
 	// lock LETIMER config update (as it is in the low frequency area it is slow to write to)
 	LETIMER0->FREEZE = LETIMER_FREEZE_REGFREEZE_FREEZE;
 
+	letimer_tx_end = tx_end;
+
 	// Config the LETIMER /////////////////////////////////////////////////////
 	CMU->LFAPRESC0 |= CMU_LFACLKEN0_LETIMER0;
-	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_TOGGLE
-	        | LETIMER_CTRL_RTCC0TEN | LETIMER_CTRL_RTCC1TEN
-	        | LETIMER_CTRL_REPMODE_ONESHOT; // | LETIMER_CTRL_DEBUGRUN;
+	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_PWM | LETIMER_CTRL_RTCC1TEN | LETIMER_CTRL_REPMODE_ONESHOT; // | LETIMER_CTRL_DEBUGRUN;
 
-	// set COMP1 to the total length of a cycle
-	LETIMER0->COMP1 = 0; // wait; // first and only compare
-	LETIMER0->COMP0 = 0xff; // wait + duration; // this is Top
+	//  + --> COMP0 ---> COMP1 ---> UNDERFLOW -+
+	//  |                                      |
+	//  +--<-------------------------------<---+
+	LETIMER0->COMP1 = wait;          // wait
+	LETIMER0->COMP0 = wait + period; // TOP
 
 	LETIMER0->REP0 = 1;
-	LETIMER0->REP1 = 0;
 
 	LETIMER0->ROUTE = LETIMER_ROUTE_LOCATION_LOC1 | LETIMER_ROUTE_OUT0PEN;
 
@@ -57,25 +60,19 @@ void letimer_init(struct letimer_config *config)
 	LETIMER0->FREEZE = LETIMER_FREEZE_REGFREEZE_UPDATE;
 	while (LETIMER0->SYNCBUSY)
 		;
-
-	memcpy(&letimer_configuration, config, sizeof(struct letimer_config));
-
-	LETIMER0->CMD = LETIMER_CMD_START;
 }
 
 void LETIMER0_IRQHandler(void)
 {
 	if (LETIMER0->IF & LETIMER_IF_UF)
 	{
-		// LETIMER0 underlow
-		LETIMER0->REP0 = 1;
-		if (letimer_configuration.broadcast_end != NULL && letimer_configuration._is_broadcast)
+		// LETIMER0 underflow
+		if (letimer_tx_end != NULL)
 		{
-			(*letimer_configuration.broadcast_end)();
-		} else if (letimer_configuration.tx_end != NULL && !letimer_configuration._is_broadcast) {
-			(*letimer_configuration.tx_end)();
+			(*letimer_tx_end)();
 		}
-		letimer_configuration._is_broadcast = !letimer_configuration._is_broadcast;
+		LETIMER0->REP0 = 1;
+
 		LETIMER0->IFC = LETIMER_IFC_UF;
 	}
 }
@@ -86,6 +83,6 @@ void letimer_deinit(void)
 	NVIC_DisableIRQ(LETIMER0_IRQn);
 
 	CMU_ClockEnable(cmuClock_LETIMER0, false);
-	letimer_configuration.broadcast_end = NULL;
-	letimer_configuration.tx_end = NULL;
+
+	letimer_tx_end = NULL;
 }

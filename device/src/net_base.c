@@ -6,12 +6,8 @@
 
 #include "net_base.h"
 
-struct net_base_broadcast {
-	time_t time;
-};
-
-void net_base_broadcast(void);
-void net_base_tx(void);
+//void net_base_broadcast(void);
+void net_base_end_rx(void);
 
 void net_base_init(void){
 	radio_address local;
@@ -32,25 +28,17 @@ void net_base_init(void){
 	// local and broadcast recive adresses and tx on local address
 	Radio_init(&local, &broadcast, &broadcast);
 
-
-	struct letimer_config letimer;
-	letimer.broadcast_period = 1 << 12;
-	letimer.broadcast_end = &net_base_broadcast;
-	letimer.wait = 0;
-	letimer.tx_period = (1 << 12) * 128;
-	letimer.tx_end = &net_base_tx;
-
 	// every 1s on the second for 238ns
-	letimer_init(&letimer);
+	//letimer_init(0, 128*3, &net_base_end_rx);
 
 }
 
-void net_base_broadcast(void){
-	// convert back to rx mode
-	Radio_setMode(Radio_Mode_RX);
-}
+//void net_base_broadcast(void){
+//	// convert back to rx mode
+//	Radio_setMode(Radio_Mode_RX);
+//}
 
-void net_base_tx(void){
+void net_base_end_rx(void){
 	struct net_base_broadcast packet;
 
 	// convet to tx mode and load packet

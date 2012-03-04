@@ -36,7 +36,7 @@ void RTC_init(void)
 #endif
 
 	RTC->COMP0 = RTC_1S;
-	RTC->COMP1 = RTC_1S + (128 * 3);
+	RTC->COMP1 = RTC_1S + (RTC_1S/2);
 
 	// Enable interrupts //////////////////////////////////////////////////////
 	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0 | RTC_IEN_COMP1;
@@ -85,7 +85,7 @@ void RTC_IRQHandler(void)
 	}
 	if (RTC->IF & RTC_IF_COMP1)
 	{
-		// RTC every 238ns after COMP0
+		// RTC every 238ns*slot_number after COMP0
 		//Radio_enable(false);
 		DBG_LED_Off();
 		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);

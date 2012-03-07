@@ -12,10 +12,15 @@ Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+NOTE:
+  * Pre  7th March 2012: Copyright Guy Taylor
+  * Post 7th March 2012: Copyright Guy Taylor with "Apache License, Ver 2.0"
 """
 
 from threading import Thread
 import subprocess
+import os
 
 class GdbServer(Thread):
   
@@ -26,6 +31,8 @@ class GdbServer(Thread):
   
   PROTOCOL_UART = 'UART'
   PROTOCOL_MAN  = 'Manchester'
+  
+  GDB_SERVER = ('127.0.0.1', 2331)
   
   def __init__(self, seggerRoot='/opt/SEGGER', printter=None):
     """
@@ -40,27 +47,34 @@ class GdbServer(Thread):
     
     self._pHandle = subprocess.Popen(
         ['JLinkGDBServer'],
-        bufsize=0, shell=False,
+        bufsize=1, shell=False,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=None,
         cwd=seggerRoot, env={'LD_LIBRARY_PATH': seggerRoot}
       )
-    self._out = self._pHandle.stdout
-    self._err = self._pHandle.stderr
+    self._out = self._pHandle.stderr
+
     self.start()
   
   def run(self):
     self._printter("\nSEGGER GDB Server started\n")
-    while self._pHandle.returncode == None:
-      # self._printter(self._pHandle.communicate(input=None)) #stdout.read(100)
-      self._printter('OUT: ' + self._out.readline())
-      self._printter('ERR: ' + self._err.readline())
+    try:
       self._pHandle.poll()
+      while self._pHandle != None and self._pHandle.returncode == None:
+        #self._printter(self._pHandle.communicate()[1]) #stdout.read(100)
+        self._printter(self._out.readline())
+        self._pHandle.poll()
+    except OSError:
+      self._printter("\nServer failed!!\n")
     self._printter("\nSEGGER GDB Server ended\n")
   
   def stop(self):
-    if self._pHandle != None:
+    if self._pHandle != None and self._pHandle.returncode == None:
       self._pHandle.terminate()
+      self._pHandle.wait()
       self._pHandle = None
+  
+  def get_host(self):
+    return self.GDB_SERVER
   
   @staticmethod
   def _formGdbMsg(msg):

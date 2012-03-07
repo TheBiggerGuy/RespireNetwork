@@ -18,6 +18,10 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
+ *
+ * NOTE:
+ *   * Pre  7th March 2012: Copyright Guy Taylor
+ *   * Post 7th March 2012: Copyright Guy Taylor with "Apache License, Ver 2.0"
  *****************************************************************************/
 
 #include <stdlib.h>

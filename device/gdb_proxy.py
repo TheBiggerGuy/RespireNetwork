@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 """
 Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
 
@@ -12,6 +13,10 @@ Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+NOTE:
+  * Pre  7th March 2012: Copyright Guy Taylor
+  * Post 7th March 2012: Copyright Guy Taylor with "Apache License, Ver 2.0"
 """
 
 """
@@ -34,18 +39,13 @@ import sys
 from Segger import GdbServer
 from Swd import SwoServer
 
-ENABLE_SWO = True
-
 SWO_PROTO = GdbServer.PROTOCOL_UART
 SWO_SPEED = 875000 # 19200
-
-#GDB_SERVER = ('192.168.0.107', 2331)
-GDB_SERVER = ('127.0.0.1',    2331)
 
 #SWO_SERVER = ('192.168.0.107', 2332)
 SWO_SERVER = ('127.0.0.1',    2332)
 
-class MyTCPHandler(SocketServer.BaseRequestHandler):
+class GdbProxyHandler(SocketServer.BaseRequestHandler):
   """
   The RequestHandler class for our server.
 
@@ -56,50 +56,59 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
   
   currentHandle = None
   
-  def __init__(self, request, client_address, server):
+  def __init__(self, request, client_address, server, enable_swo=False):
     self._input = None
     self._output = None
     self._swo = None
     self._run = True
+    self._segger = None
+    self._enable_swo = enable_swo
+   
+    # make sure there is only one connection
+    if self.currentHandle != None:
+      self.print_gdb('New connection killing old connection ...')
+      self.currentHandle.close()
+      self.currentHandle.join(3) # 3second timeout
+      self.print_gdb(' OK\n')
+    self.currentHandle = self
     
-    if request.family != socket.AF_INET or request.type != socket.SOCK_STREAM:
-      raise socket.error('Invalid protocol')
-    
-    print 'New connection'
+    self._plock = threading.Lock()
+    self.print_gdb('New connection')
     
     SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
   
+  def print_gdb(self, to_print):
+    self._print_all(to_print, 0)
+  
   def print_segger(self, to_print):
-    for line in to_print.split('\n'):
-      print ' '*40 + line
+    self._print_all(to_print, 40)
   
   def print_swo(self, to_print):
+    self._print_all(to_print, 80)
+  
+  def _print_all(self, to_print, padding):
+    self._plock.acquire()
     for line in to_print.split('\n'):
-      print ' '*80 + line
+      print (' '*padding) + line
+    self._plock.release()
   
   def setup(self):
-    # make sure there is only one connection
-    if self.currentHandle != None:
-      self.currentHandle.close()
-      self.currentHandle.join(3) # 3second timeout
-    self.currentHandle = self
+    # get segger gdb
+    self._segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c', printter=self.print_segger)
+    sleep(2)
     
     # get our gdb server
     self._output = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._output.connect(GDB_SERVER)
+    self._output.connect(self._segger.get_host())
     self._output.setblocking(0)
     
-    # get segger gdb
-    segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c', printter=self.print_segger)
-    
     # SWO?
-    if ENABLE_SWO:
+    if self._enable_swo:
       # send the magic
       self._output.setblocking(1)
-      print segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED)
-      self._output.sendall(segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED))
-      self._output.recv(len(segger.SWO_REPLY))
-      print 'Sent maigc and burnt reply'
+      self._output.sendall(self._segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED))
+      self._output.recv(len(self._segger.SWO_REPLY))
+      self.print_gdb('Sent maigc and burnt reply')
       # start SWO reciver
       self._swo = SwoServer(SWO_SERVER, printter=self.print_swo)
       # reset socket
@@ -114,27 +123,31 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     inbuf = ''
     outbuf = ''
     readNoMore = False
-    while self._run:
+    while self._run and self._segger.is_alive():
       try:
         buf = self._input.recv(4096)
         inbuf += buf
         last5inbuf += buf
         last5inbuf = last5inbuf[-5:]
-        if len(inbuf) > 0:
-          if len(inbuf) > 30:
-            print '>: ' + inbuf[:26] + ' ...'
+        while len(inbuf) > 0:
+          if len(inbuf) > 40:
+            self.print_gdb('>: ' + inbuf[:36] + ' ...')
+            inbuf = inbuf[36:]
           else:
-            print '>: ' + inbuf
+            self.print_gdb('>: ' + inbuf)
+            inbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
       try:
         outbuf += self._output.recv(4096)
-        if len(outbuf) > 0:
-          if len(outbuf) > 30:
-            print '<: ' + outbuf[:26] + ' ...'
+        while len(outbuf) > 0:
+          if len(outbuf) > 40:
+            print '<: ' + outbuf[:36] + ' ...'
+            outbuf = outbuf[36:]
           else:
             print '<: ' + outbuf
+            outbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
@@ -161,13 +174,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         except Exception as e:
           pass
         self.close()
-      
-      # self.request is the TCP socket connected to the client
-      #self.data = self.request.recv(1024).strip()
-      #print "{} wrote:".format(self.client_address[0])
-      #print self.data
-      # just send back the same data, but upper-cased
-      #self.request.send(self.data.upper())
   
   def close(self):
     self._run = False
@@ -181,6 +187,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
       self._swo.stop()
     if self.currentHandle != None:
       self.currentHandle = None
+    if self._segger != None:
+      self._segger.stop()
+      self._segger = None
     print 'Connection closed'
     print 'Waiting for other end ...',
     sleep(1)
@@ -189,41 +198,45 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
   def __del__(self):
     self.finish()
 
+
+class GdbProxyServer(SocketServer.ThreadingTCPServer):
+  
+  def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, enable_swo=True):
+    self._enable_swo = enable_swo
+    SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
+  
+  def verify_request(self, request, client_address):
+    return request.family == socket.AF_INET and request.type == socket.SOCK_STREAM
+
+  def finish_request(self, request, client_address):
+    """Finish one request by instantiating RequestHandlerClass."""
+    self.RequestHandlerClass(request, client_address, self, enable_swo=self._enable_swo)
+
 if __name__ == "__main__":
   HOST, PORT = "localhost", 9999
-  
-  GdbServer('/opt/SEGGER/JLink_Linux_V443c')
   
   # Create the server, binding to localhost on port 9999
   print "Waiting for port ", 
   while True:
     try:
-      server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
+      server = GdbProxyServer((HOST, PORT), GdbProxyHandler)
       break
     except KeyboardInterrupt:
-      break
+      print 'Shutting down (external) ...'
+      sys.exit(1)
     except Exception:
       print '.',
       sleep(1)
   print 'OK'
   
-  # Start a thread with the server -- that thread will then start one
-  # more thread for each request
-  server_thread = threading.Thread(target=server.serve_forever)
-  # Exit the server thread when the main thread terminates
-  server_thread.daemon = True
-  
   # Activate the server; this will keep running until you
   # interrupt the program with Ctrl-C
   try:
     print 'Started and waiting for connections ...'
-    #server.serve_forever()
-    server_thread.start()
-    while server_thread.is_alive():
-      pass
+    server.serve_forever()
     print 'Shutting down (internal) ...'
   except KeyboardInterrupt:
     print 'Shutting down (external) ...'
-  
+    
   server.shutdown()
 

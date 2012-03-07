@@ -15,9 +15,12 @@ from time import sleep
 import traceback
 import sys
 
+from Segger import GdbServer
+from Swd import SwoServer
+
 ENABLE_SWO = True
 
-SWO_PROTO = 'UART'
+SWO_PROTO = GdbServer.PROTOCOL_UART
 SWO_SPEED = 875000 # 19200
 
 #GDB_SERVER = ('192.168.0.107', 2331)
@@ -25,151 +28,6 @@ GDB_SERVER = ('127.0.0.1',    2331)
 
 #SWO_SERVER = ('192.168.0.107', 2332)
 SWO_SERVER = ('127.0.0.1',    2332)
-
-class SeggerGdb(object):
-  
-  SWO_REPLY = '+$OK#9a'
-  
-  PROTOCOL_JTAG = 'JTAG'
-  PROTOCOL_SWD  = 'SWD'
-  
-  PROTOCOL_UART = 'UART'
-  PROTOCOL_MAN  = 'Manchester'
-  
-  def __init__(self, protocol):
-    if protocol not in [self.PROTOCOL_JTAG, self.PROTOCOL_SWD]:
-      raise ValueError('Invalid protocol')
-    self._protocol = protocol
-  
-  def _formGdbMsg(self, msg):
-    msg = reduce(lambda x, y: x+y, map(lambda x: x in '#$}' and '}'+chr(ord(x)^0x20) or x, msg))
-    chksum =sum(map(ord, msg))%256
-    return '${msg}#{chksum:02X}'.format(msg=msg, chksum=chksum)
-
-  def swoStart(self, protocol, speed):
-    if self._protocol != self.PROTOCOL_SWD:
-      raise RuntimeError('Can not start SWO when not in SWD')
-    if protocol == self.PROTOCOL_UART:
-      protocol = '0'
-    elif protocol == self.PROTOCOL_MAN:
-      protocol = '1'
-    else:
-      raise ValueError('Invalid protocol')
-    msg = 'qSeggerSWO:start:{protocol} {speed:x}+'.format(protocol=protocol, speed=speed)
-    return self._formGdbMsg(msg)
-
-  def swoStop(self):
-    return self._formGdbMsg('qSeggerSWO:stop+')
-
-class SwoThread(threading.Thread):
-  
-  OVERFLOW = 0x70
-  
-  SYNC_NONE = 0x01
-  SYNC_80   = 0x02
-  SYNC_OK   = 0x03
-  
-  def __init__(self):
-    self._run = True
-  
-    self._io = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._io.connect(SWO_SERVER)
-    self._io.setblocking(0)
-    
-    threading.Thread.__init__(self)
-    self.start()
-  
-  def run(self):
-    inSync = self.SYNC_OK
-    buf = ''
-    
-    print ' '*40, 'SWO: started'
-    f  = open('log.swo.log', 'w')
-    while self._run:
-      try:
-        buf += self._io.recv(4096)
-        if len(buf) < 1:
-          continue
-        if inSync == self.SYNC_NONE:
-          while len(buf) > 0:
-            if buf[0] == 0x80:
-              inSync = self.SYNC_80
-              continue
-            buf = buf[1:]
-        elif inSync == self.SYNC_80:
-          if len(buf) < 5:
-            continue
-          if buf[0] == 0x00 and \
-              buf[1] == 0x00 and \
-              buf[2] == 0x00 and \
-              buf[3] == 0x00:
-            inSync = self.SYNC_OK
-            print ' '*40, 'got sync'
-          else:
-            inSync = self.SYNC_NONE
-        elif inSync == self.SYNC_OK:
-          if buf[0] == self.OVERFLOW:
-            # we have overfloe
-            buf = buf[1:]
-            print ' '*40, '>Overflow'
-          elif ord(buf[0]) & 0x07 == 0x00:
-            # we have a timestamp
-            if len(buf) < 4:
-              continue
-            msg = ''
-            while True:
-              b = buf[0]
-              buf = buf[1:]
-              msg += b
-              if ord(b) & 0x80 == 0:
-                break
-            print ' '*40, '>Timestamp (' + str(map(ord, msg)) + ')'
-            if len(msg) == 1:
-              msg = ord(msg[0])
-              if msg == 0:
-                print ' '*44, 'Reserved timestamp control'
-              elif msg == 7:
-                print ' '*44, 'Overflow ITM'
-              else:
-                print ' '*44, 'Timestamp emitted synchronous to ITM data'
-                
-          elif ord(buf[0]) & 0x03 == 0x00:
-            # we have 'Reserved'
-            if len(buf) < 4:
-              continue
-            msg = ''
-            while True:
-              b = buf[0]
-              buf = buf[1:]
-              msg += b
-              if ord(b) & 0x80 == 0:
-                break
-            print ' '*40, '>Reserved (' + str(map(ord, msg)) + ')'
-          else:
-            # we have SWIT
-            if len(buf) < 4:
-              continue
-            plen = ord(buf[0]) & 0x03
-            buf = buf[1:]
-            msg = buf[:plen]
-            buf = buf[plen:]
-            print ' '*40, '>SWIT'
-            print ' '*44, 'len: ' + str(plen) + ' (' + str(map(ord, msg)) + ')'
-            f.write(msg)
-      
-      except Exception as e:
-        if e.args[0] != 11:
-          print '-'*60
-          traceback.print_exc(file=sys.stdout)
-          print '-'*60
-          raise e
-  
-  def stop(self):
-    self._run = False
-  
-  def __del__(self):
-    if self._io != None:
-      self._io.close()
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
   """
@@ -195,30 +53,39 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     
     SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
   
+  def print_segger(self, to_print):
+    for line in to_print.split('\n'):
+      print ' '*40 + line
+  
+  def print_swo(self, to_print):
+    for line in to_print.split('\n'):
+      print ' '*80 + line
+  
   def setup(self):
     # make sure there is only one connection
     if self.currentHandle != None:
       self.currentHandle.close()
+      self.currentHandle.join(3) # 3second timeout
     self.currentHandle = self
     
-    # get the gdb server
+    # get our gdb server
     self._output = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self._output.connect(GDB_SERVER)
     self._output.setblocking(0)
     
+    # get segger gdb
+    segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c', printter=self.print_segger)
+    
     # SWO?
     if ENABLE_SWO:
       # send the magic
-      
-      segger = SeggerGdb(SeggerGdb.PROTOCOL_SWD)
-      
       self._output.setblocking(1)
-      print segger.swoStart(SWO_PROTO, SWO_SPEED)
-      self._output.sendall(segger.swoStart(SWO_PROTO, SWO_SPEED))
+      print segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED)
+      self._output.sendall(segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED))
       self._output.recv(len(segger.SWO_REPLY))
       print 'Sent maigc and burnt reply'
       # start SWO reciver
-      self._swo = SwoThread()
+      self._swo = SwoServer(SWO_SERVER, printter=self.print_swo)
       # reset socket
       self._output.setblocking(0)
     
@@ -309,16 +176,38 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 if __name__ == "__main__":
   HOST, PORT = "localhost", 9999
   
+  GdbServer('/opt/SEGGER/JLink_Linux_V443c')
+  
   # Create the server, binding to localhost on port 9999
-  server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
+  print "Waiting for port ", 
+  while True:
+    try:
+      server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
+      break
+    except KeyboardInterrupt:
+      break
+    except Exception:
+      print '.',
+      sleep(1)
+  print 'OK'
+  
+  # Start a thread with the server -- that thread will then start one
+  # more thread for each request
+  server_thread = threading.Thread(target=server.serve_forever)
+  # Exit the server thread when the main thread terminates
+  server_thread.daemon = True
   
   # Activate the server; this will keep running until you
   # interrupt the program with Ctrl-C
   try:
     print 'Started and waiting for connections ...'
-    server.serve_forever()
+    #server.serve_forever()
+    server_thread.start()
+    while server_thread.is_alive():
+      pass
     print 'Shutting down (internal) ...'
   except KeyboardInterrupt:
     print 'Shutting down (external) ...'
+  
   server.shutdown()
 

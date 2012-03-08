@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
 
@@ -18,9 +19,12 @@ NOTE:
   * Post 7th March 2012: Copyright Guy Taylor with "Apache License, Ver 2.0"
 """
 
+__version__ = "0.1"
+
 from threading import Thread
 import subprocess
 import os
+from time import sleep
 
 class GdbServer(Thread):
   
@@ -48,11 +52,12 @@ class GdbServer(Thread):
     self._pHandle = subprocess.Popen(
         ['JLinkGDBServer'],
         bufsize=1, shell=False,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=None,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
         cwd=seggerRoot, env={'LD_LIBRARY_PATH': seggerRoot}
       )
-    self._out = self._pHandle.stderr
-
+    self._out = self._pHandle.stdout
+    
+    sleep(2)
     self.start()
   
   def run(self):
@@ -61,7 +66,7 @@ class GdbServer(Thread):
       self._pHandle.poll()
       while self._pHandle != None and self._pHandle.returncode == None:
         #self._printter(self._pHandle.communicate()[1]) #stdout.read(100)
-        self._printter(self._out.readline())
+        self._printter(self._out.read())
         self._pHandle.poll()
     except OSError:
       self._printter("\nServer failed!!\n")
@@ -102,5 +107,5 @@ class GdbServer(Thread):
     return cls._formGdbMsg('qSeggerSWO:stop+')
 
 if __name__ == '__main__':
-  print 'Error: Can not be run as "__main__"'
+  print('Error: Can not be run as "__main__"')
 

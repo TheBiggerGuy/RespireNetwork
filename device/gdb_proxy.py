@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
 
@@ -30,7 +30,7 @@ http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.htm
 """
 
 import socket
-import SocketServer
+import socketserver
 import threading
 from time import sleep
 import traceback
@@ -39,13 +39,15 @@ import sys
 from Segger import GdbServer
 from Swd import SwoServer
 
+HOST = ("localhost", 9999)
+
 SWO_PROTO = GdbServer.PROTOCOL_UART
 SWO_SPEED = 875000 # 19200
 
 #SWO_SERVER = ('192.168.0.107', 2332)
 SWO_SERVER = ('127.0.0.1',    2332)
 
-class GdbProxyHandler(SocketServer.BaseRequestHandler):
+class GdbProxyHandler(socketserver.BaseRequestHandler):
   """
   The RequestHandler class for our server.
 
@@ -75,7 +77,7 @@ class GdbProxyHandler(SocketServer.BaseRequestHandler):
     self._plock = threading.Lock()
     self.print_gdb('New connection')
     
-    SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
+    socketserver.BaseRequestHandler.__init__(self, request, client_address, server)
   
   def print_gdb(self, to_print):
     self._print_all(to_print, 0)
@@ -89,10 +91,14 @@ class GdbProxyHandler(SocketServer.BaseRequestHandler):
   def _print_all(self, to_print, padding):
     self._plock.acquire()
     for line in to_print.split('\n'):
-      print (' '*padding) + line
+      print( (' '*padding) + line )
     self._plock.release()
   
   def setup(self):
+    """
+              input            output
+    Program ---------> pyGDB -----------> SEGGER GDB -------> Device
+    """
     # get segger gdb
     self._segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c', printter=self.print_segger)
     sleep(2)
@@ -143,10 +149,10 @@ class GdbProxyHandler(SocketServer.BaseRequestHandler):
         outbuf += self._output.recv(4096)
         while len(outbuf) > 0:
           if len(outbuf) > 40:
-            print '<: ' + outbuf[:36] + ' ...'
+            self.print_gdb('<: ' + outbuf[:36] + ' ...')
             outbuf = outbuf[36:]
           else:
-            print '<: ' + outbuf
+            self.print_gdb('<: ' + outbuf)
             outbuf = ''
       except Exception as e:
         if e.args[0] != 11:
@@ -163,7 +169,7 @@ class GdbProxyHandler(SocketServer.BaseRequestHandler):
         pass
       
       if last5inbuf == '$k#6b':
-        print 'found k'
+        self.print_gdb('found k')
         sleep(1)
         try:
           outbuf += self._output.recv(4096)
@@ -190,20 +196,20 @@ class GdbProxyHandler(SocketServer.BaseRequestHandler):
     if self._segger != None:
       self._segger.stop()
       self._segger = None
-    print 'Connection closed'
-    print 'Waiting for other end ...',
+    print('Connection closed')
+    print('Waiting for other end ...')
     sleep(1)
-    print '.. OK'
+    print('.. OK')
   
-  def __del__(self):
-    self.finish()
+  #def __del__(self):
+  #  self.finish()
 
 
-class GdbProxyServer(SocketServer.ThreadingTCPServer):
+class GdbProxyServer(socketserver.ThreadingTCPServer):
   
   def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, enable_swo=True):
     self._enable_swo = enable_swo
-    SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
+    socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
   
   def verify_request(self, request, client_address):
     return request.family == socket.AF_INET and request.type == socket.SOCK_STREAM
@@ -213,30 +219,29 @@ class GdbProxyServer(SocketServer.ThreadingTCPServer):
     self.RequestHandlerClass(request, client_address, self, enable_swo=self._enable_swo)
 
 if __name__ == "__main__":
-  HOST, PORT = "localhost", 9999
   
   # Create the server, binding to localhost on port 9999
-  print "Waiting for port ", 
+  print("Waiting for port ") 
   while True:
     try:
-      server = GdbProxyServer((HOST, PORT), GdbProxyHandler)
+      server = GdbProxyServer(HOST, GdbProxyHandler, enable_swo=False)
       break
     except KeyboardInterrupt:
-      print 'Shutting down (external) ...'
+      print('Shutting down (external) ...')
       sys.exit(1)
     except Exception:
-      print '.',
+      print('.')
       sleep(1)
-  print 'OK'
+  print('OK')
   
   # Activate the server; this will keep running until you
   # interrupt the program with Ctrl-C
   try:
-    print 'Started and waiting for connections ...'
+    print('Started and waiting for connections ...')
     server.serve_forever()
-    print 'Shutting down (internal) ...'
+    print('Shutting down (internal) ...')
   except KeyboardInterrupt:
-    print 'Shutting down (external) ...'
+    print('Shutting down (external) ...')
     
   server.shutdown()
 

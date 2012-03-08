@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
 
@@ -20,6 +21,8 @@ NOTE:
 
 import threading
 import socket
+
+__version__ = "0.1"
 
 class SwoServer(threading.Thread):
   
@@ -124,9 +127,9 @@ class SwoServer(threading.Thread):
       
       except Exception as e:
         if e.args[0] != 11: # TODO
-          print '-'*60
+          print('-'*60)
           traceback.print_exc(file=sys.stdout)
-          print '-'*60
+          print('-'*60)
           raise e
   
   def stop(self):
@@ -137,5 +140,5 @@ class SwoServer(threading.Thread):
       self._io.close()
 
 if __name__ == '__main__':
-  print 'ERROR: Can only run as module'
+  print('ERROR: Can only run as module')
 

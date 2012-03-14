@@ -29,12 +29,27 @@ http://infocenter.arm.com/help/topic/com.arm.doc.ddi0314h/DDI0314H_coresight_com
 http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.html
 """
 
+"""
+mon speed 4000
+mon interface SWD
+mon flash device = EFM32G890F128
+mon flash download = 1
+mon flash breakpoints = 1
+mon endian little
+mon reg r13 = (0x00000000)
+mon reg pc = (0x00000004)
+set mem inaccessible-by-default off
+mon semihosting enable
+"""
+
 import socket
 import socketserver
 import threading
 from time import sleep
 import traceback
 import sys
+import gc
+import functools # TODO
 
 from Segger import GdbServer
 from Swd import SwoServer
@@ -42,10 +57,7 @@ from Swd import SwoServer
 HOST = ("localhost", 9999)
 
 SWO_PROTO = GdbServer.PROTOCOL_UART
-SWO_SPEED = 875000 # 19200
-
-#SWO_SERVER = ('192.168.0.107', 2332)
-SWO_SERVER = ('127.0.0.1',    2332)
+SWO_SPEED = 875000
 
 class GdbProxyHandler(socketserver.BaseRequestHandler):
   """
@@ -65,16 +77,16 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
     self._run = True
     self._segger = None
     self._enable_swo = enable_swo
-   
-    # make sure there is only one connection
-    if self.currentHandle != None:
-      self.print_gdb('New connection killing old connection ...')
-      self.currentHandle.close()
-      self.currentHandle.join(3) # 3second timeout
-      self.print_gdb(' OK\n')
-    self.currentHandle = self
-    
+    self._finished = False
     self._plock = threading.Lock()
+    
+    # make sure there is only one connection
+    if GdbProxyHandler.currentHandle != None:
+      self.print_gdb('New connection killing old connection ...')
+      GdbProxyHandler.currentHandle.close(wait=True)
+      self.print_gdb(' OK\n')
+    GdbProxyHandler.currentHandle = self
+    
     self.print_gdb('New connection')
     
     socketserver.BaseRequestHandler.__init__(self, request, client_address, server)
@@ -99,61 +111,65 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
               input            output
     Program ---------> pyGDB -----------> SEGGER GDB -------> Device
     """
+    
     # get segger gdb
-    self._segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c', printter=self.print_segger)
-    sleep(2)
+    self._segger = GdbServer('/opt/SEGGER/JLink_Linux_V443c') #, printter=self.print_segger)
+    #sleep(3)
     
     # get our gdb server
     self._output = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._output.connect(self._segger.get_host())
-    self._output.setblocking(0)
+    self._output.connect(self._segger.get_gdb_host())
+    self._input = self.request
     
     # SWO?
     if self._enable_swo:
       # send the magic
       self._output.setblocking(1)
-      self._output.sendall(self._segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED))
+      self._input.setblocking(1)
+      self._output.sendall(
+          bytes(
+              self._segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED), 'UTF-8'
+            )
+        )
       self._output.recv(len(self._segger.SWO_REPLY))
       self.print_gdb('Sent maigc and burnt reply')
       # start SWO reciver
-      self._swo = SwoServer(SWO_SERVER, printter=self.print_swo)
-      # reset socket
-      self._output.setblocking(0)
+      self._swo = SwoServer(self._segger.get_swv_host(), printter=self.print_swo)
     
-    # clean up the input socket
-    self._input = self.request
+    # clean up the sockets
     self._input.setblocking(0)
+    self._output.setblocking(0)
   
   def handle(self):
     last5inbuf = ' '*5
-    inbuf = ''
-    outbuf = ''
-    readNoMore = False
-    while self._run and self._segger.is_alive():
+    inbuf = bytes()
+    outbuf = bytes()
+    
+    while self._run: # and self._segger.is_alive():
       try:
         buf = self._input.recv(4096)
         inbuf += buf
-        last5inbuf += buf
+        last5inbuf += str(buf)
         last5inbuf = last5inbuf[-5:]
-        while len(inbuf) > 0:
-          if len(inbuf) > 40:
-            self.print_gdb('>: ' + inbuf[:36] + ' ...')
-            inbuf = inbuf[36:]
-          else:
-            self.print_gdb('>: ' + inbuf)
-            inbuf = ''
+        #while len(inbuf) > 0:
+        #  if len(inbuf) > 40:
+        #    self.print_gdb('>: ' + inbuf[:36] + ' ...')
+        #    inbuf = inbuf[36:]
+        #  else:
+        #    self.print_gdb('>: ' + inbuf)
+        #    inbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
       try:
         outbuf += self._output.recv(4096)
-        while len(outbuf) > 0:
-          if len(outbuf) > 40:
-            self.print_gdb('<: ' + outbuf[:36] + ' ...')
-            outbuf = outbuf[36:]
-          else:
-            self.print_gdb('<: ' + outbuf)
-            outbuf = ''
+        #while len(outbuf) > 0:
+        #  if len(outbuf) > 40:
+        #    self.print_gdb('<: ' + outbuf[:36] + ' ...')
+        #    outbuf = outbuf[36:]
+        #  else:
+        #    self.print_gdb('<: ' + outbuf)
+        #    outbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
@@ -179,31 +195,47 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
           sent = self._input.send(outbuf)
         except Exception as e:
           pass
-        self.close()
+        self._run = False
+    
+    if self._output != None and last5inbuf != '$k#6b':
+      self.print_gdb('Trying to safely close by detaching ...')
+      self._output.send(bytes(self._formGdbMsg('D'), 'ASCII'))
   
-  def close(self):
+  # TODO
+  @staticmethod
+  def _formGdbMsg(msg):
+    msg = functools.reduce(lambda x, y: x+y, map(lambda x: x in '#$}' and '}'+chr(ord(x)^0x20) or x, msg))
+    chksum =sum(map(ord, msg))%256
+    return '${msg}#{chksum:02X}'.format(msg=msg, chksum=chksum)
+  
+  def close(self, wait=False):
     self._run = False
+    if not wait:
+      return
+    while not self._finished:
+      pass
   
   def finish(self):
     if self._input != None:
       self._input.close()
+      self._input = None
     if self._output != None:
       self._output.close()
+      self._output = None
     if self._swo != None:
       self._swo.stop()
+      self._swo = None
     if self.currentHandle != None:
       self.currentHandle = None
     if self._segger != None:
       self._segger.stop()
       self._segger = None
     print('Connection closed')
+    gc.collect() # help the gc
     print('Waiting for other end ...')
     sleep(1)
     print('.. OK')
-  
-  #def __del__(self):
-  #  self.finish()
-
+    self._finished = True
 
 class GdbProxyServer(socketserver.ThreadingTCPServer):
   
@@ -224,7 +256,7 @@ if __name__ == "__main__":
   print("Waiting for port ") 
   while True:
     try:
-      server = GdbProxyServer(HOST, GdbProxyHandler, enable_swo=False)
+      server = GdbProxyServer(HOST, GdbProxyHandler, enable_swo=True)
       break
     except KeyboardInterrupt:
       print('Shutting down (external) ...')

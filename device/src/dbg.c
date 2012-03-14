@@ -24,7 +24,7 @@ void DBG_init(void)
 	// Enable GPIO clock
 	CMU_ClockEnable(cmuClock_GPIO, true);
 	// Enable debug ocillator branch AUXHFRCO
-	CMU_OscillatorEnable(cmuOsc_AUXHFRCO, true, true);
+	CMU_OscillatorEnable(cmuOsc_AUXHFRCO, true, false);
 
 	// Enable Serial wire output pin
 	GPIO->ROUTE |= GPIO_ROUTE_SWOPEN;
@@ -42,18 +42,45 @@ void DBG_init(void)
 #endif
 
 	// Enable trace in core debug
-	CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
+	/*
+	 * DBGKEY
+	 * ------
+	 * Debug Key. 0xA05F must be written whenever this register is written.
+	 *
+	 * C_DEBUGEN
+	 * ---------
+	 * Enables debug. This can only be written by AHB-AP and not by the core.
+	 * It is ignored when written by the core, which cannot set or clear it.
+	 */
+	CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk && (0xA05F << CoreDebug_DHCSR_DBGKEY_Pos);
+	/*
+	 * TRCENA
+	 * ------
+	 * This bit must be set to 1 to enable use of the trace and debug blocks:
+	 *  * Data Watchpoint and Trace (DWT)
+	 *  * Instrumentation Trace Macrocell (ITM)
+	 *  * Embedded Trace Macrocell (ETM)
+	 *  * Trace Port Interface Unit (TPIU).
+	 *
+	 * MON_EN
+	 * ------
+	 * Enable the debug monitor. When enabled, the System handler priority
+	 * register controls its priority level. If disabled, then all debug
+	 * events go to Hard fault. C_DEBUGEN in the Debug Halting Control and
+	 * Statue register overrides this bit.
+	 *
+	 */
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk | CoreDebug_DEMCR_MON_EN_Msk;
 
 	// Enable PC and IRQ sampling output
 	*dwt_ctrl = 0x400113FF;
 	// Set TPIU prescaler to 16
-	*tpiu_prescaler = 0xf;
+	*tpiu_prescaler = 0x0f - 1;
 	// Set protocol to NRZ
 	*tpiu_protocol = PROTOCOL_SERIALWIRE_NRZ;
 	// Unlock ITM and output data
 	ITM->LAR = ITM_UNLOCK_CODE;
-	ITM->TCR = 0x10009;
+	ITM->TCR = ITM_TCR_ITMENA_Msk | ITM_TCR_DWTENA_Msk | (1 << ITM_TCR_ATBID_Pos);
 
 	/* Guy Edit */
 	//ITM->TPR = ITM_TPR_PRIVMASK_Msk & 0x03; // ITM Trace Privilege Register

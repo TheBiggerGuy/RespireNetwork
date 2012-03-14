@@ -109,20 +109,19 @@ int main(void) {
 
 	/* Run the module initilizers */
 	i = 0;
-	//while(init_list[i] != NULL) {
-	//	init_list[i]();
-	//	i++;
-	//}
-	DBG_init();
-	RTC_init();
+	while(init_list[i] != NULL) {
+		init_list[i]();
+		i++;
+	}
 
-	// printf("Finished Init\n");
+	printf("Finished Init\n");
 
 	// TODO
 	RTC_setTime(1328288470);
 
 	while (DO_MAIN_LOOP == true) {
 		// DBG_LED_Toggle();
+		printf("hello\n");
 	}
 
 	printf("Starting DeInit\n");

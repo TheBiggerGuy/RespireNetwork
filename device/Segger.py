@@ -25,6 +25,7 @@ from threading import Thread
 import subprocess
 import os
 from time import sleep
+import functools # TODO
 
 class GdbServer(Thread):
   
@@ -37,53 +38,54 @@ class GdbServer(Thread):
   PROTOCOL_MAN  = 'Manchester'
   
   GDB_SERVER = ('127.0.0.1', 2331)
+  #GDB_SERVER = ('192.168.0.106', 2331)
   
-  def __init__(self, seggerRoot='/opt/SEGGER', printter=None):
+  #SWO_SERVER = ('192.168.0.106', 2332)
+  SWO_SERVER = ('127.0.0.1',    2332)
+  
+  def __init__(self, seggerRoot='/opt/SEGGER', printter=print):
     """
     Launch and maintain a SEGGER GDB server.
     """
     Thread.__init__(self)
     
-    if printter == None:
-      self._printter = lambda x: x
-    else:
-      self._printter = printter
-    
-    self._pHandle = subprocess.Popen(
-        ['JLinkGDBServer'],
-        bufsize=1, shell=False,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
-        cwd=seggerRoot, env={'LD_LIBRARY_PATH': seggerRoot}
-      )
-    self._out = self._pHandle.stdout
-    
-    sleep(2)
-    self.start()
+    self._seggerRoot = seggerRoot
+    self._printter = printter
+    self._process = None
+    #self.start()
   
   def run(self):
+    process = subprocess.Popen(
+        ['JLinkGDBServer', ' -vd -select usb=0 -if swd -endian little -speed 4000'],
+        bufsize=1, shell=False,
+        stdout=None, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+        cwd=self._seggerRoot, env={'LD_LIBRARY_PATH': self._seggerRoot}
+      )
+    self._process = process
     self._printter("\nSEGGER GDB Server started\n")
     try:
-      self._pHandle.poll()
-      while self._pHandle != None and self._pHandle.returncode == None:
-        #self._printter(self._pHandle.communicate()[1]) #stdout.read(100)
-        self._printter(self._out.read())
-        self._pHandle.poll()
-    except OSError:
-      self._printter("\nServer failed!!\n")
+      process.wait()
+    except Exception:
+      pass
     self._printter("\nSEGGER GDB Server ended\n")
   
   def stop(self):
-    if self._pHandle != None and self._pHandle.returncode == None:
-      self._pHandle.terminate()
-      self._pHandle.wait()
-      self._pHandle = None
+    if self._process == None:
+      return
+    try:
+      self._process.terminate()
+    except Exception:
+      pass
   
-  def get_host(self):
+  def get_gdb_host(self):
     return self.GDB_SERVER
+  
+  def get_swv_host(self):
+    return self.SWO_SERVER
   
   @staticmethod
   def _formGdbMsg(msg):
-    msg = reduce(lambda x, y: x+y, map(lambda x: x in '#$}' and '}'+chr(ord(x)^0x20) or x, msg))
+    msg = functools.reduce(lambda x, y: x+y, map(lambda x: x in '#$}' and '}'+chr(ord(x)^0x20) or x, msg))
     chksum =sum(map(ord, msg))%256
     return '${msg}#{chksum:02X}'.format(msg=msg, chksum=chksum)
   
@@ -106,6 +108,24 @@ class GdbServer(Thread):
       raise ValueError('Invalid transport')
     return cls._formGdbMsg('qSeggerSWO:stop+')
 
-if __name__ == '__main__':
-  print('Error: Can not be run as "__main__"')
+import unittest
+
+class GdbServerTest(unittest.TestCase):
+  '''
+  Created on 11 March 2012
+  
+  @author: Guy Taylor
+  '''
+  
+  def test_init(self):
+    '''
+    Basic check for functionality.
+    '''
+    gdb = GdbServer(seggerRoot='/opt/SEGGER/JLink_Linux_V443c')
+    sleep(3)
+    gdb.stop()
+    gdb.join()
+
+if __name__ == "__main__":
+    unittest.main()
 

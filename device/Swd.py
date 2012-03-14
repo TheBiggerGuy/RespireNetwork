@@ -21,6 +21,8 @@ NOTE:
 
 import threading
 import socket
+import traceback
+import sys
 
 __version__ = "0.1"
 
@@ -32,13 +34,10 @@ class SwoServer(threading.Thread):
   SYNC_80   = 0x02
   SYNC_OK   = 0x03
   
-  def __init__(self, server, printter=None):
+  def __init__(self, server, printter=print):
     self._run = True
     
-    if printter == None:
-      self._printter = lambda x: x
-    else:
-      self._printter = printter
+    self._printter = printter
     
     self._io = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self._io.connect(server)
@@ -49,7 +48,7 @@ class SwoServer(threading.Thread):
   
   def run(self):
     inSync = self.SYNC_OK
-    buf = ''
+    buf = bytes()
     
     self._printter('SWO: started\n')
     f  = open('log.swo.log', 'w')
@@ -80,7 +79,7 @@ class SwoServer(threading.Thread):
             # we have overfloe
             buf = buf[1:]
             self._printter('>Overflow\n')
-          elif ord(buf[0]) & 0x07 == 0x00:
+          elif ord(buf[0]) & 0x07 == 0x00: # TODO ord?
             # we have a timestamp
             if len(buf) < 4:
               continue
@@ -101,7 +100,7 @@ class SwoServer(threading.Thread):
               else:
                 self._printter('Timestamp emitted synchronous to ITM data\n')
                 
-          elif ord(buf[0]) & 0x03 == 0x00:
+          elif ord(buf[0]) & 0x03 == 0x00: # TODO ord?
             # we have 'Reserved'
             if len(buf) < 4:
               continue

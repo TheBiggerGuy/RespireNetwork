@@ -141,35 +141,37 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
     self._output.setblocking(0)
   
   def handle(self):
-    last5inbuf = ' '*5
-    inbuf = bytes()
-    outbuf = bytes()
+    last5inbuf = bytes()
+    inbuf      = bytes()
+    outbuf     = bytes()
     
     while self._run: # and self._segger.is_alive():
       try:
         buf = self._input.recv(4096)
         inbuf += buf
-        last5inbuf += str(buf)
+        last5inbuf += buf
         last5inbuf = last5inbuf[-5:]
-        #while len(inbuf) > 0:
-        #  if len(inbuf) > 40:
-        #    self.print_gdb('>: ' + inbuf[:36] + ' ...')
-        #    inbuf = inbuf[36:]
-        #  else:
-        #    self.print_gdb('>: ' + inbuf)
-        #    inbuf = ''
+        sbuf = str(buf, 'ASCII', 'replace')
+        while len(sbuf) > 0:
+          if len(sbuf) > 40:
+            self.print_gdb('>: ' + sbuf[:36] + ' ...')
+            sbuf = sbuf[36:]
+          else:
+            self.print_gdb('>: ' + sbuf)
+            sbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
       try:
         outbuf += self._output.recv(4096)
-        #while len(outbuf) > 0:
-        #  if len(outbuf) > 40:
-        #    self.print_gdb('<: ' + outbuf[:36] + ' ...')
-        #    outbuf = outbuf[36:]
-        #  else:
-        #    self.print_gdb('<: ' + outbuf)
-        #    outbuf = ''
+        sbuf = str(buf, 'ASCII', 'replace')
+        while len(sbuf) > 0:
+          if len(sbuf) > 40:
+            self.print_gdb('>: ' + sbuf[:36] + ' ...')
+            sbuf = sbuf[36:]
+          else:
+            self.print_gdb('>: ' + sbuf)
+            sbuf = ''
       except Exception as e:
         if e.args[0] != 11:
           raise e
@@ -184,7 +186,7 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
       except Exception as e:
         pass
       
-      if last5inbuf == '$k#6b':
+      if last5inbuf == bytes('$k#6b', 'ASCII'):
         self.print_gdb('found k')
         sleep(1)
         try:
@@ -197,7 +199,7 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
           pass
         self._run = False
     
-    if self._output != None and last5inbuf != '$k#6b':
+    if self._output != None and last5inbuf != bytes('$k#6b', 'ASCII'):
       self.print_gdb('Trying to safely close by detaching ...')
       self._output.send(bytes(self._formGdbMsg('D'), 'ASCII'))
   

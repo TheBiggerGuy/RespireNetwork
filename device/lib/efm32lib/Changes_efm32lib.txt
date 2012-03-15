@@ -1,4 +1,14 @@
 ================ Revision history ============================================
+2.4.0:
+ - Added efm32_version.h defining software version number
+ - Added BURTC support for Giant and Leopard Gecko
+ - Added RMU_ResetControl for BU reset flag
+ - Added some missing features to EMU for back up domain and EM4 support
+ - ADC TimebaseCalc(), Giant/Leopard Gecko have max 5 bits in TIMEBASE field
+ - Removed EMU Backup Power Domain threshold setings from EMU_BUPDInit, added
+   EMU_BUThresRangeSet() and EMU_BUThresholdSet() API calls. Threshold values
+   are factory calibrated and should not usually be overridden by the user.
+
 2.3.2:
  - Added Tiny Gecko and Giant Gecko support in RMU for new reset causes
  - CMU_ClockFreqGet will now report correct clock rates if HFLE is set (/4)

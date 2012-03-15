@@ -3,7 +3,7 @@
  * @brief Advanced Encryption Standard (AES) accelerator peripheral API
  *   for EFM32
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -141,6 +141,8 @@
  *   When doing encryption, this is the 128 bit encryption key. When doing
  *   decryption, this is the 128 bit decryption key. The decryption key may
  *   be generated from the encryption key with AES_DecryptKey128().
+ *   If this argument is null, the key will not be loaded, as it is assumed
+ *   the key has been loaded into KEYHA previously.
  *
  * @param[in] iv
  *   128 bit initalization vector to use.
@@ -158,7 +160,6 @@ void AES_CBC128(uint8_t *out,
   int            i;
   uint32_t       *_out = (uint32_t *)out;
   const uint32_t *_in  = (const uint32_t *)in;
-  const uint32_t *_key = (const uint32_t *)key;
   const uint32_t *_iv  = (const uint32_t *)iv;
   /* Need to buffer one block when decrypting in case 'out' replaces 'in' */
   uint32_t       prev[4];
@@ -168,10 +169,14 @@ void AES_CBC128(uint8_t *out,
   /* Number of blocks to process */
   len /= AES_BLOCKSIZE;
 
-  /* Load key into high key for key buffer usage */
-  for (i = 3; i >= 0; i--)
+  if (key)
   {
-    AES->KEYHA = __REV(_key[i]);
+    const uint32_t *_key = (const uint32_t *)key;
+    /* Load key into high key for key buffer usage */
+    for (i = 3; i >= 0; i--)
+    {
+      AES->KEYHA = __REV(_key[i]);
+    }
   }
 
   if (encrypt)
@@ -654,6 +659,8 @@ void AES_CFB256(uint8_t *out,
  *
  * @param[in] key
  *   128 bit encryption key.
+ *   If this argument is null, the key will not be loaded, as it is assumed
+ *   the key has been loaded into KEYHA previously.
  *
  * @param[in,out] ctr
  *   128 bit initial counter value. The counter is updated after each AES
@@ -672,7 +679,6 @@ void AES_CTR128(uint8_t *out,
   int            i;
   uint32_t       *_out = (uint32_t *)out;
   const uint32_t *_in  = (const uint32_t *)in;
-  const uint32_t *_key = (const uint32_t *)key;
   uint32_t       *_ctr = (uint32_t *)ctr;
 
   EFM_ASSERT(!(len % AES_BLOCKSIZE));
@@ -681,10 +687,14 @@ void AES_CTR128(uint8_t *out,
   /* Select encryption mode, with auto trigger */
   AES->CTRL = AES_CTRL_KEYBUFEN | AES_CTRL_DATASTART;
 
-  /* Load key into high key for key buffer usage */
-  for (i = 3; i >= 0; i--)
+  if (key)
   {
-    AES->KEYHA = __REV(_key[i]);
+    const uint32_t *_key = (const uint32_t *)key;
+    /* Load key into high key for key buffer usage */
+    for (i = 3; i >= 0; i--)
+    {
+      AES->KEYHA = __REV(_key[i]);
+    }
   }
 
   /* Encrypt/decrypt data */

@@ -1,11 +1,11 @@
 /***************************************************************************//**
  * @file
- * @brief System API for EFM32
+ * @brief efm32lib version number
  * @author Energy Micro AS
  * @version 2.4.0
  *******************************************************************************
  * @section License
- * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
+ * <b>(C) Copyright 2012 Energy Micro AS, http://www.energymicro.com</b>
  *******************************************************************************
  *
  * This source code is the property of Energy Micro AS. The source and compiled
@@ -25,10 +25,9 @@
  * arising from your use of this Software.
  *
  ******************************************************************************/
-#ifndef __EFM32_SYSTEM_H
-#define __EFM32_SYSTEM_H
+#ifndef __EFM32_VERSION_H
+#define __EFM32_VERSION_H
 
-#include <stdbool.h>
 #include "efm32.h"
 
 #ifdef __cplusplus
@@ -41,34 +40,21 @@ extern "C" {
  ******************************************************************************/
 
 /***************************************************************************//**
- * @addtogroup SYSTEM
+ * @addtogroup Version
  * @{
  ******************************************************************************/
 
-/*******************************************************************************
- *******************************   STRUCTS   ***********************************
- ******************************************************************************/
+/** Version number of efm32lib peripheral API */
+#define _EFM32LIB_VERSION 2.4.0
+#define _EFM32LIB_VERSION_MAJOR 2
+#define _EFM32LIB_VERSION_MINOR 4
+#define _EFM32LIB_VERSION_PATCH 0
 
-/** Chip revision details */
-typedef struct
-{
-  uint8_t major; /**< Major revision number */
-  uint8_t minor; /**< Minor revision number */
-} SYSTEM_ChipRevision_TypeDef;
-
-
-/*******************************************************************************
- *****************************   PROTOTYPES   **********************************
- ******************************************************************************/
-
-void     SYSTEM_ChipRevisionGet(SYSTEM_ChipRevision_TypeDef *rev);
-uint32_t SYSTEM_GetCalibrationValue(volatile uint32_t *regAddress);
-
-/** @} (end addtogroup SYSTEM) */
+/** @} (end addtogroup Version) */
 /** @} (end addtogroup EFM32_Library) */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __EFM32_SYSTEM_H */
+#endif /* __EFM32_VERSION_H */

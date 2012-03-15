@@ -2,7 +2,7 @@
  * @file
  * @brief Reset Management Unit (RMU) peripheral API for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -46,10 +46,28 @@ extern "C" {
  ******************************************************************************/
 
 /*******************************************************************************
+ ********************************   ENUMS   ************************************
+ ******************************************************************************/
+
+/** RMU controlled peripheral reset control and reset source control */
+typedef enum
+{
+#if defined(_EFM32_GIANT_FAMILY)
+  /** Reset control over Backup Power Domain */
+  rmuResetBU = _RMU_CTRL_BURSTEN_SHIFT,        
+#endif
+  /** Allow Cortex-M3 lock up signal */
+  rmuResetLockUp = _RMU_CTRL_LOCKUPRDIS_SHIFT 
+} RMU_Reset_TypeDef;
+
+/*******************************************************************************
  *****************************   PROTOTYPES   **********************************
  ******************************************************************************/
 
-void RMU_LockupResetDisable(bool disable);
+/** RMU_LockupResetDisable kept for backwards compatibility */
+#define RMU_LockupResetDisable(A) RMU_ResetControl(rmuResetLockUp, A)
+
+void RMU_ResetControl(RMU_Reset_TypeDef reset, bool enable);
 void RMU_ResetCauseClear(void);
 uint32_t RMU_ResetCauseGet(void);
 

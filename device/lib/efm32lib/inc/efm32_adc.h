@@ -2,7 +2,7 @@
  * @file
  * @brief Analog to Digital Converter (ADC) peripheral API for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -258,7 +258,7 @@ typedef struct
    * Timebase used for ADC warm up. Select N to give (N+1)HFPERCLK cycles.
    * (Additional delay is added for bandgap references, please refer to the
    * reference manual.) Normally, N should be selected so that the timebase
-   * is at least 1 us. See ADC_TimebaseCalcDefault() for a way to obtain
+   * is at least 1 us. See ADC_TimebaseCalc() for a way to obtain
    * a suggested timebase of at least 1 us.
    */
   uint8_t                timebase;

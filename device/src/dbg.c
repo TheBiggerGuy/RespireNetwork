@@ -74,8 +74,8 @@ void DBG_init(void)
 
 	// Enable PC and IRQ sampling output
 	*dwt_ctrl = 0x400113FF;
-	// Set TPIU prescaler to 16
-	*tpiu_prescaler = 0x0f - 1;
+	// Set TPIU prescaler to 16 (14MHz/16 = 875KHz)
+	*tpiu_prescaler = 16 - 1;
 	// Set protocol to NRZ
 	*tpiu_protocol = PROTOCOL_SERIALWIRE_NRZ;
 	// Unlock ITM and output data

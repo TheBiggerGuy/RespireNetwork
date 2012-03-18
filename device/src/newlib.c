@@ -38,7 +38,6 @@ static unsigned char *heap_end = heap;
 void _exit(int code) {
 	if (code == EXIT_SUCCESS) {
 		EMU_EnterEM4();
-		NVIC_SystemReset();
 	} else {
 		NVIC_SystemReset();
 	}

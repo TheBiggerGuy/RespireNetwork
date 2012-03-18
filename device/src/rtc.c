@@ -35,11 +35,12 @@ void RTC_init(void)
 	RTC->CTRL |= RTC_CTRL_DEBUGRUN;
 #endif
 
-	RTC->COMP0 = RTC_1S;
-	RTC->COMP1 = RTC_1S + (RTC_1S/2);
+	RTC->COMP0 = 1*RTC_1S;
+	RTC->COMP1 = 2*RTC_1S;
+	//RTC->COMP1 = RTC_1S + (RTC_1S/2);
 
 	// Enable interrupts //////////////////////////////////////////////////////
-	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0 | RTC_IEN_COMP1;
+	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0; // | RTC_IEN_COMP1;
 
 	NVIC_ClearPendingIRQ(RTC_IRQn);
 	NVIC_EnableIRQ(RTC_IRQn);
@@ -79,18 +80,18 @@ void RTC_IRQHandler(void)
 	{
 		// RTC every 1s
 		//Radio_enable(true);
-		DBG_LED_On();
-		RTC->COMP0 = (RTC->COMP0 + RTC_1S) % (1 << 24);
+		RTC->COMP0 = RTC->COMP1;
+		RTC->COMP1 = (RTC->COMP1 + RTC_1S) & 0xFFFFFF;
 		RTC->IFC = RTC_IFC_COMP0;
 	}
-	if (RTC->IF & RTC_IF_COMP1)
-	{
-		// RTC every 238ns*slot_number after COMP0
-		//Radio_enable(false);
-		DBG_LED_Off();
-		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);
-		RTC->IFC = RTC_IFC_COMP1;
-	}
+//	if (RTC->IF & RTC_IF_COMP1)
+//	{
+//		// RTC every 238ns*slot_number after COMP0
+//		//Radio_enable(false);
+//		DBG_LED_Off();
+//		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);
+//		RTC->IFC = RTC_IFC_COMP1;
+//	}
 
 }
 

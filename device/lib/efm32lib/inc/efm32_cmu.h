@@ -543,6 +543,7 @@ typedef enum
                      (_CMU_LFBCLKEN0_LEUART1_SHIFT << CMU_EN_BIT_POS) |
                      (CMU_LEUART1_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #endif
+  cmuClock_NONE = -1
 } CMU_Clock_TypeDef;
 
 

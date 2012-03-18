@@ -128,7 +128,7 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
       self._input.setblocking(1)
       self._output.sendall(
           bytes(
-              self._segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED), 'UTF-8'
+              self._segger.swoStart(GdbServer.TRANSPORT_SWD, SWO_PROTO, SWO_SPEED), 'ASCII'
             )
         )
       self._output.recv(len(self._segger.SWO_REPLY))
@@ -140,54 +140,67 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
     self._input.setblocking(0)
     self._output.setblocking(0)
   
+  def _read_input(self, size=4096):
+    try:
+      return self._input.recv(size)
+    except Exception as e:
+      if e.args[0] != 11:
+        raise e
+      else:
+        return bytes()
+  
+  def _read_output(self, size=4096):
+    try:
+      return self._output.recv(size)
+    except Exception as e:
+      if e.args[0] != 11:
+        raise e
+      else:
+        return bytes()
+  
   def handle(self):
     last5inbuf = bytes()
     inbuf      = bytes()
     outbuf     = bytes()
     
     while self._run: # and self._segger.is_alive():
-      try:
-        buf = self._input.recv(4096)
-        inbuf += buf
-        last5inbuf += buf
-        last5inbuf = last5inbuf[-5:]
-        sbuf = str(buf, 'ASCII', 'replace')
-        while len(sbuf) > 0:
-          if len(sbuf) > 40:
-            self.print_gdb('>: ' + sbuf[:36] + ' ...')
-            sbuf = sbuf[36:]
-          else:
-            self.print_gdb('>: ' + sbuf)
-            sbuf = ''
-      except Exception as e:
-        if e.args[0] != 11:
-          raise e
-      try:
-        outbuf += self._output.recv(4096)
-        sbuf = str(buf, 'ASCII', 'replace')
-        while len(sbuf) > 0:
-          if len(sbuf) > 40:
-            self.print_gdb('>: ' + sbuf[:36] + ' ...')
-            sbuf = sbuf[36:]
-          else:
-            self.print_gdb('>: ' + sbuf)
-            sbuf = ''
-      except Exception as e:
-        if e.args[0] != 11:
-          raise e
-      try:
-        sent = self._input.send(outbuf)
-        outbuf = outbuf[sent:]
-      except Exception as e:
-        pass
-      try:
-        sent = self._output.send(inbuf)
-        inbuf = inbuf[sent:]
-      except Exception as e:
-        pass
       
+      # read the input
+      buf = self._read_input()
+      inbuf += buf
+      last5inbuf += buf
+      last5inbuf = last5inbuf[-5:]
+      sbuf = str(buf, 'ASCII', 'replace')
+      while len(sbuf) > 0:
+        if len(sbuf) > 40:
+          self.print_gdb('>: ' + sbuf[:36] + ' ...')
+          sbuf = sbuf[36:]
+        else:
+          self.print_gdb('>: ' + sbuf)
+          sbuf = ''
+      
+      # read the output
+      outbuf += self._read_output()
+      sbuf = str(buf, 'ASCII', 'replace')
+      while len(sbuf) > 0:
+        if len(sbuf) > 40:
+          self.print_gdb('>: ' + sbuf[:36] + ' ...')
+          sbuf = sbuf[36:]
+        else:
+          self.print_gdb('>: ' + sbuf)
+          sbuf = ''
+      
+      # send the input
+      sent = self._input.send(outbuf)
+      outbuf = outbuf[sent:]
+      
+      # send the output
+      sent = self._output.send(inbuf)
+      inbuf = inbuf[sent:]
+      
+      # find out if the session has ended
       if last5inbuf == bytes('$k#6b', 'ASCII'):
-        self.print_gdb('found k')
+        self.print_gdb('found kill request')
         sleep(1)
         try:
           outbuf += self._output.recv(4096)

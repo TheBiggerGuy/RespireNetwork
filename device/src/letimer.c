@@ -13,7 +13,8 @@
 #include "config.h"
 
 void(*letimer_tx_end)(void);
-
+uint16_t letimer_period;
+uint16_t letimer_wait;
 void letimer_init(uint16_t wait, uint16_t period, void(*tx_end)(void))
 {
 	// Config the clocks //////////////////////////////////////////////////////
@@ -34,26 +35,31 @@ void letimer_init(uint16_t wait, uint16_t period, void(*tx_end)(void))
 	LETIMER0->FREEZE = LETIMER_FREEZE_REGFREEZE_FREEZE;
 
 	letimer_tx_end = tx_end;
+	letimer_period = period;
+	letimer_wait = wait;
 
 	// Config the LETIMER /////////////////////////////////////////////////////
 	CMU->LFAPRESC0 |= CMU_LFACLKEN0_LETIMER0;
-	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_TOGGLE | LETIMER_CTRL_UFOA1_TOGGLE | LETIMER_CTRL_RTCC1TEN | LETIMER_CTRL_RTCC0TEN | LETIMER_CTRL_REPMODE_ONESHOT;
+	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_UFOA0_TOGGLE | LETIMER_CTRL_REPMODE_BUFFERED | LETIMER_CTRL_RTCC0TEN;
 #if defined(CONFIG_CLOCKS_ON_DEBUG)
 	LETIMER0->CTRL |= LETIMER_CTRL_DEBUGRUN;
 #endif
 
-	//  + --> COMP0 ---> COMP1 ---> UNDERFLOW -+
-	//  |                                      |
-	//  +--<-------------------------------<---+
-	LETIMER0->COMP1 = wait;          // wait
-	LETIMER0->COMP0 = wait + period; // TOP
+	//       +---------+                +--------+
+	//  ----/           \--------------/          \----------
+	//
+	//  + --> COMP0 ---> UNDERFLOW ---> COMP1 ---> UNDERFLOW --+
+	//  |                                                      |
+	//  +--<------------------------------------------------<--+
+	LETIMER0->COMP1 = letimer_period; // TOP 2
+	LETIMER0->COMP0 = letimer_wait; // TOP
 
-	LETIMER0->REP0 = 1;
+	LETIMER0->REP0 = 2;
 
 	LETIMER0->ROUTE = LETIMER_ROUTE_LOCATION_LOC1 | LETIMER_ROUTE_OUT0PEN;
 
 	// Enable interrupts //////////////////////////////////////////////////////
-	LETIMER0->IEN = LETIMER_IEN_UF;
+	LETIMER0->IEN = LETIMER_IEN_REP0;
 
 	NVIC_ClearPendingIRQ(LETIMER0_IRQn);
 	NVIC_EnableIRQ(LETIMER0_IRQn);
@@ -68,16 +74,20 @@ void letimer_init(uint16_t wait, uint16_t period, void(*tx_end)(void))
 
 void LETIMER0_IRQHandler(void)
 {
-	if (LETIMER0->IF & LETIMER_IF_UF)
+	if (LETIMER0->IF & LETIMER_IF_REP0)
 	{
 		// LETIMER0 underflow
-		if (letimer_tx_end != NULL)
-		{
-			(*letimer_tx_end)();
-		}
-		LETIMER0->REP0 = 1;
+		//if (letimer_tx_end != NULL)
+		//{
+		//	(*letimer_tx_end)();
+		//}
+		LETIMER0->REP0 = 2;
+		LETIMER0->COMP1 = letimer_period; // TOP 2
+		LETIMER0->COMP0 = letimer_wait; // TOP
 
-		LETIMER0->IFC = LETIMER_IFC_UF;
+		DBG_LED_Toggle();
+
+		LETIMER0->IFC = LETIMER_IFC_REP0;
 	}
 }
 

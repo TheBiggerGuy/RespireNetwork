@@ -36,6 +36,11 @@
 #ifndef __EFM32_H
 #define __EFM32_H
 
+#if !defined(DEVICE)
+#if !defined(EFM32G890F128)
+#define EFM32G890F128
+#endif
+#endif
 
 #if defined(EFM32G200F16)
 #include "efm32g200f16.h"

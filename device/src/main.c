@@ -120,7 +120,7 @@ int main(void) {
 	RTC_setTime(1328288470);
 
 	while (DO_MAIN_LOOP == true) {
-		// DBG_LED_Toggle();
+		//DBG_LED_Toggle();
 		printf("hello\n");
 	}
 

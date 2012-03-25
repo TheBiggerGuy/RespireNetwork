@@ -29,21 +29,25 @@ void RTC_init(void)
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_FREEZE;
 
 	// Config the RTC /////////////////////////////////////////////////////////
-	CMU->LFAPRESC0 |= RTC_PRESC;
-	RTC->CTRL = RTC_CTRL_EN;
-#if defined(CONFIG_CLOCKS_ON_DEBUG)
-	RTC->CTRL |= RTC_CTRL_DEBUGRUN;
-#endif
 
-	RTC->COMP0 = 1*RTC_1S;
-	RTC->COMP1 = 2*RTC_1S;
-	//RTC->COMP1 = RTC_1S + (RTC_1S/2);
+	CMU->FREEZE = CMU_FREEZE_REGFREEZE_FREEZE;
+	CMU->LFAPRESC0 |= CMU_LFAPRESC0_RTC_DIV2; // DIV8192; //RTC_PRESC;
+	CMU->FREEZE = CMU_FREEZE_REGFREEZE_UPDATE;
+	while(CMU->SYNCBUSY & CMU_SYNCBUSY_LFAPRESC0);
+
+	RTC->COMP0 = 2*RTC_S;
 
 	// Enable interrupts //////////////////////////////////////////////////////
 	RTC->IEN = RTC_IEN_OF | RTC_IEN_COMP0; // | RTC_IEN_COMP1;
 
 	NVIC_ClearPendingIRQ(RTC_IRQn);
 	NVIC_EnableIRQ(RTC_IRQn);
+
+	// enable RTC and set debug run
+	RTC->CTRL = RTC_CTRL_EN;
+#if defined(CONFIG_CLOCKS_ON_DEBUG)
+	RTC->CTRL |= RTC_CTRL_DEBUGRUN;
+#endif
 
 	// Write the changes out and wait /////////////////////////////////////////
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_UPDATE;
@@ -55,16 +59,12 @@ time_t RTC_getTime(void)
 {
 	if (baseTime < 0)
 		return -1;
-	// TODO: check calculation
-	// return baseTime + (RTC->CNT / (1<<(15-RTC_PRESC)));
-	return baseTime + RTC->CNT;
+	return baseTime + (RTC->CNT >> RTC_S_SHIFT);
 }
 
 void RTC_setTime(time_t newTime)
 {
-	// TODO: check calculation
-	// baseTime = newTime - (RTC->CNT / (1<<(15-RTC_PRESC)));
-	baseTime = newTime - RTC->CNT;
+	baseTime = newTime - (RTC->CNT >> RTC_S_SHIFT);
 }
 
 void RTC_IRQHandler(void)
@@ -79,20 +79,10 @@ void RTC_IRQHandler(void)
 	if (RTC->IF & RTC_IF_COMP0)
 	{
 		// RTC every 1s
-		//Radio_enable(true);
-		RTC->COMP0 = RTC->COMP1;
-		RTC->COMP1 = (RTC->COMP1 + RTC_1S) & 0xFFFFFF;
+		DBG_LED_Toggle();
+		RTC->COMP0 = (RTC->COMP0 + RTC_S) & 0xFFFFFF; // 24bit reg
 		RTC->IFC = RTC_IFC_COMP0;
 	}
-//	if (RTC->IF & RTC_IF_COMP1)
-//	{
-//		// RTC every 238ns*slot_number after COMP0
-//		//Radio_enable(false);
-//		DBG_LED_Off();
-//		RTC->COMP1 = (RTC->COMP1 + RTC_1S) % (1 << 24);
-//		RTC->IFC = RTC_IFC_COMP1;
-//	}
-
 }
 
 void RTC_deinit(void)

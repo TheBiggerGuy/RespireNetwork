@@ -30,15 +30,15 @@ void net_node_init(void){
 	Radio_init(&local, &broadcast, &local);
 
 
-	struct letimer_config letimer;
-	letimer.broadcast_period = 128;
-	letimer.broadcast_end = &net_node_broadcast;
-	letimer.wait = 0;
-	letimer.tx_period = 128;
-	letimer.tx_end = &net_node_tx;
+//	struct letimer_config letimer;
+//	letimer.broadcast_period = 128;
+//	letimer.broadcast_end = &net_node_broadcast;
+//	letimer.wait = 0;
+//	letimer.tx_period = 128;
+//	letimer.tx_end = &net_node_tx;
 
 	// every 1s on the second for 238ns
-	letimer_init(&letimer);
+	//letimer_init(&letimer);
 
 }
 

@@ -2,6 +2,7 @@
 #define __RESPIRENETWORK_NET_BASE_H
 
 struct net_base_broadcast {
+	uint8_t hello[5];
 	time_t time;
 };
 

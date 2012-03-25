@@ -24,6 +24,7 @@ uint8_t Radio_read_payload(uint8_t* buffer, int length);
 void Radio_write_reg(uint8_t loc, uint8_t val);
 void Radio_write_lreg(uint8_t loc, uint8_t *val, int length);
 void Radio_write_packet(uint8_t *data, int length);
+void Radio_flush(uint8_t buf);
 
 bool radio_dataReady = false;
 bool radio_data_a_braodcast = true;
@@ -51,6 +52,10 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	/* Enable the SPI ////////////////////////////////////////////////////// */
 	spi_init();
 
+	spi_cs(true);
+	delay(10);
+	spi_cs(false);
+
 	/* Config Radio /////////////////////////////////////////////////////// */
 	Radio_write_reg(RADIO_CONFIG,     RADIO_CONFIG_DEFAULT); // default (see .h)
 	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
@@ -58,13 +63,14 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // disable auto retransmit
 	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
 	//Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
+	Radio_write_reg(RADIO_RF_CH,      RADIO_RF_SETUP_RF_DR_HIGH & (0x3 << 1)); // set RF speed (2Mbps) and full power
 
-	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, sizeof(struct radio_address)); // set RX address 0
-	Radio_write_reg(RADIO_RX_PW_P0, sizeof(struct net_packet_rt));
+	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, 5); // set RX address 0
+	Radio_write_reg(RADIO_RX_PW_P0, 32);
 	radio_local = local;
 
-	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, sizeof(struct radio_address)); // set RX address 1
-	Radio_write_reg(RADIO_RX_PW_P1, sizeof(struct net_packet_broadcast));
+	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, 5); // set RX address 1
+	Radio_write_reg(RADIO_RX_PW_P1, 32);
 	radio_broadcast = broadcast;
 
 	/* Config IRQ //////////////////// */
@@ -80,6 +86,8 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	NVIC_EnableIRQ(RADIO_IRQH);
 
 	/* power up //////////////////////////////////////////////////// */
+	Radio_flush(RADIO_CMD_FLUSH_RX);
+	Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_setMode(Radio_Mode_RX);
 	Radio_clearIRQ();
 }
@@ -92,19 +100,19 @@ void RADIO_IRQHF(void) {
 		Radio_clearIRQ();
 		GPIO->IFC = (1 << RADIO_PIN_IRQ);
 
-		if(radioIRQ & RADIO_CONFIG_MASK_RX_RT) {
+		if(radioIRQ & RADIO_STATUS_MAX_RT) {
 			// Retransmitting
 			GPIO->IFC = (1 << RADIO_PIN_IRQ); // NOP replacement
 			__NOP();
 		}
 
-		if(radioIRQ & RADIO_CONFIG_MASK_RX_DS) {
+		if(radioIRQ & RADIO_STATUS_TX_DS) {
 			// Data sent
 			GPIO->IFC = (1 << RADIO_PIN_IRQ); // NOP replacement
 			__NOP();
 		}
 
-		if(radioIRQ & RADIO_CONFIG_MASK_RX_DR) {
+		if(radioIRQ & RADIO_STATUS_RX_DR) {
 			// Data ready to read
 			radio_dataReady = true;
 			uint8_t pipe = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
@@ -159,7 +167,7 @@ int Radio_send_rt(struct net_packet_rt *data)
 int Radio_loadbuf_broadcast(struct net_packet_broadcast *data)
 {
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_broadcast, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
-	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_broadcast));
+	Radio_write_packet((uint8_t *) data, 32);
 
 	return sizeof(struct net_packet_broadcast);
 }
@@ -167,7 +175,7 @@ int Radio_loadbuf_broadcast(struct net_packet_broadcast *data)
 int Radio_loadbuf_rt(struct net_packet_rt *data)
 {
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_parent, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
-	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_rt));
+	Radio_write_packet((uint8_t *) data, 32);
 
 	return sizeof(struct net_packet_rt);
 }
@@ -330,6 +338,22 @@ void Radio_write_packet(uint8_t *data, int length)
 	// send cmd and data
 	spi_write(&buf, 1);
 	spi_write(data, length);
+	// wait for spi to finish
+	spi_flush_tx();
+	spi_cs(true);
+
+	// clear RX buffer
+	spi_clear_rx();
+}
+
+void Radio_flush(uint8_t buf)
+{
+	// clear RX buffer
+	spi_clear_rx();
+
+	spi_cs(false);
+	// send cmd and NOP
+	spi_write(&buf, 1);
 	// wait for spi to finish
 	spi_flush_tx();
 	spi_cs(true);

@@ -31,6 +31,7 @@
 #define RADIO_SETUP_AW   0x03
 #define RADIO_SETUP_RETR 0x04
 #define RADIO_RF_CH      0x05
+#define RADIO_RF_SETUP   0x06
 #define RADIO_STATUS     0x07
 #define RADIO_RX_ADDR_P0 0x0A
 #define RADIO_RX_ADDR_P1 0x0B
@@ -58,6 +59,8 @@
 #define RADIO_SETUP_AW_3 0x01
 #define RADIO_SETUP_AW_4 0x02
 #define RADIO_SETUP_AW_5 0x03
+
+#define RADIO_RF_SETUP_RF_DR_HIGH (1 << 3)
 
 #define RADIO_STATUS_RX_DR   (1 << 6)
 #define RADIO_STATUS_TX_DS   (1 << 5)

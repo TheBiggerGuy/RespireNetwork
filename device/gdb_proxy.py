@@ -251,6 +251,10 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
     sleep(1)
     print('.. OK')
     self._finished = True
+  
+  def __del__(self):
+    if GdbProxyHandler.currentHandle == self:
+      GdbProxyHandler.currentHandle = None
 
 class GdbProxyServer(socketserver.ThreadingTCPServer):
   

@@ -37,14 +37,19 @@
 #include "efm32_chip.h"
 #include "efm32_dbg.h"
 
-#define IS_BASE
-
+#include "config.h"
 #include "main.h"
 #include "dbg.h"
-#if defined(IS_BASE)
+
+#include "net_packets.h"
+#if CONFIG_FUNC == CONFIG_FUNC_BASE
 #include "net_base.h"
-#else
+#elif CONFIG_FUNC == CONFIG_FUNC_NODE
 #include "net_node.h"
+#elif CONFIG_FUNC == CONFIG_FUNC_RECV
+#include "net_recv_only.h"
+#else
+#error "Invalid 'CONFIG_FUNC'"
 #endif
 #include "rtc.h"
 
@@ -58,12 +63,17 @@
  * E15 CE
  */
 
-#if defined(IS_BASE)
+#if CONFIG_FUNC == CONFIG_FUNC_BASE
 void (*init_list[])(void)   = {DBG_init, net_base_init, RTC_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_base_deinit, DBG_deinit, NULL};
-#else
+#elif CONFIG_FUNC == CONFIG_FUNC_NODE
 void (*init_list[])(void)   = {DBG_init, net_node_init, RTC_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_node_deinit, DBG_deinit, NULL};
+#elif CONFIG_FUNC == CONFIG_FUNC_RECV
+void (*init_list[])(void)   = {DBG_init, net_recv_only_init, RTC_init, NULL};
+void (*deinit_list[])(void) = {RTC_deinit, net_recv_only_deinit, DBG_deinit, NULL};
+#else
+#error "Invalid 'CONFIG_FUNC'"
 #endif
 
 volatile time_t msTicks; /* counts 1ms timeTicks */
@@ -119,9 +129,17 @@ int main(void) {
 	// TODO
 	RTC_setTime(1328288470);
 
+	struct net_packet_broadcast buf;
+
+	memset(&buf, 0x00, sizeof(buf));
+
 	while (DO_MAIN_LOOP == true) {
 		//DBG_LED_Toggle();
 		printf("hello\n");
+#if CONFIG_FUNC == CONFIG_FUNC_RECV
+		if (net_available() > 0)
+			net_recive((uint8_t *) &buf, sizeof(buf));
+#endif
 	}
 
 	printf("Starting DeInit\n");

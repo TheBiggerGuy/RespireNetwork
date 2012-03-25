@@ -78,8 +78,6 @@ void RTC_IRQHandler(void)
 	}
 	if (RTC->IF & RTC_IF_COMP0)
 	{
-		// RTC every 1s
-		DBG_LED_Toggle();
 		RTC->COMP0 = (RTC->COMP0 + RTC_S) & 0xFFFFFF; // 24bit reg
 		RTC->IFC = RTC_IFC_COMP0;
 	}

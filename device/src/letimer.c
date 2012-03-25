@@ -18,6 +18,7 @@ uint16_t letimer_wait0;
 uint16_t letimer_wait1;
 
 bool letimer_toggle = true;
+bool letimer_has_init_gpio = false;
 
 void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_period1, void(*wait1_end)(void), bool wait1_on)
 {
@@ -35,7 +36,8 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_peri
 	CMU->LFAPRESC0 |= CMU_LFAPRESC0_LETIMER0_DIV2;
 
 	// Config the IO pins /////////////////////////////////////////////////////
-	GPIO_PinModeSet(LETIMER_PORT_CE, LETIMER_PIN_CE, gpioModePushPull, 0);
+	GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE, gpioModePushPull, 0);
+	letimer_has_init_gpio = true;
 
 	// lock LETIMER config update (as it is in the low frequency area it is slow to write to)
 	LETIMER0->FREEZE = LETIMER_FREEZE_REGFREEZE_FREEZE;
@@ -71,7 +73,7 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_peri
 	LETIMER0->ROUTE = LETIMER_ROUTE_LOCATION_LOC1 | LETIMER_ROUTE_OUT0PEN;
 
 	// Enable interrupts //////////////////////////////////////////////////////
-	LETIMER0->IEN = LETIMER_IEN_COMP0;
+	LETIMER0->IEN = LETIMER_IEN_COMP0 | LETIMER_IEN_UF;
 
 	NVIC_ClearPendingIRQ(LETIMER0_IRQn);
 	NVIC_EnableIRQ(LETIMER0_IRQn);
@@ -84,30 +86,46 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_peri
 		;
 }
 
+void letimer_forcepin(bool state){
+	if (!letimer_has_init_gpio) {
+		GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE, gpioModePushPull, 0);
+		letimer_has_init_gpio = true;
+	}
+	if (state) {
+		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
+	} else {
+		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
+}
 
-// 		// could be a long time so clear first
-//		if (letimer_wait1_end != NULL && LETIMER0->REP0 == 1)
-//		{
-//			(*letimer_wait1_end)();
-//		}
-//		else if (letimer_wait2_end != NULL && LETIMER0->REP0 == 0)
-//		{
-//			(*letimer_wait2_end)();
-//		}
-
-bool todo = true;
+int i= 0;
 
 void LETIMER0_IRQHandler(void)
 {
-	if (LETIMER0->IF & LETIMER_IF_COMP0)
+	if (LETIMER0->IF & LETIMER_IF_UF) {
+		// could be a long time so clear first
+		LETIMER0->IFC = LETIMER_IFC_UF;
+		if (LETIMER0->REP0 == 0) {
+			if (letimer_wait1_end != NULL)
+			{
+				(*letimer_wait1_end)();
+			}
+		} else {
+			if (letimer_wait0_end != NULL)
+			{
+				(*letimer_wait0_end)();
+			}
+		}
+	}
+	if (LETIMER0->IF & LETIMER_IF_COMP0) // CALLED ON A RISING EDGE OF OUTPUT
 	{
-		if (todo) {
+		if (letimer_toggle) {
 			LETIMER0->COMP1 = letimer_wait1; // TOP
 			LETIMER0->REP1 = 1;
-			todo = false;
+			letimer_toggle = false;
 		} else {
 			LETIMER0->COMP1 = letimer_wait0; // TOP
-			todo = true;
+			letimer_toggle = true;
 		}
 		LETIMER0->IFC = LETIMER_IFC_COMP0;
 	}

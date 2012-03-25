@@ -20,21 +20,10 @@
 //  * RADIO_PORT_IRQ - The port that the radio IRQ is on
 //  * RADIO_PIN_IRQ  - The pin that the radio IRQ is on
 //
-#define RADIO_PORT_CE   gpioPortD
-#define RADIO_PIN_CE    4
+#define RADIO_PORT_CE   gpioPortB
+#define RADIO_PIN_CE    11
 #define RADIO_PORT_IRQ  gpioPortD
 #define RADIO_PIN_IRQ   5
-
-// Radio LETIMER //////////////////////////////////////////////////////////////
-//
-// Needed:
-//  * RADIO_PORT_CE  - The port that the radio CE is on
-//  * RADIO_PIN_CE   - The pin that the radio CE is on
-//  * RADIO_PORT_IRQ - The port that the radio IRQ is on
-//  * RADIO_PIN_IRQ  - The pin that the radio IRQ is on
-//
-#define LETIMER_PORT_CE	gpioPortB
-#define LETIMER_PIN_CE  11
 
 // Debug //////////////////////////////////////////////////////////////////////
 //

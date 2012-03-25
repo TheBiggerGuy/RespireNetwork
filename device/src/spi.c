@@ -52,15 +52,15 @@ void spi_init(void) {
 	SPI_USART->CTRL ^= USART_CTRL_AUTOCS;
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	GPIO_PinModeSet(SPI_PORT, SPI_PIN_TX, gpioModePushPull, 0); // MOSI
-	GPIO_PinModeSet(SPI_PORT, SPI_PIN_RX, gpioModeInput, 0); // MISO
+	GPIO_PinModeSet(SPI_PORT, SPI_PIN_TX,  gpioModePushPull, 1); // MOSI
+	GPIO_PinModeSet(SPI_PORT, SPI_PIN_RX,  gpioModeInput,    0); // MISO
 	GPIO_PinModeSet(SPI_PORT, SPI_PIN_CLK, gpioModePushPull, 0); // Clock
-	GPIO_PinModeSet(SPI_PORT, SPI_PIN_CS, gpioModePushPull, 0); // CS
+	GPIO_PinModeSet(SPI_PORT, SPI_PIN_CS,  gpioModePushPull, 1); // CS
 }
 
 int spi_read(uint8_t* buffer, int lenght, uint8_t flush_byte) {
 	/* loop over required length */
-	for (int i=0; i < lenght; i++) {
+	for (int i=0; i < lenght; ++i) {
 		/* Stimulate the next byte */
 		while (!(SPI_USART->STATUS & USART_STATUS_TXBL))
 			;
@@ -75,7 +75,7 @@ int spi_read(uint8_t* buffer, int lenght, uint8_t flush_byte) {
 }
 
 int spi_write(uint8_t* buffer, int length) {
-	for (int i=0; i < length; i++) {
+	for (int i=0; i < length; ++i) {
 		/* wait for last byte to send and the buffer new byte */
 		while (!(SPI_USART->STATUS & USART_STATUS_TXBL))
 			;

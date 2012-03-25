@@ -12,4 +12,6 @@
 void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_period1, void(*wait1_end)(void), bool wait1_on);
 void letimer_deinit(void);
 
+void letimer_forcepin(bool state);
+
 #endif // __RESPIRENETWORK_LETIMER_H

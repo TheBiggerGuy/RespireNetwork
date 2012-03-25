@@ -4,15 +4,16 @@
 #include "letimer.h"
 #include "rtc.h"
 
-#include "net_base.h"
+#include "net_packets.h"
 #include "net_node.h"
 
 void net_node_broadcast(void);
 void net_node_tx(void);
 
+struct radio_address broadcast;
+struct radio_address local;
+
 void net_node_init(void){
-	radio_address local;
-	radio_address broadcast;
 
 	local.b0 = *(&(DEVINFO->UNIQUEL)+0);
 	local.b1 = *(&(DEVINFO->UNIQUEL)+1);
@@ -20,14 +21,14 @@ void net_node_init(void){
 	local.b3 = *(&(DEVINFO->UNIQUEL)+3);
 	local.b4 = 0x00;
 
-	broadcast.b0 = 0xff;
-	broadcast.b1 = 0xff;
+	broadcast.b0 = 0x55;
+	broadcast.b1 = 0xAA;
 	broadcast.b2 = 0xff;
-	broadcast.b3 = 0xff;
-	broadcast.b4 = 0xff;
+	broadcast.b3 = 0xAA;
+	broadcast.b4 = 0x55;
 
 	// local and broadcast recive adresses and tx on local address
-	Radio_init(&local, &broadcast, &local);
+	Radio_init(&broadcast, &broadcast);
 
 
 //	struct letimer_config letimer;
@@ -43,11 +44,11 @@ void net_node_init(void){
 }
 
 void net_node_broadcast(void){
-	struct net_base_broadcast packet;
+	struct net_packet_broadcast packet;
 
 	// convet to tx mode and load packet
 	packet.time = RTC_getTime();
-	Radio_loadbuf((uint8_t *) &packet, sizeof(packet));
+	Radio_loadbuf_broadcast(&packet);
 
 	Radio_setMode(Radio_Mode_TX);
 }

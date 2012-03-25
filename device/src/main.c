@@ -39,42 +39,9 @@
 
 #include "config.h"
 #include "main.h"
-#include "dbg.h"
 
 #include "net_packets.h"
-#if CONFIG_FUNC == CONFIG_FUNC_BASE
 #include "net_base.h"
-#elif CONFIG_FUNC == CONFIG_FUNC_NODE
-#include "net_node.h"
-#elif CONFIG_FUNC == CONFIG_FUNC_RECV
-#include "net_recv_only.h"
-#else
-#error "Invalid 'CONFIG_FUNC'"
-#endif
-#include "rtc.h"
-
-/*
- * E10 RX
- * E11 TX
- * E12 CLK
- * E13 CSN
- * 
- * E14 IRQ
- * E15 CE
- */
-
-#if CONFIG_FUNC == CONFIG_FUNC_BASE
-void (*init_list[])(void)   = {DBG_init, net_base_init, RTC_init, NULL};
-void (*deinit_list[])(void) = {RTC_deinit, net_base_deinit, DBG_deinit, NULL};
-#elif CONFIG_FUNC == CONFIG_FUNC_NODE
-void (*init_list[])(void)   = {DBG_init, net_node_init, RTC_init, NULL};
-void (*deinit_list[])(void) = {RTC_deinit, net_node_deinit, DBG_deinit, NULL};
-#elif CONFIG_FUNC == CONFIG_FUNC_RECV
-void (*init_list[])(void)   = {DBG_init, net_recv_only_init, RTC_init, NULL};
-void (*deinit_list[])(void) = {RTC_deinit, net_recv_only_deinit, DBG_deinit, NULL};
-#else
-#error "Invalid 'CONFIG_FUNC'"
-#endif
 
 volatile time_t msTicks; /* counts 1ms timeTicks */
 
@@ -105,7 +72,6 @@ volatile bool DO_MAIN_LOOP = true;
  * @brief  Main function
  *****************************************************************************/
 int main(void) {
-	int i;
 
 	/* Chip errata */
 	CHIP_Init();
@@ -117,38 +83,13 @@ int main(void) {
 	if (SysTick_Config(SystemCoreClock / 1400))
 		exit(EXIT_FAILURE);
 
-	/* Run the module initilizers */
-	i = 0;
-	while(init_list[i] != NULL) {
-		init_list[i]();
-		i++;
-	}
+	net_base_init();
 
-	printf("Finished Init\n");
-
-	// TODO
-	RTC_setTime(1328288470);
-
-	struct net_packet_broadcast buf;
-
-	memset(&buf, 0x00, sizeof(buf));
-
-	while (DO_MAIN_LOOP == true) {
-		//DBG_LED_Toggle();
-		printf("hello\n");
-#if CONFIG_FUNC == CONFIG_FUNC_RECV
-		if (net_available() > 0)
-			net_recive((uint8_t *) &buf, sizeof(buf));
-#endif
-	}
-
-	printf("Starting DeInit\n");
-
-	/* Run the module de-initilizers */
-	i = 0;
-	while(deinit_list[i] != NULL) {
-		deinit_list[i]();
-		i++;
+	//net_rx();
+	while(true) {
+		net_send();
+		delay(100);
+		net_read_fifo();
 	}
 
 	exit(EXIT_SUCCESS);

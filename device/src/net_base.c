@@ -2,15 +2,11 @@
 
 #include "efm32.h"
 
+#include "main.h"
 #include "radio.h"
-#include "letimer.h"
-#include "rtc.h"
 
 #include "net_packets.h"
 #include "net_base.h"
-
-void net_base_end_rx(void);
-void net_base_end_tx(void);
 
 void net_base_init(void){
 	struct radio_address local;
@@ -33,27 +29,27 @@ void net_base_init(void){
 	Radio_init(&local, &broadcast);
 	radio_set_parent(&broadcast);
 
-	// every 1s on the second for 238ns
-	letimer_init(5, &net_base_end_tx, (1 << 14) -16, &net_base_end_rx, false);
-
-}
-
-void net_base_end_rx(void){
-	struct net_packet_rt packet;
-
-	// convet to tx mode and load packet
-	memcpy(packet.hello, "hello", 5);
-	packet.time = RTC_getTime();
-	Radio_loadbuf_rt(&packet);
-
-	Radio_setMode(Radio_Mode_TX);
-}
-
-void net_base_end_tx(void){
 	Radio_setMode(Radio_Mode_RX);
+	Radio_enable(true);
+}
+
+void net_rx(void) {
+	Radio_enable(false);
+	Radio_setMode(Radio_Mode_RX);
+	Radio_enable(true);
+	delay(100);
+}
+
+void net_send(void) {
+	struct net_packet_broadcast buf;
+	memcpy(buf.hello, "Hello", 5);
+
+	Radio_send_broadcast(&buf);
+}
+
+void net_read_fifo(void) {
+	radio_read_fifo();
 }
 
 void net_base_deinit(void){
-	Radio_deinit();
-	letimer_deinit();
 }

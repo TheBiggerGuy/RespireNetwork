@@ -10,8 +10,6 @@
 #include "main.h"
 #include "radio.h"
 #include "spi.h"
-#include "dbg.h"
-#include "letimer.h"
 
 #include "net_packets.h"
 
@@ -43,8 +41,8 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	CMU_ClockEnable(cmuClock_GPIO, true);
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	// GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE,  gpioModeInputPull, 0);  // CE
-	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
+	GPIO_PinModeSet(RADIO_PORT_CE,  RADIO_PIN_CE,  gpioModeInputPull, 0);  // CE
+	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput,     0);  // IRQ
 
 	/* Make sure the radio is not broadcasting ///////////////////////////// */
 	Radio_enable(false);
@@ -57,21 +55,21 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	spi_cs(false);
 
 	/* Config Radio /////////////////////////////////////////////////////// */
-	Radio_write_reg(RADIO_CONFIG,     RADIO_CONFIG_DEFAULT); // default (see .h)
-	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
-	Radio_write_reg(RADIO_EN_RXADDR,  RADIO_EN_RXADDR_P0 | RADIO_EN_RXADDR_P1); // enable only pipe 0 and 1
-	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // disable auto retransmit
-	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
-	//Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
-	Radio_write_reg(RADIO_RF_CH,      RADIO_RF_SETUP_RF_DR_HIGH & (0x3 << 1)); // set RF speed (2Mbps) and full power
-
-	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, 5); // set RX address 0
+//	Radio_write_reg(RADIO_CONFIG,     RADIO_CONFIG_DEFAULT); // default (see .h)
+//	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
+//	Radio_write_reg(RADIO_EN_RXADDR,  RADIO_EN_RXADDR_P0 | RADIO_EN_RXADDR_P1); // enable only pipe 0 and 1
+//	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // disable auto retransmit
+//	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
+//	//Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
+//	Radio_write_reg(RADIO_RF_CH,      RADIO_RF_SETUP_RF_DR_HIGH & (0x3 << 1)); // set RF speed (2Mbps) and full power
+//
+//	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, 5); // set RX address 0
 	Radio_write_reg(RADIO_RX_PW_P0, 32);
-	radio_local = local;
-
-	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, 5); // set RX address 1
+//	radio_local = local;
+//
+//	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, 5); // set RX address 1
 	Radio_write_reg(RADIO_RX_PW_P1, 32);
-	radio_broadcast = broadcast;
+//	radio_broadcast = broadcast;
 
 	/* Config IRQ //////////////////// */
 	// select the port and pin
@@ -126,18 +124,24 @@ void RADIO_IRQHF(void) {
 	}
 }
 
+uint8_t radio_fifo;
+
+void radio_read_fifo(void) {
+	radio_fifo = Radio_read_reg(RADIO_FIFO_STATUS);
+}
+
 /**************************************************************************//**
  * @brief Send a msg
  *****************************************************************************/
 int Radio_send_broadcast(struct net_packet_broadcast *data)
 {
 	Radio_enable(false);
-	Radio_setMode(Radio_Mode_TX);
 
 	Radio_loadbuf_broadcast(data);
 
+	Radio_setMode(Radio_Mode_TX);
 	Radio_enable(true);
-	delay(2);
+	delay(200);
 	Radio_enable(false);
 
 	Radio_setMode(Radio_Mode_RX);
@@ -148,10 +152,10 @@ int Radio_send_broadcast(struct net_packet_broadcast *data)
 int Radio_send_rt(struct net_packet_rt *data)
 {
 	Radio_enable(false);
-	Radio_setMode(Radio_Mode_TX);
 
 	Radio_loadbuf_rt(data);
 
+	Radio_setMode(Radio_Mode_TX);
 	Radio_enable(true);
 	delay(2);
 	Radio_enable(false);
@@ -207,13 +211,14 @@ int Radio_recive(uint8_t* data, uint8_t maxLenght){
 
 void Radio_setMode(Radio_Modes_typdef mode)
 {
-	uint8_t val = RADIO_CONFIG_DEFAULT;
+	uint8_t val = RADIO_CONFIG_DEFAULT | RADIO_CONFIG_PRIM_RX;
 
 	if(mode == Radio_Mode_TX) {
 		val ^= RADIO_CONFIG_PRIM_RX;
 	}
 	Radio_write_reg(RADIO_CONFIG, val);
 	// TODO: may need delay
+	delay(10);
 }
 
 void radio_set_parent(struct radio_address *parent){
@@ -222,7 +227,12 @@ void radio_set_parent(struct radio_address *parent){
 
 void Radio_enable(bool state)
 {
-	letimer_forcepin(state);
+	if (state) {
+		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
+		Radio_flush(RADIO_CMD_FLUSH_RX);
+	} else {
+		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
 }
 
 void Radio_deinit(void) {

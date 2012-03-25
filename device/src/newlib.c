@@ -11,8 +11,6 @@
 
 #include "efm32_emu.h"
 
-#include "rtc.h"
-
 #undef errno
 extern int errno;
 
@@ -245,12 +243,6 @@ int _write(int file, char *ptr, int len) {
 }
 
 time_t time(time_t *timer){
-	time_t temp;
-
-	temp = RTC_getTime();
-	if (timer != NULL && temp >= 0){
-		*timer = temp;
-	}
-	return temp;
+	return -1;
 }
 

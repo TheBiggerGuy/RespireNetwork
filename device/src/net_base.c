@@ -32,7 +32,7 @@ void net_base_init(void){
 	Radio_init(&local, &broadcast, &broadcast);
 
 	// every 1s on the second for 238ns
-	letimer_init(4, &net_base_end_tx, 12, &net_base_end_rx);
+	letimer_init(4, &net_base_end_tx, 0xff, &net_base_end_rx, false);
 
 }
 

@@ -19,7 +19,7 @@ uint16_t letimer_wait1;
 
 bool letimer_toggle = true;
 
-void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1, void(*wait1_end)(void))
+void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_period1, void(*wait1_end)(void), bool wait1_on)
 {
 	// Config the clocks //////////////////////////////////////////////////////
 	//CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
@@ -43,11 +43,15 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1, void(*
 	letimer_wait0_end = wait0_end;
 	letimer_wait1_end = wait1_end;
 	letimer_wait0 = wait0;
-	letimer_wait1 = wait1 - wait0;
+	letimer_wait1 = wait1_or_period1;
 
 	// Config the LETIMER /////////////////////////////////////////////////////
 	CMU->LFAPRESC0 |= CMU_LFACLKEN0_LETIMER0;
-	LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_BUFTOP | LETIMER_CTRL_REPMODE_DOUBLE | LETIMER_CTRL_UFOA0_PULSE | LETIMER_CTRL_RTCC0TEN;
+	if (wait1_on) {
+		LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_BUFTOP | LETIMER_CTRL_REPMODE_BUFFERED | LETIMER_CTRL_UFOA0_PULSE | LETIMER_CTRL_RTCC0TEN;
+	} else {
+		LETIMER0->CTRL = LETIMER_CTRL_COMP0TOP | LETIMER_CTRL_BUFTOP | LETIMER_CTRL_REPMODE_BUFFERED | LETIMER_CTRL_UFOA0_PWM | LETIMER_CTRL_RTCC0TEN; // TODO
+	}
 #if defined(CONFIG_CLOCKS_ON_DEBUG)
 	LETIMER0->CTRL |= LETIMER_CTRL_DEBUGRUN;
 #endif
@@ -59,14 +63,15 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1, void(*
 	//  |                                                      |
 	//  +--<------------------------------------------------<--+
 	LETIMER0->COMP0 = letimer_wait0; // TOP
-	LETIMER0->COMP1 = letimer_wait1; // TOP 2
+	LETIMER0->COMP1 = letimer_wait1; // TOP
+
 	LETIMER0->REP0 = 1;
-	LETIMER0->REP1 = 2;
+	LETIMER0->REP1 = 1;
 
 	LETIMER0->ROUTE = LETIMER_ROUTE_LOCATION_LOC1 | LETIMER_ROUTE_OUT0PEN;
 
 	// Enable interrupts //////////////////////////////////////////////////////
-	LETIMER0->IEN = LETIMER_IEN_REP0 | LETIMER_IEN_UF;
+	LETIMER0->IEN = LETIMER_IEN_COMP0;
 
 	NVIC_ClearPendingIRQ(LETIMER0_IRQn);
 	NVIC_EnableIRQ(LETIMER0_IRQn);
@@ -90,26 +95,21 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1, void(*
 //			(*letimer_wait2_end)();
 //		}
 
+bool todo = true;
+
 void LETIMER0_IRQHandler(void)
 {
-	if (LETIMER0->IF & LETIMER_IF_REP0)
+	if (LETIMER0->IF & LETIMER_IF_COMP0)
 	{
-		LETIMER0->IFC = LETIMER_IFC_REP0;
-	}
-	if (LETIMER0->IF & LETIMER_IF_UF)
-	{
-		if (letimer_toggle) {
-			LETIMER0->COMP0 = letimer_wait1; // TOP 2
-			if (letimer_wait0_end != NULL)
-				(*letimer_wait0_end)();
-		} else if (!letimer_toggle) {
-			LETIMER0->COMP0 = letimer_wait0; // TOP 2
-			if (letimer_wait1_end != NULL)
-				(*letimer_wait1_end)();
+		if (todo) {
+			LETIMER0->COMP1 = letimer_wait1; // TOP
+			LETIMER0->REP1 = 1;
+			todo = false;
+		} else {
+			LETIMER0->COMP1 = letimer_wait0; // TOP
+			todo = true;
 		}
-		letimer_toggle = !letimer_toggle;
-
-		LETIMER0->IFC = LETIMER_IFC_UF;
+		LETIMER0->IFC = LETIMER_IFC_COMP0;
 	}
 }
 

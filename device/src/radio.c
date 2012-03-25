@@ -137,7 +137,7 @@ int Radio_send_broadcast(struct net_packet_broadcast *data)
 	Radio_loadbuf_broadcast(data);
 
 	Radio_enable(true);
-	delay(2);
+	delay(20);
 	Radio_enable(false);
 
 	Radio_setMode(Radio_Mode_RX);

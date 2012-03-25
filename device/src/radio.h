@@ -20,8 +20,8 @@
 #define RADIO_CMD_W_REG        0x20
 #define RADIO_CMD_R_RX_PAYLOAD 0x61
 #define RADIO_CMD_W_TX_PAYLOAD 0xA0
-#define RADIO_CMD_FLUSH_RX     0xE1
-#define RADIO_CMD_FLUSH_TX     0xE2
+#define RADIO_CMD_FLUSH_TX     0xE1
+#define RADIO_CMD_FLUSH_RX     0xE2
 #define RADIO_CMD_NOP          0xFF
 
 

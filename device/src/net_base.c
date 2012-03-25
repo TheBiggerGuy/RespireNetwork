@@ -41,7 +41,7 @@ void net_base_init(void){
 void net_base_end_rx(void){
 	struct net_packet_rt packet;
 
-	// convet to tx mode and load packet
+	// convert to tx mode and load packet
 	memcpy(packet.hello, "hello", 5);
 	packet.time = RTC_getTime();
 	Radio_loadbuf_rt(&packet);

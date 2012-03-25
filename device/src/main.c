@@ -37,11 +37,10 @@
 #include "efm32_chip.h"
 #include "efm32_dbg.h"
 
+#include "radio.h"
 #include "config.h"
 #include "main.h"
-
-#include "net_packets.h"
-#include "net_base.h"
+#include "spi.h"
 
 volatile time_t msTicks; /* counts 1ms timeTicks */
 
@@ -66,7 +65,14 @@ void delay(uint8_t dlyTicks) {
 	}
 }
 
-volatile bool DO_MAIN_LOOP = true;
+void radio_ce(bool state)
+{
+	if (state) {
+		GPIO->P[RADIO_PORT_CE].DOUTSET = 1 << RADIO_PIN_CE;
+	} else {
+		GPIO->P[RADIO_PORT_CE].DOUTCLR = 1 << RADIO_PIN_CE;
+	}
+}
 
 /**************************************************************************//**
  * @brief  Main function
@@ -79,15 +85,25 @@ int main(void) {
 	/* Ensure core frequency has been updated */
 	SystemCoreClockUpdate();
 
-	/* Setup SysTick Timer for 1 msec interrupts  */
+	/* Setup SysTick Timer for 1 msec interrupts
+	 * Note:
+	 *   This enables the IRQ in the IRQ table
+     */
 	if (SysTick_Config(SystemCoreClock / 1400))
 		exit(EXIT_FAILURE);
 
-	net_base_init();
+	GPIO_PinModeSet(RADIO_PORT_CE,  RADIO_PIN_CE,  gpioModeInputPull, 0);  // CE
+	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput,     0);  // IRQ
 
-	//net_rx();
+	radio_ce(false);
+
+	spi_init();
+
+	spi_clear_rx();
+	spi_clear_tx();
+
 	while(true) {
-		net_send();
+		//net_send();
 		delay(100);
 		net_read_fifo();
 	}

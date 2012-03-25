@@ -28,16 +28,20 @@ void net_base_init(void){
 	// local and broadcast recive adresses and tx on local address
 	Radio_init(&local, &broadcast);
 	radio_set_parent(&broadcast);
-
-	Radio_setMode(Radio_Mode_RX);
-	Radio_enable(true);
 }
 
 void net_rx(void) {
 	Radio_enable(false);
 	Radio_setMode(Radio_Mode_RX);
 	Radio_enable(true);
-	delay(100);
+	delay(200);
+}
+
+void net_tx(void) {
+	Radio_enable(false);
+	Radio_setMode(Radio_Mode_TX);
+	Radio_enable(true);
+	delay(200);
 }
 
 void net_send(void) {

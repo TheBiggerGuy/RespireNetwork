@@ -39,12 +39,12 @@ void net_base_init(void){
 }
 
 void net_base_end_rx(void){
-	struct net_packet_rt packet;
+	struct net_packet_broadcast packet;
 
 	// convert to tx mode and load packet
 	memcpy(packet.hello, "hello", 5);
 	packet.time = RTC_getTime();
-	Radio_loadbuf_rt(&packet);
+	Radio_loadbuf_broadcast(&packet);
 
 	Radio_setMode(Radio_Mode_TX);
 }

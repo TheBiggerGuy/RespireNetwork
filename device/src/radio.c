@@ -52,17 +52,19 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	/* Enable the SPI ////////////////////////////////////////////////////// */
 	spi_init();
 
-	spi_cs(true);
-	delay(10);
-	spi_cs(false);
+	/* power down to allow config */
+	Radio_write_reg(RADIO_CONFIG, 0x00);
+	delay(20);
+	Radio_flush(RADIO_CMD_FLUSH_RX);
+	Radio_flush(RADIO_CMD_FLUSH_TX);
+	delay(20);
 
 	/* Config Radio /////////////////////////////////////////////////////// */
-	Radio_write_reg(RADIO_CONFIG,     RADIO_CONFIG_DEFAULT); // default (see .h)
 	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
 	Radio_write_reg(RADIO_EN_RXADDR,  RADIO_EN_RXADDR_P0 | RADIO_EN_RXADDR_P1); // enable only pipe 0 and 1
 	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // disable auto retransmit
 	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
-	//Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
+	Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
 	Radio_write_reg(RADIO_RF_CH,      RADIO_RF_SETUP_RF_DR_HIGH & (0x3 << 1)); // set RF speed (2Mbps) and full power
 
 	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, 5); // set RX address 0
@@ -88,8 +90,8 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	/* power up //////////////////////////////////////////////////// */
 	Radio_flush(RADIO_CMD_FLUSH_RX);
 	Radio_flush(RADIO_CMD_FLUSH_TX);
-	Radio_setMode(Radio_Mode_RX);
 	Radio_clearIRQ();
+	Radio_setMode(Radio_Mode_RX);
 }
 
 void RADIO_IRQHF(void) {
@@ -98,18 +100,15 @@ void RADIO_IRQHF(void) {
 		// read and clear radio irq
 		uint8_t radioIRQ = Radio_read_reg(RADIO_STATUS);
 		Radio_clearIRQ();
-		GPIO->IFC = (1 << RADIO_PIN_IRQ);
 
 		if(radioIRQ & RADIO_STATUS_MAX_RT) {
 			// Retransmitting
-			GPIO->IFC = (1 << RADIO_PIN_IRQ); // NOP replacement
-			__NOP();
+			radioIRQ ++; // NOP replacement
 		}
 
 		if(radioIRQ & RADIO_STATUS_TX_DS) {
 			// Data sent
-			GPIO->IFC = (1 << RADIO_PIN_IRQ); // NOP replacement
-			__NOP();
+			radioIRQ ++; // NOP replacement
 		}
 
 		if(radioIRQ & RADIO_STATUS_RX_DR) {
@@ -121,7 +120,10 @@ void RADIO_IRQHF(void) {
 			} else {
 				radio_data_a_braodcast = true;
 			}
+			Radio_flush(RADIO_CMD_FLUSH_RX); // TODO
 		}
+
+		GPIO->IFC = (1 << RADIO_PIN_IRQ);
 
 	}
 }

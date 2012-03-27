@@ -2,7 +2,7 @@
 ; * @file:    
 ; * @purpose: CMSIS Cortex-M3 Core Device Startup File 
 ; *           for the Energy Micro 'EFM32G' Device Series 
-; * @version 2.3.2
+; * @version 2.4.0
 ; * @date:    January 2011
 ; *----------------------------------------------------------------------------
 ; *
@@ -106,6 +106,8 @@ __vector_table_0x1c
         DCD LCD_IRQHandler  ; 27: LCD Interrupt 
         DCD MSC_IRQHandler  ; 28: MSC Interrupt 
         DCD AES_IRQHandler  ; 29: AES Interrupt 
+
+
 
 __Vectors_End
 __Vectors       EQU   __vector_table
@@ -322,4 +324,7 @@ MSC_IRQHandler
 AES_IRQHandler
         B AES_IRQHandler
  
+        SECTION .text:CODE:REORDER(1)
+ 
+
         END

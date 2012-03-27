@@ -16,13 +16,14 @@
 #undef errno
 extern int errno;
 
-#define HEAP_SIZE 1024
+#define HEAP_SIZE (4*1024)
 
 #define STDOUT 1
 #define STDIN  2
 #define STDERR 3
 
-unsigned char heap[HEAP_SIZE];
+static unsigned char heap[HEAP_SIZE];
+static unsigned char *heap_end = heap;
 
 /**
  * via: http://e2e.ti.com/support/microcontrollers/stellaris_arm_cortex-m3_microcontroller/f/473/t/44452.aspx
@@ -37,7 +38,6 @@ unsigned char heap[HEAP_SIZE];
 void _exit(int code) {
 	if (code == EXIT_SUCCESS) {
 		EMU_EnterEM4();
-		NVIC_SystemReset();
 	} else {
 		NVIC_SystemReset();
 	}
@@ -148,17 +148,13 @@ int _read(int file, char *ptr, int len) {
 /**
  * Increase program data space.
  * As malloc and related functions depend on this, it is useful to have a working implementation.
- * The following suffices for a standalone system.
+ * The following suffices for a stand alone system.
  */
 caddr_t _sbrk(int incr) {
-	static unsigned char *heap_end;
 	unsigned char *prev_heap_end;
 
-	if (heap_end == 0) {
-		heap_end = heap;
-	}
 	prev_heap_end = heap_end;
-	if (heap_end + incr - heap > HEAP_SIZE) {
+	if (heap_end - heap + incr > HEAP_SIZE) {
 		write(STDOUT, "Heap overflow\n", 14);
 		abort();
 	}

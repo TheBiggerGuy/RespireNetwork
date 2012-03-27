@@ -2,7 +2,7 @@
  * @file
  * @brief Energy Management Unit (EMU) Peripheral API for EFM32
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -413,10 +413,7 @@ void EMU_EM4Init(EMU_EM4Init_TypeDef *em4init)
 
 /***************************************************************************//**
  * @brief
- *   Configure BackUp Power Domain settings
- *
- * @note
- *   stig note to self: Touches RMU->CTRL BUPD?
+ *   Configure Backup Power Domain settings
  *
  * @param[in] bupdInit
  *   Backup power domain initialization structure
@@ -424,11 +421,6 @@ void EMU_EM4Init(EMU_EM4Init_TypeDef *em4init)
 void EMU_BUPDInit(EMU_BUPDInit_TypeDef *bupdInit)
 {
   uint32_t reg;
-
-  EFM_ASSERT(bupdInit->inactiveThresRange < 4);
-  EFM_ASSERT(bupdInit->inactiveThreshold < 4);
-  EFM_ASSERT(bupdInit->activeThresRange < 4);
-  EFM_ASSERT(bupdInit->activeThreshold < 4);
 
   /* Set power connection configuration */
   reg = EMU->PWRCONF & ~(
@@ -445,27 +437,13 @@ void EMU_BUPDInit(EMU_BUPDInit_TypeDef *bupdInit)
   EMU->PWRCONF = reg;
 
   /* Set backup domain inactive mode configuration */ 
-  reg = EMU->BUINACT & ~(
-    _EMU_BUINACT_PWRCON_MASK|
-    _EMU_BUINACT_BUENRANGE_MASK|
-    _EMU_BUINACT_BUENTHRES_MASK);
-
-  reg |= (bupdInit->inactivePower|
-         (bupdInit->inactiveThresRange << _EMU_BUINACT_BUENRANGE_SHIFT)|
-         (bupdInit->inactiveThreshold  << _EMU_BUINACT_BUENTHRES_SHIFT));
-
+  reg = EMU->BUINACT & ~(_EMU_BUINACT_PWRCON_MASK);
+  reg |= (bupdInit->inactivePower);
   EMU->BUINACT = reg;
 
   /* Set backup domain active mode configuration */
-  reg = EMU->BUACT & ~(
-    _EMU_BUACT_PWRCON_MASK|
-    _EMU_BUACT_BUEXRANGE_MASK|
-    _EMU_BUACT_BUEXTHRES_MASK);
-
-  reg |= (bupdInit->activePower|
-         (bupdInit->activeThresRange << _EMU_BUACT_BUEXRANGE_SHIFT)|
-         (bupdInit->activeThreshold  << _EMU_BUACT_BUEXTHRES_SHIFT));
-
+  reg = EMU->BUACT & ~(_EMU_BUACT_PWRCON_MASK);
+  reg |= (bupdInit->activePower);
   EMU->BUACT = reg;
 
   /* Set power control configuration */
@@ -490,6 +468,54 @@ void EMU_BUPDInit(EMU_BUPDInit_TypeDef *bupdInit)
 
   /* If enable is true, release BU reset, if not keep reset asserted */
   BITBAND_Peripheral(&(RMU->CTRL), _RMU_CTRL_BURSTEN_SHIFT, !bupdInit->enable);
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *   Configure Backup Power Domain BOD Threshold value
+ * @note
+ *   These values are precalibrated 
+ * @param[in] mode Active or Inactive mode
+ * @param[in] value
+ ******************************************************************************/
+void EMU_BUThresholdSet(EMU_BODMode_TypeDef mode, uint32_t value)
+{
+  EFM_ASSERT(value<4);
+  
+  switch(mode)
+  {
+  case emuBODMode_Active:
+    EMU->BUACT = (EMU->BUACT & ~(_EMU_BUACT_BUEXTHRES_MASK))|(value<<_EMU_BUACT_BUEXTHRES_SHIFT);
+    break;
+  case emuBODMode_Inactive:
+    EMU->BUINACT = (EMU->BUINACT & ~(_EMU_BUINACT_BUENTHRES_MASK))|(value<<_EMU_BUINACT_BUENTHRES_SHIFT);
+    break;
+  }
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *  Configure Backup Power Domain BOD Threshold Range
+ * @note
+ *  These values are precalibrated 
+ * @param[in] mode Active or Inactive mode
+ * @param[in] value
+ ******************************************************************************/
+void EMU_BUThresRangeSet(EMU_BODMode_TypeDef mode, uint32_t value)
+{
+  EFM_ASSERT(value<4);
+
+  switch(mode)
+  {
+  case emuBODMode_Active:
+    EMU->BUACT = (EMU->BUACT & ~(_EMU_BUACT_BUEXRANGE_MASK))|(value<<_EMU_BUACT_BUEXRANGE_SHIFT);
+    break;
+  case emuBODMode_Inactive:
+    EMU->BUINACT = (EMU->BUINACT & ~(_EMU_BUINACT_BUENRANGE_MASK))|(value<<_EMU_BUINACT_BUENRANGE_SHIFT);
+    break;
+  }
 }
 
 #endif

@@ -1,11 +1,27 @@
 /**************************************************************************//**
  * @file
- * @brief Magic
+ * @brief The Main entry point into the program.
  * @author Guy Taylor
- * @version 0.0.1
+ * @version 0.2.1
  ******************************************************************************
  * @section License
- * <b>(C) Copyright 2011-2012 Guy Taylor
+ * Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
+ * 
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ * NOTE:
+ *   * Pre  7th March 2012: Copyright Guy Taylor
+ *   * Post 7th March 2012: Copyright Guy Taylor with "Apache License, Ver 2.0"
  *****************************************************************************/
 
 #include <stdlib.h>
@@ -21,14 +37,19 @@
 #include "efm32_chip.h"
 #include "efm32_dbg.h"
 
-#define IS_BASE
-
+#include "config.h"
 #include "main.h"
 #include "dbg.h"
-#ifdef IS_BASE
+
+#include "net_packets.h"
+#if CONFIG_FUNC == CONFIG_FUNC_BASE
 #include "net_base.h"
-#else
+#elif CONFIG_FUNC == CONFIG_FUNC_NODE
 #include "net_node.h"
+#elif CONFIG_FUNC == CONFIG_FUNC_RECV
+#include "net_recv_only.h"
+#else
+#error "Invalid 'CONFIG_FUNC'"
 #endif
 #include "rtc.h"
 
@@ -42,12 +63,17 @@
  * E15 CE
  */
 
-#ifdef IS_BASE
+#if CONFIG_FUNC == CONFIG_FUNC_BASE
 void (*init_list[])(void)   = {DBG_init, net_base_init, RTC_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_base_deinit, DBG_deinit, NULL};
-#else
+#elif CONFIG_FUNC == CONFIG_FUNC_NODE
 void (*init_list[])(void)   = {DBG_init, net_node_init, RTC_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_node_deinit, DBG_deinit, NULL};
+#elif CONFIG_FUNC == CONFIG_FUNC_RECV
+void (*init_list[])(void)   = {DBG_init, net_recv_only_init, RTC_init, NULL};
+void (*deinit_list[])(void) = {RTC_deinit, net_recv_only_deinit, DBG_deinit, NULL};
+#else
+#error "Invalid 'CONFIG_FUNC'"
 #endif
 
 volatile time_t msTicks; /* counts 1ms timeTicks */
@@ -98,11 +124,23 @@ int main(void) {
 		i++;
 	}
 
+	printf("Finished Init\n");
+
 	// TODO
 	RTC_setTime(1328288470);
 
+	struct net_packet_broadcast buf;
+
+	memset(&buf, 0x00, sizeof(buf));
+
 	while (DO_MAIN_LOOP == true) {
+		if (net_available() > 0) {
+			net_recive((uint8_t *) &buf, sizeof(struct net_packet_broadcast));
+			printf("hello\n");
+		}
 	}
+
+	printf("Starting DeInit\n");
 
 	/* Run the module de-initilizers */
 	i = 0;

@@ -2,7 +2,7 @@
  * @file
  * @brief External Bus Interface (EBI) Peripheral API for EFM32
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -29,7 +29,6 @@
 #if defined(EBI_COUNT) && (EBI_COUNT > 0)
 #include "efm32_assert.h"
 #include "efm32_bitband.h"
-#include <stdlib.h>
 
 /***************************************************************************//**
  * @addtogroup EFM32_Library
@@ -248,8 +247,11 @@ void EBI_Init(const EBI_Init_TypeDef *ebiInit)
   /* Location */
   EBI->ROUTE = (EBI->ROUTE & ~_EBI_ROUTE_LOCATION_MASK) | ebiInit->location;
 
-  /* Enable EBI pins BL, ADxx, WEn, REn */
-  BITBAND_Peripheral(&(EBI->ROUTE), _EBI_ROUTE_BLPEN_SHIFT, ebiInit->blEnable);
+  /* Enable EBI BL pin if necessary */
+  if(ctrl & (_EBI_CTRL_BL_MASK|_EBI_CTRL_BL1_MASK|_EBI_CTRL_BL2_MASK|_EBI_CTRL_BL3_MASK))
+  {
+    BITBAND_Peripheral(&(EBI->ROUTE), _EBI_ROUTE_BLPEN_SHIFT, ebiInit->blEnable);
+  }
 #endif
   /* Enable EBI pins EBI_WEn and EBI_REn */
   BITBAND_Peripheral(&(EBI->ROUTE), _EBI_ROUTE_EBIPEN_SHIFT, 1);
@@ -1028,7 +1030,7 @@ void EBI_BankAddressTimingSet(uint32_t banks, int setupCycles, int holdCycles)
 void EBI_BankPolaritySet(uint32_t banks, EBI_Line_TypeDef line, EBI_Polarity_TypeDef polarity)
 {
   uint32_t bankSet = 0;
-  volatile uint32_t *polRegister = NULL;
+  volatile uint32_t *polRegister = 0;
 
   /* Verify only valid banks are used */
   EFM_ASSERT((banks & ~(EBI_BANK0 | EBI_BANK1 | EBI_BANK2 | EBI_BANK3)) == 0);

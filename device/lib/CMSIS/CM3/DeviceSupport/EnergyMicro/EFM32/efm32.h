@@ -9,7 +9,7 @@
  *          Add "#include "efm32.h" to your source files
  * @endverbatim
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  ******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -36,8 +36,10 @@
 #ifndef __EFM32_H
 #define __EFM32_H
 
-#ifndef EFM32G890F128
+#if !defined(DEVICE)
+#if !defined(EFM32G890F128)
 #define EFM32G890F128
+#endif
 #endif
 
 #if defined(EFM32G200F16)

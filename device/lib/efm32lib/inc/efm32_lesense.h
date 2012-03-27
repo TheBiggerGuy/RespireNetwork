@@ -2,7 +2,7 @@
  * @file
  * @brief Low Energy Sensor (LESENSE) peripheral API for EFM32 TG/GG devices.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -1310,8 +1310,7 @@ static __INLINE uint32_t LESENSE_IntGet(void)
  ******************************************************************************/
 static __INLINE uint32_t LESENSE_IntGetEnabled(void)
 {
-  uint32_t tmp = 0U;
-
+  uint32_t tmp;
 
   /* Store LESENSE->IEN in temporary variable in order to define explicit order
    * of volatile accesses. */

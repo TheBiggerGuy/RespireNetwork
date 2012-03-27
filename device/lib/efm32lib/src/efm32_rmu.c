@@ -3,7 +3,7 @@
  * @brief Reset Management Unit (RMU) peripheral module peripheral API
  *   for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -48,15 +48,15 @@
 
 /***************************************************************************//**
  * @brief
- *   Disable/enable the lockup signal from the Cortex M-3.
+ *   Disable/enable reset for various peripherals and signal sources
  *
- * @param[in] disable
- *   @li false - Allow lockup signal to reset.
- *   @li true - Do not allow lockup signal to reset.
+ * @param[in] enable
+ *   @li false - Disable reset signal or flag
+ *   @li true - Enable reset signal or flag
  ******************************************************************************/
-void RMU_LockupResetDisable(bool disable)
+void RMU_ResetControl(RMU_Reset_TypeDef reset, bool enable)
 {
-  BITBAND_Peripheral(&(RMU->CTRL), _RMU_CTRL_LOCKUPRDIS_SHIFT, (unsigned int)disable);
+  BITBAND_Peripheral(&(RMU->CTRL), (uint32_t)reset, (uint32_t)enable);
 }
 
 
@@ -95,7 +95,8 @@ void RMU_ResetCauseClear(void)
  * @details
  *   In order to be useful, the reset cause must be cleared by SW before a new
  *   reset occurs, otherwise reset causes may accumulate. See
- *   RMU_ResetCauseClear().
+ *   RMU_ResetCauseClear(). This function call will return the main cause for
+ *   reset, which can be a bit mask (several causes), and clear away "noise".
  *
  * @return
  *   The reset cause, a bit mask of (typically, but not always, only one) of:
@@ -106,6 +107,15 @@ void RMU_ResetCauseClear(void)
  *   @li RMU_RSTCAUSE_WDOGRST - Watchdog reset
  *   @li RMU_RSTCAUSE_LOCKUPRST - Cortex-M3 lockup reset
  *   @li RMU_RSTCAUSE_SYSREQRST - Cortex-M3 system request reset
+ *   @li RMU_RSTCAUSE_EM4RST - Set if the system has been in EM4
+ *   @li RMU_RSTCAUSE_EM4WURST - Set if the system woke up on a pin from EM4
+ *   @li RMU_RSTCAUSE_BODAVDD0 - Analog power domain 0 brown out detector reset
+ *   @li RMU_RSTCAUSE_BODAVDD1 - Analog power domain 1 brown out detector reset
+ *   @li RMU_RSTCAUSE_BUBODVDDDREG - Backup BOD on VDDD_REG triggered
+ *   @li RMU_RSTCAUSE_BUBODBUVIN - Backup BOD on BU_VIN triggered
+ *   @li RMU_RSTCAUSE_BUBODUNREG - Backup BOD on unregulated power triggered
+ *   @li RMU_RSTCAUSE_BUBODREG - Backup BOD on regulated powered has triggered
+ *   @li RMU_RSTCAUSE_BUMODERST - System has been in Backup mode
  ******************************************************************************/
 uint32_t RMU_ResetCauseGet(void)
 {
@@ -123,29 +133,12 @@ uint32_t RMU_ResetCauseGet(void)
              RMU_RSTCAUSE_LOCKUPRST|
              RMU_RSTCAUSE_SYSREQRST);
   }
-  if (ret == RMU_RSTCAUSE_BODAVDD0)
-  {
-    ret = RMU_RSTCAUSE_BODAVDD0;
-  }
-  else if (ret == RMU_RSTCAUSE_BODAVDD1)
-  {
-    ret = RMU_RSTCAUSE_BODAVDD1;
-  }
-  else if (ret == (RMU_RSTCAUSE_EM4WURST|RMU_RSTCAUSE_EM4RST))
-  {
-    ret &= (RMU_RSTCAUSE_EM4WURST|RMU_RSTCAUSE_EM4RST);
-  }
-  else if (ret & (RMU_RSTCAUSE_EM4RST|RMU_RSTCAUSE_EXTRST))
-  {
-    ret &= (RMU_RSTCAUSE_EM4RST|RMU_RSTCAUSE_EXTRST);
-  }
-  else
 #endif
   if (ret & RMU_RSTCAUSE_PORST)
   {
     ret = RMU_RSTCAUSE_PORST;
   }
-  else if (ret & RMU_RSTCAUSE_BODUNREGRST)
+  else if ((ret & 0x83) == RMU_RSTCAUSE_BODUNREGRST)
   {
     ret = RMU_RSTCAUSE_BODUNREGRST;
   }
@@ -154,16 +147,55 @@ uint32_t RMU_ResetCauseGet(void)
     ret = RMU_RSTCAUSE_BODREGRST;
   }
   /* Both external and watchdog reset may occur at the same time */
-  else if (ret & (RMU_RSTCAUSE_EXTRST | RMU_RSTCAUSE_WDOGRST))
+  else if ((ret & 0x1b) & (RMU_RSTCAUSE_EXTRST | RMU_RSTCAUSE_WDOGRST))
   {
     ret &= RMU_RSTCAUSE_EXTRST | RMU_RSTCAUSE_WDOGRST;
   }
   /* Both lockup and system reset may occur at the same time */
-  else if (ret & (RMU_RSTCAUSE_LOCKUPRST | RMU_RSTCAUSE_SYSREQRST))
+  else if ((ret & 0x7ff) & (RMU_RSTCAUSE_LOCKUPRST | RMU_RSTCAUSE_SYSREQRST))
   {
     ret &= RMU_RSTCAUSE_LOCKUPRST | RMU_RSTCAUSE_SYSREQRST;
   }
-  else 
+  /* EM4 wake up and pin retention support */
+#if defined(_EFM32_TINY_FAMILY) || defined(_EFM32_GIANT_FAMILY)
+  else if (ret & RMU_RSTCAUSE_BODAVDD0)
+  {
+    ret = RMU_RSTCAUSE_BODAVDD0;
+  }
+  else if (ret & RMU_RSTCAUSE_BODAVDD1)
+  {
+    ret = RMU_RSTCAUSE_BODAVDD1;
+  }
+  else if (ret & (RMU_RSTCAUSE_EM4WURST|RMU_RSTCAUSE_EM4RST))
+  {
+    ret &= (RMU_RSTCAUSE_EM4WURST|RMU_RSTCAUSE_EM4RST);
+  }
+  else if (ret & (RMU_RSTCAUSE_EM4RST|RMU_RSTCAUSE_EXTRST))
+  {
+    ret &= (RMU_RSTCAUSE_EM4RST|RMU_RSTCAUSE_EXTRST);
+  }
+#endif
+  /* Backup power domain support */
+#if defined(_EFM32_GIANT_FAMILY)
+  else if (ret & (RMU_RSTCAUSE_BUBODVDDDREG))
+  {
+    /* Keep backup mode flag, will only be present in this scenario */
+    ret &= (RMU_RSTCAUSE_BUBODVDDDREG|RMU_RSTCAUSE_BUMODERST);
+  }
+  else if (ret & (RMU_RSTCAUSE_BUBODBUVIN))
+  {
+    ret &= (RMU_RSTCAUSE_BUBODBUVIN);
+  }
+  else if (ret & (RMU_RSTCAUSE_BUBODUNREG))
+  {
+    ret &= (RMU_RSTCAUSE_BUBODUNREG);
+  }
+  else if (ret & (RMU_RSTCAUSE_BUBODREG))
+  {
+    ret &= (RMU_RSTCAUSE_BUBODREG);
+  }
+#endif
+  else
   {
     ret = 0;
   }

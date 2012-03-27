@@ -19,11 +19,14 @@ void Radio_clearIRQ(void);
 void Radio_setMode(Radio_Modes_typdef mode);
 
 uint8_t Radio_read_reg(uint8_t loc);
-uint8_t Radio_read_payload(uint8_t* buffer, int length);
-
 void Radio_write_reg(uint8_t loc, uint8_t val);
-void Radio_write_lreg(uint8_t loc, uint8_t *val, int length);
-void Radio_write_packet(uint8_t *data, int length);
+
+uint8_t Radio_read_lreg(uint8_t loc, uint8_t *buf, uint8_t length);
+void Radio_write_lreg(uint8_t loc, uint8_t *val, uint8_t length);
+
+uint8_t Radio_read_payload(uint8_t* buffer, uint8_t length);
+void Radio_write_packet(uint8_t *data, uint8_t length);
+
 void Radio_flush(uint8_t buf);
 
 bool radio_dataReady = false;
@@ -61,18 +64,19 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 
 	/* Config Radio /////////////////////////////////////////////////////// */
 	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
-	Radio_write_reg(RADIO_EN_RXADDR,  RADIO_EN_RXADDR_P0 | RADIO_EN_RXADDR_P1); // enable only pipe 0 and 1
-	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // disable auto retransmit
 	Radio_write_reg(RADIO_SETUP_RETR, 0x00); // disable auto retransmit
+
+	Radio_write_reg(RADIO_EN_RXADDR,  RADIO_EN_RXADDR_P0 | RADIO_EN_RXADDR_P1); // enable only pipe 0 and 1
+	Radio_write_reg(RADIO_SETUP_AW,   RADIO_SETUP_AW_5); // set address width
 	Radio_write_reg(RADIO_RF_CH,      RADIO_CHANNEL); // set RF channel
-	Radio_write_reg(RADIO_RF_CH,      RADIO_RF_SETUP_RF_DR_HIGH & (0x3 << 1)); // set RF speed (2Mbps) and full power
+	Radio_write_reg(RADIO_RF_SETUP,   RADIO_RF_SETUP_RF_DR_HIGH | (0x3 << 1)); // set RF speed (2Mbps) and full power
 
 	Radio_write_lreg(RADIO_RX_ADDR_P0, (uint8_t *) local, 5); // set RX address 0
-	Radio_write_reg(RADIO_RX_PW_P0, 32);
+	Radio_write_reg(RADIO_RX_PW_P0, sizeof(struct net_packet_rt));
 	radio_local = local;
 
 	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, 5); // set RX address 1
-	Radio_write_reg(RADIO_RX_PW_P1, 32);
+	Radio_write_reg(RADIO_RX_PW_P1, sizeof(struct net_packet_broadcast));
 	radio_broadcast = broadcast;
 
 	/* Config IRQ //////////////////// */
@@ -91,38 +95,42 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	Radio_flush(RADIO_CMD_FLUSH_RX);
 	Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_clearIRQ();
-	Radio_setMode(Radio_Mode_RX);
+	Radio_setMode(Radio_Mode_RX); // powers up
+	delay(10);
 }
 
 void RADIO_IRQHF(void) {
+	bool bob = false;
 	if (GPIO->IF & (1 << RADIO_PIN_IRQ)) {
 
 		// read and clear radio irq
 		uint8_t radioIRQ = Radio_read_reg(RADIO_STATUS);
-		Radio_clearIRQ();
 
 		if(radioIRQ & RADIO_STATUS_MAX_RT) {
 			// Retransmitting
-			radioIRQ ++; // NOP replacement
+			bob = true; // NOP replacement
 		}
 
 		if(radioIRQ & RADIO_STATUS_TX_DS) {
 			// Data sent
-			radioIRQ ++; // NOP replacement
+			bob = true; // NOP replacement
 		}
 
 		if(radioIRQ & RADIO_STATUS_RX_DR) {
 			// Data ready to read
+			DBG_LED_Toggle();
 			radio_dataReady = true;
-			uint8_t pipe = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
+			uint8_t pipe   = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
 			if (pipe == 0x00) {
 				radio_data_a_braodcast = false;
 			} else {
 				radio_data_a_braodcast = true;
 			}
+			bool isEmpty = (Radio_read_reg(RADIO_FIFO_STATUS) & RADIO_FIFO_STATUS_RX_EMPTY) == RADIO_FIFO_STATUS_RX_EMPTY;
 			Radio_flush(RADIO_CMD_FLUSH_RX); // TODO
 		}
 
+		Radio_clearIRQ();
 		GPIO->IFC = (1 << RADIO_PIN_IRQ);
 
 	}
@@ -131,37 +139,37 @@ void RADIO_IRQHF(void) {
 /**************************************************************************//**
  * @brief Send a msg
  *****************************************************************************/
-int Radio_send_broadcast(struct net_packet_broadcast *data)
-{
-	Radio_enable(false);
-	Radio_setMode(Radio_Mode_TX);
-
-	Radio_loadbuf_broadcast(data);
-
-	Radio_enable(true);
-	delay(20);
-	Radio_enable(false);
-
-	Radio_setMode(Radio_Mode_RX);
-
-	return sizeof(struct net_packet_broadcast);
-}
-
-int Radio_send_rt(struct net_packet_rt *data)
-{
-	Radio_enable(false);
-	Radio_setMode(Radio_Mode_TX);
-
-	Radio_loadbuf_rt(data);
-
-	Radio_enable(true);
-	delay(2);
-	Radio_enable(false);
-
-	Radio_setMode(Radio_Mode_RX);
-
-	return sizeof(struct net_packet_rt);
-}
+//int Radio_send_broadcast(struct net_packet_broadcast *data)
+//{
+//	Radio_enable(false);
+//	Radio_setMode(Radio_Mode_TX);
+//
+//	Radio_loadbuf_broadcast(data);
+//
+//	Radio_enable(true);
+//	delay(20);
+//	Radio_enable(false);
+//
+//	Radio_setMode(Radio_Mode_RX);
+//
+//	return sizeof(struct net_packet_broadcast);
+//}
+//
+//int Radio_send_rt(struct net_packet_rt *data)
+//{
+//	Radio_enable(false);
+//	Radio_setMode(Radio_Mode_TX);
+//
+//	Radio_loadbuf_rt(data);
+//
+//	Radio_enable(true);
+//	delay(2);
+//	Radio_enable(false);
+//
+//	Radio_setMode(Radio_Mode_RX);
+//
+//	return sizeof(struct net_packet_rt);
+//}
 
 /**************************************************************************//**
  * @brief Send a msg
@@ -169,7 +177,7 @@ int Radio_send_rt(struct net_packet_rt *data)
 int Radio_loadbuf_broadcast(struct net_packet_broadcast *data)
 {
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_broadcast, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
-	Radio_write_packet((uint8_t *) data, 32);
+	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_broadcast));
 
 	return sizeof(struct net_packet_broadcast);
 }
@@ -177,7 +185,7 @@ int Radio_loadbuf_broadcast(struct net_packet_broadcast *data)
 int Radio_loadbuf_rt(struct net_packet_rt *data)
 {
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_parent, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
-	Radio_write_packet((uint8_t *) data, 32);
+	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_rt));
 
 	return sizeof(struct net_packet_rt);
 }
@@ -212,9 +220,15 @@ void Radio_setMode(Radio_Modes_typdef mode)
 	uint8_t val = RADIO_CONFIG_DEFAULT;
 
 	if(mode == Radio_Mode_TX) {
-		val ^= RADIO_CONFIG_PRIM_RX;
+		val = val & ~RADIO_CONFIG_PRIM_RX; // disable RX
+	} else {
+		val = val | RADIO_CONFIG_PRIM_RX; // enable RX
 	}
+	Radio_enable(false);
+	Radio_flush(RADIO_CMD_FLUSH_RX);
+	// Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_write_reg(RADIO_CONFIG, val);
+	Radio_enable(true);
 	// TODO: may need delay
 }
 
@@ -262,19 +276,47 @@ uint8_t Radio_read_reg(uint8_t loc)
 	return buf[1];
 }
 
-uint8_t Radio_read_payload(uint8_t* buffer, int length)
+uint8_t Radio_read_lreg(uint8_t loc, uint8_t* buf, uint8_t length)
 {
-	uint8_t buf = RADIO_CMD_R_RX_PAYLOAD;
+	EFM_ASSERT(loc < 128);
+
+	buf[0] = RADIO_CMD_R_REG | loc;
 
 	// clear RX buffer
 	spi_clear_rx();
 
 	spi_cs(false);
 	// send cmd and NOP
-	spi_write(&buf, 1);
+	spi_write(buf, 1);
 	// read both status and cmd
-	spi_read(buffer, 1, RADIO_CMD_NOP);
-	spi_read(buffer, length, RADIO_CMD_NOP);
+	spi_read(buf, 1, RADIO_CMD_NOP);
+	spi_read(buf, length, RADIO_CMD_NOP);
+	spi_cs(true);
+
+	// clear RX buffer
+	spi_clear_rx();
+
+	// return length
+	return length;
+}
+
+uint8_t Radio_read_payload(uint8_t* buf, uint8_t length)
+{
+	buf[0] = RADIO_CMD_R_RX_PAYLOAD;
+
+	if (length > 32) {
+		length = 32; // max length is 32
+	}
+
+	// clear RX buffer
+	spi_clear_rx();
+
+	spi_cs(false);
+	// send cmd and NOP
+	spi_write(buf, 1);
+	// read both status and cmd
+	spi_read(buf, 1, RADIO_CMD_NOP);
+	spi_read(buf, length, RADIO_CMD_NOP);
 	spi_cs(true);
 
 	// clear RX buffer
@@ -308,7 +350,7 @@ void Radio_write_reg(uint8_t loc, uint8_t val)
 	spi_clear_rx();
 }
 
-void Radio_write_lreg(uint8_t loc, uint8_t *val, int length)
+void Radio_write_lreg(uint8_t loc, uint8_t *val, uint8_t length)
 {
 	uint8_t buf = RADIO_CMD_W_REG | loc;
 
@@ -329,7 +371,7 @@ void Radio_write_lreg(uint8_t loc, uint8_t *val, int length)
 	spi_clear_rx();
 }
 
-void Radio_write_packet(uint8_t *data, int length)
+void Radio_write_packet(uint8_t *data, uint8_t length)
 {
 	uint8_t buf = RADIO_CMD_W_TX_PAYLOAD;
 

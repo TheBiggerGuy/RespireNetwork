@@ -14,7 +14,7 @@
 
 #include "net_packets.h"
 
-#define RADIO_CHANNEL 0x0F
+#define RADIO_CHANNEL 0x32
 
 #define RADIO_CMD_R_REG        0x00
 #define RADIO_CMD_W_REG        0x20
@@ -25,20 +25,21 @@
 #define RADIO_CMD_NOP          0xFF
 
 
-#define RADIO_CONFIG     0x00
-#define RADIO_EN_AA      0x01
-#define RADIO_EN_RXADDR  0x02
-#define RADIO_SETUP_AW   0x03
-#define RADIO_SETUP_RETR 0x04
-#define RADIO_RF_CH      0x05
-#define RADIO_RF_SETUP   0x06
-#define RADIO_STATUS     0x07
-#define RADIO_RX_ADDR_P0 0x0A
-#define RADIO_RX_ADDR_P1 0x0B
-#define RADIO_TX_ADDR    0x10
-#define RADIO_RX_PW_P0   0x11
-#define RADIO_RX_PW_P1   0x12
-#define RADIO_FEATURE    0x1D
+#define RADIO_CONFIG      0x00
+#define RADIO_EN_AA       0x01
+#define RADIO_EN_RXADDR   0x02
+#define RADIO_SETUP_AW    0x03
+#define RADIO_SETUP_RETR  0x04
+#define RADIO_RF_CH       0x05
+#define RADIO_RF_SETUP    0x06
+#define RADIO_STATUS      0x07
+#define RADIO_RX_ADDR_P0  0x0A
+#define RADIO_RX_ADDR_P1  0x0B
+#define RADIO_TX_ADDR     0x10
+#define RADIO_RX_PW_P0    0x11
+#define RADIO_RX_PW_P1    0x12
+#define RADIO_FIFO_STATUS 0x17
+#define RADIO_FEATURE     0x1D
 
 #define RADIO_CONFIG_MASK_RX_DR (1 << 6)
 #define RADIO_CONFIG_MASK_RX_DS (1 << 5)
@@ -48,6 +49,7 @@
 #define RADIO_CONFIG_PWR_UP     (1 << 1)
 #define RADIO_CONFIG_PRIM_RX    (1 << 0)
 #define RADIO_CONFIG_DEFAULT    (RADIO_CONFIG_PRIM_RX | RADIO_CONFIG_PWR_UP | RADIO_CONFIG_CRCCO | RADIO_CONFIG_EN_CRC)
+//#define RADIO_CONFIG_DEFAULT    (RADIO_CONFIG_PRIM_RX | RADIO_CONFIG_PWR_UP)
 
 #define RADIO_EN_RXADDR_P5 (1 << 5)
 #define RADIO_EN_RXADDR_P4 (1 << 4)
@@ -68,7 +70,13 @@
 #define RADIO_STATUS_RX_P_NO_MASK  0x0E
 #define RADIO_STATUS_RX_P_NO_SHIFT 1
 
-#define RADIO_FEATURE_EN_DPL     (1 << 2)
+#define RADIO_FIFO_STATUS_TX_FULL  (1 << 4)
+#define RADIO_FIFO_STATUS_TX_EMPTY (1 << 3)
+#define RADIO_FIFO_STATUS_RES1     (1 << 3)
+#define RADIO_FIFO_STATUS_RX_FULL  (1 << 1)
+#define RADIO_FIFO_STATUS_RX_EMPTY (1 << 0)
+
+#define RADIO_FEATURE_EN_DPL
 #define RADIO_FEATURE_EN_ACK_PAY (1 << 1)
 #define RADIO_FEATURE_EN_DYN_ACK (1 << 0)
 

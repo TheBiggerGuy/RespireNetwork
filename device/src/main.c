@@ -2,7 +2,7 @@
  * @file
  * @brief The Main entry point into the program.
  * @author Guy Taylor
- * @version 0.1.1
+ * @version 0.2.1
  ******************************************************************************
  * @section License
  * Copyright 2011 Guy Taylor <guy@thebiggerguy.com>
@@ -134,12 +134,10 @@ int main(void) {
 	memset(&buf, 0x00, sizeof(buf));
 
 	while (DO_MAIN_LOOP == true) {
-		//DBG_LED_Toggle();
-		printf("hello\n");
-#if CONFIG_FUNC == CONFIG_FUNC_RECV
-		if (net_available() > 0)
-			net_recive((uint8_t *) &buf, sizeof(buf));
-#endif
+		if (net_available() > 0) {
+			net_recive((uint8_t *) &buf, sizeof(struct net_packet_broadcast));
+			printf("hello\n");
+		}
 	}
 
 	printf("Starting DeInit\n");

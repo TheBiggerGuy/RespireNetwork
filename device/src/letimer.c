@@ -33,7 +33,7 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_peri
 
 	CMU_ClockEnable(cmuClock_GPIO, true);
 
-	CMU->LFAPRESC0 |= CMU_LFAPRESC0_LETIMER0_DIV2;
+	CMU->LFAPRESC0 |= CMU_LFAPRESC0_LETIMER0_DIV1;
 
 	// Config the IO pins /////////////////////////////////////////////////////
 	GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE, gpioModePushPull, 0);
@@ -86,6 +86,10 @@ void letimer_init(uint16_t wait0, void(*wait0_end)(void), uint16_t wait1_or_peri
 		;
 }
 
+void letimer_forcepin_ish(void){
+	LETIMER0->CMD = LETIMER_CMD_CTO0;
+}
+
 void letimer_forcepin(bool state){
 	if (!letimer_has_init_gpio) {
 		GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE, gpioModePushPull, 0);
@@ -136,7 +140,9 @@ void letimer_deinit(void)
 	NVIC_ClearPendingIRQ(LETIMER0_IRQn);
 	NVIC_DisableIRQ(LETIMER0_IRQn);
 
-	CMU_ClockEnable(cmuClock_LETIMER0, false);
+	LETIMER0->CMD = LETIMER_CMD_STOP;
+	LETIMER0->ROUTE = 0x00;
+	LETIMER0->CTRL = 0x00;
 
 	letimer_wait0_end = NULL;
 	letimer_wait1_end = NULL;

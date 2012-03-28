@@ -150,6 +150,7 @@ int Radio_loadbuf_broadcast(struct net_packet_broadcast *data);
 int Radio_loadbuf_rt(struct net_packet_rt *data);
 
 int Radio_available(void);
+bool radio_has_packets_to_sent(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
 

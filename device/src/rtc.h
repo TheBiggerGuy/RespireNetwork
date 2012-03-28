@@ -10,7 +10,7 @@
 
 // Computed defines
 #define RTC_MAX_VALUE (1 << (RTC_PRESC + (24-16+1)))
-#define RTC_S_SHIFT   12
+#define RTC_S_SHIFT   13
 #define RTC_S         (1 << RTC_S_SHIFT)
 
 // Prototypes

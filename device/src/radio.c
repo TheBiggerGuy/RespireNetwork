@@ -24,11 +24,12 @@ void Radio_write_reg(uint8_t loc, uint8_t val);
 uint8_t Radio_read_lreg(uint8_t loc, uint8_t *buf, uint8_t length);
 void Radio_write_lreg(uint8_t loc, uint8_t *val, uint8_t length);
 
-uint8_t Radio_read_payload(uint8_t* buffer, uint8_t length);
 void Radio_write_packet(uint8_t *data, uint8_t length);
+uint8_t Radio_read_payload(uint8_t* buf, uint8_t length);
 
 void Radio_flush(uint8_t buf);
 
+bool radio_dataReadyToSend = false;
 bool radio_dataReady = false;
 bool radio_data_a_braodcast = true;
 
@@ -114,6 +115,7 @@ void RADIO_IRQHF(void) {
 		if(radioIRQ & RADIO_STATUS_TX_DS) {
 			// Data sent
 			bob = true; // NOP replacement
+			radio_dataReadyToSend = false;
 		}
 
 		if(radioIRQ & RADIO_STATUS_RX_DR) {
@@ -179,6 +181,7 @@ int Radio_loadbuf_broadcast(struct net_packet_broadcast *data)
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_broadcast, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
 	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_broadcast));
 
+	radio_dataReadyToSend = true;
 	return sizeof(struct net_packet_broadcast);
 }
 
@@ -187,6 +190,7 @@ int Radio_loadbuf_rt(struct net_packet_rt *data)
 	Radio_write_lreg(RADIO_TX_ADDR, (uint8_t *) radio_parent, sizeof(struct radio_address)); // equal to RADIO_RX_ADDR_P1
 	Radio_write_packet((uint8_t *) data, sizeof(struct net_packet_rt));
 
+	radio_dataReadyToSend = true;
 	return sizeof(struct net_packet_rt);
 }
 
@@ -203,6 +207,10 @@ int Radio_available(void) {
 	} else {
 		return 0;
 	}
+}
+
+bool radio_has_packets_to_sent(void) {
+	return radio_dataReadyToSend;
 }
 
 /**************************************************************************//**
@@ -224,11 +232,11 @@ void Radio_setMode(Radio_Modes_typdef mode)
 	} else {
 		val = val | RADIO_CONFIG_PRIM_RX; // enable RX
 	}
-	Radio_enable(false);
-	Radio_flush(RADIO_CMD_FLUSH_RX);
+	//Radio_enable(false);
+	//Radio_flush(RADIO_CMD_FLUSH_RX);
 	// Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_write_reg(RADIO_CONFIG, val);
-	Radio_enable(true);
+	//Radio_enable(true);
 	// TODO: may need delay
 }
 
@@ -322,6 +330,7 @@ uint8_t Radio_read_payload(uint8_t* buf, uint8_t length)
 	// clear RX buffer
 	spi_clear_rx();
 
+	radio_dataReady = false;
 	// return length
 	return length;
 }

@@ -46,8 +46,8 @@
 #include "net_base.h"
 #elif CONFIG_FUNC == CONFIG_FUNC_NODE
 #include "net_node.h"
-#elif CONFIG_FUNC == CONFIG_FUNC_RECV
-#include "net_recv_only.h"
+#elif CONFIG_FUNC == CONFIG_FUNC_TEST
+#include "net_test.h"
 #else
 #error "Invalid 'CONFIG_FUNC'"
 #endif
@@ -64,14 +64,14 @@
  */
 
 #if CONFIG_FUNC == CONFIG_FUNC_BASE
-void (*init_list[])(void)   = {DBG_init, net_base_init, RTC_init, NULL};
+void (*init_list[])(void)   = {DBG_init, RTC_init, net_base_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_base_deinit, DBG_deinit, NULL};
 #elif CONFIG_FUNC == CONFIG_FUNC_NODE
-void (*init_list[])(void)   = {DBG_init, net_node_init, RTC_init, NULL};
+void (*init_list[])(void)   = {DBG_init, RTC_init, net_node_init, NULL};
 void (*deinit_list[])(void) = {RTC_deinit, net_node_deinit, DBG_deinit, NULL};
-#elif CONFIG_FUNC == CONFIG_FUNC_RECV
-void (*init_list[])(void)   = {DBG_init, net_recv_only_init, RTC_init, NULL};
-void (*deinit_list[])(void) = {RTC_deinit, net_recv_only_deinit, DBG_deinit, NULL};
+#elif CONFIG_FUNC == CONFIG_FUNC_TEST
+void (*init_list[])(void)   = {DBG_init, RTC_init, NULL};
+void (*deinit_list[])(void) = {RTC_deinit, DBG_deinit, NULL};
 #else
 #error "Invalid 'CONFIG_FUNC'"
 #endif
@@ -129,16 +129,14 @@ int main(void) {
 	// TODO
 	RTC_setTime(1328288470);
 
-	struct net_packet_broadcast buf;
-
-	memset(&buf, 0x00, sizeof(buf));
-
-	while (DO_MAIN_LOOP == true) {
-		if (net_available() > 0) {
-			net_recive((uint8_t *) &buf, sizeof(struct net_packet_broadcast));
-			printf("hello\n");
-		}
-	}
+#if CONFIG_FUNC == CONFIG_FUNC_BASE
+	net_base_run();
+#elif CONFIG_FUNC == CONFIG_FUNC_NODE
+	net_node_join();
+	net_node_run();
+#elif CONFIG_FUNC == CONFIG_FUNC_TEST
+	net_test_init(NET_TEST_TX_ONLY);
+#endif
 
 	printf("Starting DeInit\n");
 

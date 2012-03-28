@@ -1,14 +1,17 @@
+#include <string.h>
+
 #include "efm32.h"
 
 #include "radio.h"
 #include "letimer.h"
 #include "rtc.h"
+#include "dbg.h"
 
 #include "net_packets.h"
 #include "net_node.h"
 
-void net_node_broadcast(void);
-void net_node_tx(void);
+void net_node_end_tx(void);
+void net_node_start_rx(void);
 
 struct radio_address broadcast;
 struct radio_address local;
@@ -28,34 +31,58 @@ void net_node_init(void){
 	broadcast.b4 = 0x55;
 
 	// local and broadcast recive adresses and tx on local address
-	Radio_init(&broadcast, &broadcast);
-
-
-//	struct letimer_config letimer;
-//	letimer.broadcast_period = 128;
-//	letimer.broadcast_end = &net_node_broadcast;
-//	letimer.wait = 0;
-//	letimer.tx_period = 128;
-//	letimer.tx_end = &net_node_tx;
-
-	// every 1s on the second for 238ns
-	//letimer_init(&letimer);
-
+	Radio_init(&local, &broadcast);
 }
 
-void net_node_broadcast(void){
-	struct net_packet_broadcast packet;
+void net_node_join(void){
+	struct net_packet_broadcast pkg;
 
-	// convet to tx mode and load packet
-	packet.time = RTC_getTime();
-	Radio_loadbuf_broadcast(&packet);
+	// set up the radio
+	Radio_setMode(Radio_Mode_RX, false);
+	Radio_enable(true);
 
-	Radio_setMode(Radio_Mode_TX);
+	// wait for becon
+	while(Radio_available() == 0);
+
+	// get the packet
+	Radio_enable(false);
+	Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
+
+	RTC_reset_irq(115);
+	letimer_init(100, NULL);
+	RTC_set_irq(net_node_start_rx);
+	DBG_LED_Off();
 }
 
-void net_node_tx(void){
-	// convert back to rx mode
-	Radio_setMode(Radio_Mode_RX);
+void net_node_run(void){
+	struct net_packet_broadcast pkg;
+	while(true) {
+		while(Radio_available() == 0);
+		Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
+		Radio_enable(false);
+
+		// convet to tx mode and load packet
+		pkg.hello[0] = 'h';
+		pkg.hello[1] = 'e';
+		pkg.hello[2] = 'l';
+		pkg.hello[3] = 'l';
+		pkg.hello[4] = 'o';
+		pkg.time = RTC_getTime();
+		Radio_loadbuf_broadcast(&pkg);
+
+		Radio_setMode(Radio_Mode_TX, false);
+	}
+}
+
+void net_node_start_rx(void){
+	DBG_LED_On();
+	Radio_setMode(Radio_Mode_RX, true);
+	Radio_enable(true);
+}
+
+void net_node_end_tx(void){
+	Radio_setMode(Radio_Mode_RX, false);
+	DBG_LED_Off();
 }
 
 void net_node_deinit(void){

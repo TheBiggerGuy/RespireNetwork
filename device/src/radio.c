@@ -16,7 +16,6 @@
 #include "net_packets.h"
 
 void Radio_clearIRQ(void);
-void Radio_setMode(Radio_Modes_typdef mode);
 
 uint8_t Radio_read_reg(uint8_t loc);
 void Radio_write_reg(uint8_t loc, uint8_t val);
@@ -96,7 +95,7 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	Radio_flush(RADIO_CMD_FLUSH_RX);
 	Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_clearIRQ();
-	Radio_setMode(Radio_Mode_RX); // powers up
+	Radio_setMode(Radio_Mode_RX, false); // powers up
 	delay(10);
 }
 
@@ -114,13 +113,12 @@ void RADIO_IRQHF(void) {
 
 		if(radioIRQ & RADIO_STATUS_TX_DS) {
 			// Data sent
-			bob = true; // NOP replacement
 			radio_dataReadyToSend = false;
 		}
 
 		if(radioIRQ & RADIO_STATUS_RX_DR) {
 			// Data ready to read
-			DBG_LED_Toggle();
+			DBG_LED_On();
 			radio_dataReady = true;
 			uint8_t pipe   = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
 			if (pipe == 0x00) {
@@ -223,9 +221,13 @@ int Radio_recive(uint8_t* data, uint8_t maxLenght){
 	return Radio_read_payload(data, maxLenght);
 }
 
-void Radio_setMode(Radio_Modes_typdef mode)
+void Radio_setMode(Radio_Modes_typdef mode, bool powersycle)
 {
 	uint8_t val = RADIO_CONFIG_DEFAULT;
+
+	if (powersycle) {
+		Radio_write_reg(RADIO_CONFIG, 0x00);
+	}
 
 	if(mode == Radio_Mode_TX) {
 		val = val & ~RADIO_CONFIG_PRIM_RX; // disable RX
@@ -234,7 +236,7 @@ void Radio_setMode(Radio_Modes_typdef mode)
 	}
 	//Radio_enable(false);
 	//Radio_flush(RADIO_CMD_FLUSH_RX);
-	// Radio_flush(RADIO_CMD_FLUSH_TX);
+	//Radio_flush(RADIO_CMD_FLUSH_TX);
 	Radio_write_reg(RADIO_CONFIG, val);
 	//Radio_enable(true);
 	// TODO: may need delay

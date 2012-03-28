@@ -154,7 +154,7 @@ bool radio_has_packets_to_sent(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
 
-void Radio_setMode(Radio_Modes_typdef mode);
+void Radio_setMode(Radio_Modes_typdef mode, bool powersycle);
 void radio_set_parent(struct radio_address *parent);
 
 void Radio_enable(bool state);

@@ -14,6 +14,8 @@
 
 volatile time_t baseTime = -1;
 
+void(*rtc_user_irq)(void) = NULL;
+
 void RTC_init(void)
 {
 	// Config the clocks //////////////////////////////////////////////////////
@@ -24,6 +26,11 @@ void RTC_init(void)
 
 	CMU_ClockEnable(cmuClock_CORELE, true);
 
+	// stop if already running
+	RTC->CTRL = 0x00;
+	while (RTC->SYNCBUSY)
+		;
+
 	// lock RTC config update /////////////////////////////////////////////////
 	// as it is in the low frequency area it is slow to write to
 	RTC->FREEZE = RTC_FREEZE_REGFREEZE_FREEZE;
@@ -31,7 +38,7 @@ void RTC_init(void)
 	// Config the RTC /////////////////////////////////////////////////////////
 
 	CMU->FREEZE = CMU_FREEZE_REGFREEZE_FREEZE;
-	CMU->LFAPRESC0 |= CMU_LFAPRESC0_RTC_DIV1; // DIV8192; //RTC_PRESC;
+	CMU->LFAPRESC0 |= CMU_LFAPRESC0_RTC_DIV32;
 	CMU->FREEZE = CMU_FREEZE_REGFREEZE_UPDATE;
 	while(CMU->SYNCBUSY & CMU_SYNCBUSY_LFAPRESC0);
 
@@ -67,6 +74,16 @@ void RTC_setTime(time_t newTime)
 	baseTime = newTime - (RTC->CNT >> RTC_S_SHIFT);
 }
 
+void RTC_set_irq(void(*irq)(void)){
+	rtc_user_irq  = irq;
+}
+
+void RTC_reset_irq(uint8_t delay){
+	RTC->COMP0 = (RTC->COMP0 + RTC_S - delay) & 0xFFFFFF; // 24bit reg
+	while (RTC->SYNCBUSY)
+		;
+}
+
 void RTC_IRQHandler(void)
 {
 	if (RTC->IF & RTC_IF_OF)
@@ -79,7 +96,14 @@ void RTC_IRQHandler(void)
 	if (RTC->IF & RTC_IF_COMP0)
 	{
 		RTC->COMP0 = (RTC->COMP0 + RTC_S) & 0xFFFFFF; // 24bit reg
+		while (RTC->SYNCBUSY)
+			;
 		RTC->IFC = RTC_IFC_COMP0;
+
+		DBG_LED_Toggle();
+		if(rtc_user_irq != NULL){
+			(rtc_user_irq)();
+		}
 	}
 }
 

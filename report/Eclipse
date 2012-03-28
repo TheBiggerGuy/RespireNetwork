@@ -1,0 +1,6 @@
+Eclipse
+=======
+Eclipse Intergrated Debugging Evnriroment (IDE) is one of the leading IDEs in the embeded dev
+elopment feild, and in many others. It was chosen for use as it if fast becoming the indestury standard and is been used as the basses for offical ARM IDE. Eclipse is also both open source and fully supported on Linux enabeling use without cost for this project. The free ARM MDK IDE was used in the begining as it was suggested, and been used, by the concurent Respire Project. MDK however was found to be clunky and slow down development sleep.
+
+To enable the sue of Eclipse it just first be set 

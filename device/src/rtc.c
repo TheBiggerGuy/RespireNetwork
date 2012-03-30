@@ -69,6 +69,11 @@ time_t RTC_getTime(void)
 	return baseTime + (RTC->CNT >> RTC_S_SHIFT);
 }
 
+uint16_t RTC_getTickCount(void)
+{
+	return RTC->CNT;
+}
+
 void RTC_setTime(time_t newTime)
 {
 	baseTime = newTime - (RTC->CNT >> RTC_S_SHIFT);
@@ -78,10 +83,8 @@ void RTC_set_irq(void(*irq)(void)){
 	rtc_user_irq  = irq;
 }
 
-void RTC_reset_irq(uint8_t delay){
-	RTC->COMP0 = (RTC->COMP0 + RTC_S - delay) & 0xFFFFFF; // 24bit reg
-	while (RTC->SYNCBUSY)
-		;
+void RTC_reset_irq(int diff){
+	RTC->COMP0 = (RTC->COMP0 + RTC_S - diff) & 0xFFFFFF; // 24bit reg
 }
 
 void RTC_IRQHandler(void)
@@ -95,12 +98,10 @@ void RTC_IRQHandler(void)
 	}
 	if (RTC->IF & RTC_IF_COMP0)
 	{
+		DBG_probe_toggle(DBG_Probe_0);
 		RTC->COMP0 = (RTC->COMP0 + RTC_S) & 0xFFFFFF; // 24bit reg
-		while (RTC->SYNCBUSY)
-			;
 		RTC->IFC = RTC_IFC_COMP0;
 
-		DBG_LED_Toggle();
 		if(rtc_user_irq != NULL){
 			(rtc_user_irq)();
 		}

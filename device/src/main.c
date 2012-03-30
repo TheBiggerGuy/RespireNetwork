@@ -76,7 +76,7 @@ void (*deinit_list[])(void) = {RTC_deinit, DBG_deinit, NULL};
 #error "Invalid 'CONFIG_FUNC'"
 #endif
 
-volatile time_t msTicks; /* counts 1ms timeTicks */
+volatile uint8_t msTicks; /* counts 1ms timeTicks */
 
 /**************************************************************************//**
  * @brief SysTick_Handler
@@ -92,10 +92,9 @@ void SysTick_Handler(void) {
  * @param dlyTicks Number of ticks to delay
  *****************************************************************************/
 void delay(uint8_t dlyTicks) {
-	time_t till = msTicks + dlyTicks;
-	while (msTicks < till) {
-		//__WFI();
-		__NOP();
+	uint8_t till = (msTicks + dlyTicks);
+	while (msTicks != till) {
+		__WFI();
 	}
 }
 

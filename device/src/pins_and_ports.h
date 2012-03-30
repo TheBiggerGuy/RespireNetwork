@@ -32,8 +32,10 @@
 //  * DBG_LED_PIN  - The pin that the debug led or probe is on
 //  * DBG_SWO_LOC  - The location of the SWO
 //
-#define DBG_LED_PORT gpioPortD
-#define DBG_LED_PIN  6
-#define DBG_SWO_LOC  0
+#define DBG_PROBE_PORT gpioPortD
+#define DBG_PROBE_PIN0 6
+#define DBG_PROBE_PIN1 7
+#define DBG_PROBE_PIN2 4
+#define DBG_SWO_LOC    0
 
 #endif // __RESPIRENETWORK_PINS_AND_PORTS_H

@@ -12,6 +12,7 @@
 #include "spi.h"
 #include "dbg.h"
 #include "letimer.h"
+#include "rtc.h"
 
 #include "net_packets.h"
 
@@ -31,6 +32,7 @@ void Radio_flush(uint8_t buf);
 bool radio_dataReadyToSend = false;
 bool radio_dataReady = false;
 bool radio_data_a_braodcast = true;
+uint16_t radio_last_broadcast_tick = 0;
 
 struct radio_address *radio_broadcast;
 struct radio_address *radio_parent;
@@ -100,39 +102,48 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 }
 
 void RADIO_IRQHF(void) {
-	bool bob = false;
+	uint8_t status;
+
+	DBG_probe_on(DBG_Probe_2);
 	if (GPIO->IF & (1 << RADIO_PIN_IRQ)) {
 
 		// read and clear radio irq
-		uint8_t radioIRQ = Radio_read_reg(RADIO_STATUS);
+		status = Radio_read_reg(RADIO_STATUS);
 
-		if(radioIRQ & RADIO_STATUS_MAX_RT) {
+		if(status & RADIO_STATUS_MAX_RT) {
 			// Retransmitting
-			bob = true; // NOP replacement
+			__NOP();
 		}
 
-		if(radioIRQ & RADIO_STATUS_TX_DS) {
+		if(status & RADIO_STATUS_TX_DS) {
 			// Data sent
 			radio_dataReadyToSend = false;
+			__SEV(); // wake up process that may be waiting for this
 		}
 
-		if(radioIRQ & RADIO_STATUS_RX_DR) {
+		if(status & RADIO_STATUS_RX_DR) {
 			// Data ready to read
-			DBG_LED_On();
+			uint8_t pipe;
+
 			radio_dataReady = true;
-			uint8_t pipe   = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
-			if (pipe == 0x00) {
-				radio_data_a_braodcast = false;
-			} else {
-				radio_data_a_braodcast = true;
+			bool isEmpty = false;
+			while(!isEmpty) {
+				pipe   = (Radio_read_reg(RADIO_STATUS) & RADIO_STATUS_RX_P_NO_MASK) >> RADIO_STATUS_RX_P_NO_SHIFT;
+				if (pipe == 0x00) {
+					radio_data_a_braodcast = false;
+				} else {
+					radio_last_broadcast_tick = RTC_getTickCount();
+					radio_data_a_braodcast = true;
+				}
+				isEmpty = (Radio_read_reg(RADIO_FIFO_STATUS) & RADIO_FIFO_STATUS_RX_EMPTY) == RADIO_FIFO_STATUS_RX_EMPTY;
 			}
-			bool isEmpty = (Radio_read_reg(RADIO_FIFO_STATUS) & RADIO_FIFO_STATUS_RX_EMPTY) == RADIO_FIFO_STATUS_RX_EMPTY;
-			Radio_flush(RADIO_CMD_FLUSH_RX); // TODO
+			// Radio_flush(RADIO_CMD_FLUSH_RX); // TODO
+			__SEV(); // wake up process that may be waiting for this
 		}
 
 		Radio_clearIRQ();
 		GPIO->IFC = (1 << RADIO_PIN_IRQ);
-
+		DBG_probe_off(DBG_Probe_2);
 	}
 }
 
@@ -249,6 +260,10 @@ void radio_set_parent(struct radio_address *parent){
 void Radio_enable(bool state)
 {
 	letimer_forcepin(state);
+}
+
+uint16_t radio_get_last_broadcast_time(void) {
+	return radio_last_broadcast_tick;
 }
 
 void Radio_deinit(void) {

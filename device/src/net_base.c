@@ -12,6 +12,8 @@
 
 void net_base_rtc_callback(void);
 
+bool net_base_is_sending = false;
+
 void net_base_init(void){
 	struct radio_address local;
 	struct radio_address broadcast;
@@ -33,8 +35,6 @@ void net_base_init(void){
 	Radio_init(&local, &broadcast);
 }
 
-bool net_base_is_sending = false;
-
 void net_base_run(void) {
 	struct net_packet_broadcast pkg;
 
@@ -42,16 +42,21 @@ void net_base_run(void) {
 	RTC_set_irq(net_base_rtc_callback);
 
 	while(true) {
-		if(Radio_available() > 0) {
-			Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
-			pkg.time = 1;
-		}
 		if (net_base_is_sending) {
-			while (radio_has_packets_to_sent());
+			while (radio_has_packets_to_sent()){
+				__WFE();
+			}
 
 			Radio_setMode(Radio_Mode_RX, false);
 			Radio_enable(true);
 			net_base_is_sending = false;
+		}
+		if(Radio_available() > 0) {
+			Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
+			pkg.time = 1;
+		}
+		if(Radio_available() == 0 && !net_base_is_sending) {
+			__WFE();
 		}
 	}
 

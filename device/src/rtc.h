@@ -20,7 +20,9 @@ void RTC_deinit(void);
 time_t RTC_getTime(void);
 void RTC_setTime(time_t newTime);
 
+uint16_t RTC_getTickCount(void);
+
 void RTC_set_irq(void(*irq)(void));
-void RTC_reset_irq(uint8_t delay);
+void RTC_reset_irq(int diff);
 
 #endif // __RESPIRENETWORK_RTC_H

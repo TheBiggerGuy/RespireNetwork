@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "efm32.h"
 
@@ -30,33 +31,50 @@ void net_test_init(uint8_t test){
 
 	// local and broadcast recive adresses and tx on local address
 	Radio_init(&local, &broadcast);
-	radio_set_parent(&broadcast);
 
 	if (test == NET_TEST_TX_ONLY) {
 		struct net_packet_broadcast p;
+
 		Radio_setMode(Radio_Mode_TX, false);
 		Radio_enable(true);
+
 		p.hello[0] = 'h';
 		p.hello[1] = 'e';
 		p.hello[2] = 'l';
 		p.hello[3] = 'l';
 		p.hello[4] = 'o';
+
 		while(true) {
+			DBG_probe_on(DBG_Probe_1);
+			p.time = RTC_getTime();
+			p.tick = RTC_getTickCount();
 			Radio_loadbuf_broadcast(&p);
-			delay(200);
-			Radio_loadbuf_broadcast(&p);
-			delay(255);
-			Radio_loadbuf_broadcast(&p);
-			delay(100);
+			Radio_enable(true);
+			for(volatile int i=0; i < 150; ++i) {
+				__NOP();
+			}
+			Radio_enable(false);
+			while(radio_has_packets_to_sent()){
+				__WFE();
+			}
+			DBG_probe_off(DBG_Probe_1);
+			delay(250);
+			delay(250);
 		}
 	} else if (test == NET_TEST_RX_ONLY) {
 		Radio_setMode(Radio_Mode_RX, false);
 		Radio_enable(true);
+		//uint8_t i = 0;
 		while(true){
 			if(Radio_available() > 0) {
 				struct net_packet_broadcast buf;
 				Radio_recive((uint8_t *) &buf, sizeof(struct net_packet_broadcast));
-				buf.time = 1;
+				//++i;
+				//if (i > 5) {
+				//	RTC_reset_irq(abs((buf.tick % RTC_S) - (RTC_getTickCount() % RTC_S)));
+				//	i = 0;
+				//}
+				DBG_probe_toggle(DBG_Probe_1);
 			}
 		}
 	} else if ( test == NET_TEST_RX_TX) {
@@ -82,7 +100,6 @@ void net_test_init(uint8_t test){
 			Radio_setMode(Radio_Mode_RX, false);
 			Radio_enable(true);
 			while (Radio_available() == 0);
-			DBG_LED_Toggle();
 			Radio_recive((uint8_t *) &recv, sizeof(struct net_packet_broadcast));
 			Radio_enable(false);
 			Radio_setMode(Radio_Mode_TX, false);

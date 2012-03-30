@@ -68,6 +68,9 @@ $(EXE_DIR)/$(PROJECTNAME): $(EXE_DIR)/$(PROJECTNAME).elf
 gdb:
 	JLinkGDBServer -vd -select usb -if swd -endian little -speed 4000
 
+debug_in:
+	eACommander --mode in
+
 clean:
 	rm -r $(OBJ_DIR)
 	@echo "Removing build directory."

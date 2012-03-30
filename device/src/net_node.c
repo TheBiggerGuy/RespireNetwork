@@ -42,22 +42,25 @@ void net_node_join(void){
 	Radio_enable(true);
 
 	// wait for becon
-	while(Radio_available() == 0);
+	while(Radio_available() == 0){
+		__WFE();
+	}
 
 	// get the packet
 	Radio_enable(false);
 	Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
-
+	DBG_probe_toggle(DBG_Probe_1);
 	RTC_reset_irq(115);
 	letimer_init(100, NULL);
 	RTC_set_irq(net_node_start_rx);
-	DBG_LED_Off();
 }
 
 void net_node_run(void){
 	struct net_packet_broadcast pkg;
 	while(true) {
-		while(Radio_available() == 0);
+		while(Radio_available() == 0) {
+			__WFE();
+		}
 		Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
 		Radio_enable(false);
 
@@ -75,14 +78,13 @@ void net_node_run(void){
 }
 
 void net_node_start_rx(void){
-	DBG_LED_On();
+	Radio_enable(false);
 	Radio_setMode(Radio_Mode_RX, true);
 	Radio_enable(true);
 }
 
 void net_node_end_tx(void){
 	Radio_setMode(Radio_Mode_RX, false);
-	DBG_LED_Off();
 }
 
 void net_node_deinit(void){

@@ -99,6 +99,7 @@ void delay(uint8_t dlyTicks) {
 	while (msTicks != till) {
 		__WFI();
 	}
+	SysTick->CTRL = 0x00;
 	NVIC_DisableIRQ(SysTick_IRQn);
 }
 
@@ -134,7 +135,7 @@ int main(void) {
 	net_node_join();
 	net_node_run();
 #elif CONFIG_FUNC == CONFIG_FUNC_TEST
-	net_test_init(NET_TEST_TX_ONLY);
+	net_test_init(NET_TEST_RX_ONLY);
 #endif
 
 	printf("Starting DeInit\n");

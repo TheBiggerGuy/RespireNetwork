@@ -57,7 +57,7 @@ from Swd import SwoServer
 HOST = ("localhost", 9999)
 
 SWO_PROTO = GdbServer.PROTOCOL_UART
-SWO_SPEED = 875000
+SWO_SPEED = int(875000/8)
 
 class GdbProxyHandler(socketserver.BaseRequestHandler):
   """
@@ -73,7 +73,6 @@ class GdbProxyHandler(socketserver.BaseRequestHandler):
   def __init__(self, request, client_address, server, enable_swo=False):
     self._input = None
     self._output = None
-    self._swo = None
     self._run = True
     self._segger = None
     self._enable_swo = enable_swo

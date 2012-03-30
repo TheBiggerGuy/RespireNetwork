@@ -5,12 +5,14 @@
 #include "radio.h"
 #include "letimer.h"
 #include "rtc.h"
+#include "dbg.h"
 
 #include "net_packets.h"
 #include "net_base.h"
 
-void net_base_end_rx(void);
-void net_base_end_tx(void);
+void net_base_rtc_callback(void);
+
+bool net_base_is_sending = false;
 
 void net_base_init(void){
 	struct radio_address local;
@@ -31,26 +33,57 @@ void net_base_init(void){
 
 	// local and broadcast recive adresses and tx on local address
 	Radio_init(&local, &broadcast);
-	radio_set_parent(&broadcast);
-
-	// every 1s on the second for 238ns
-	letimer_init(5, &net_base_end_tx, (1 << 14) -16, &net_base_end_rx, false);
-
 }
 
-void net_base_end_rx(void){
-	struct net_packet_broadcast packet;
+void net_base_run(void) {
+	struct net_packet_broadcast pkg;
 
-	// convert to tx mode and load packet
-	memcpy(packet.hello, "hello", 5);
-	packet.time = RTC_getTime();
-	Radio_loadbuf_broadcast(&packet);
+	// every 1s
+	RTC_set_irq(net_base_rtc_callback);
 
-	Radio_setMode(Radio_Mode_TX);
+	while(true) {
+		if (net_base_is_sending) {
+			while (radio_has_packets_to_sent()){
+				__WFE();
+			}
+
+			Radio_setMode(Radio_Mode_RX, false);
+			Radio_enable(true);
+			net_base_is_sending = false;
+		}
+		if(Radio_available() > 0) {
+			Radio_recive((uint8_t *) &pkg, sizeof(struct net_packet_broadcast));
+			pkg.time = 1;
+		}
+		if(Radio_available() == 0 && !net_base_is_sending) {
+			__WFE();
+		}
+	}
+
+	// stop callback
+	RTC_set_irq(NULL);
 }
 
-void net_base_end_tx(void){
-	Radio_setMode(Radio_Mode_RX);
+void net_base_rtc_callback(void) {
+	struct net_packet_broadcast pkg;
+
+	net_base_is_sending = true;
+
+	Radio_enable(false);
+	Radio_setMode(Radio_Mode_TX, false);
+
+	pkg.hello[0] = 'h';
+	pkg.hello[1] = 'e';
+	pkg.hello[2] = 'l';
+	pkg.hello[3] = 'l';
+	pkg.hello[4] = 'o';
+
+	Radio_loadbuf_broadcast(&pkg);
+	Radio_enable(true);
+	for(volatile int i=0; i < 150; ++i) {
+		__NOP();
+	}
+	Radio_enable(false);
 }
 
 void net_base_deinit(void){

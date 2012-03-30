@@ -1,0 +1,34 @@
+MCU Time from rx IRQ low IRQ pin change
+
+Settings:
+ * no debugger present
+
+Acuracy
+200.000Mhz
+=> samples of 5ns
+
+Messured on first chnaged sample
+all results need a corection factor of 10.000ns due to time recording starting 2 samples before event
+
+on 1
+1,  7.020
+2,  7.005
+3,  7.030
+4,  6.995
+5,  7.030
+6,  7.050
+7,  7.015
+8,  7.000
+9,  7.040
+10, 7.030
+
+on 2
+1,  7.055uS
+2,  7.035
+4,  7.005
+5,  7.005
+6,  6.995
+7,  7.035
+8,  7.005
+9,  6.980
+10, 7.030

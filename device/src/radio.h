@@ -150,11 +150,14 @@ int Radio_loadbuf_broadcast(struct net_packet_broadcast *data);
 int Radio_loadbuf_rt(struct net_packet_rt *data);
 
 int Radio_available(void);
+bool radio_has_packets_to_sent(void);
 
 int Radio_recive(uint8_t* data, uint8_t maxLenght);
 
-void Radio_setMode(Radio_Modes_typdef mode);
+void Radio_setMode(Radio_Modes_typdef mode, bool powersycle);
 void radio_set_parent(struct radio_address *parent);
+
+uint16_t radio_get_last_broadcast_time(void);
 
 void Radio_enable(bool state);
 

@@ -87,29 +87,49 @@ void DBG_init(void)
 	//ITM->TER = 0xFFFFFFFF; // ITM Trace Privilege Register
 	/* End */
 
-#if defined(DBG_ENABLE_LED)
-	GPIO_PinModeSet(DBG_LED_PORT, DBG_LED_PIN, gpioModePushPull, 0);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN0, gpioModePushPull, 0);
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN1, gpioModePushPull, 0);
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN2, gpioModePushPull, 0);
 #endif
 }
 
-void DBG_LED_On(void)
+void DBG_probe_on(DBG_Probe_typdef probe)
 {
-#if defined(DBG_ENABLE_LED)
-	GPIO_PinOutSet(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 
-void DBG_LED_Off(void)
+void DBG_probe_off(DBG_Probe_typdef probe)
 {
-#if defined(DBG_ENABLE_LED)
-	GPIO_PinOutClear(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 
-void DBG_LED_Toggle(void)
+void DBG_probe_toggle(DBG_Probe_typdef probe)
 {
-#if defined(DBG_ENABLE_LED)
-	GPIO_PinOutToggle(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 

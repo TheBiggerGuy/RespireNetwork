@@ -6,7 +6,7 @@
 include project.mk
 
 .SUFFIXES:				# ignore builtin rules
-.PHONY: all debug release internal_build makeDir clean
+.PHONY: all debug release internal_build makeDir clean gdb
 .SILENT: # get it to be less verbose
 
 # Default build is debug build
@@ -64,6 +64,12 @@ $(EXE_DIR)/$(PROJECTNAME): $(EXE_DIR)/$(PROJECTNAME).elf
 	$(OBJCOPY) --output-target=binary $(EXE_DIR)/$(PROJECTNAME).elf $(EXE_DIR)/$(PROJECTNAME).bin
 	@echo "Creating list file"
 	$(DUMP) -h -S $(EXE_DIR)/$(PROJECTNAME).elf > $(LST_DIR)/$(PROJECTNAME).lst
+
+gdb:
+	JLinkGDBServer -vd -select usb -if swd -endian little -speed 4000
+
+debug_in:
+	eACommander --mode in
 
 clean:
 	rm -r $(OBJ_DIR)

@@ -1,0 +1,36 @@
+Radio Time from tx IRQ low to rx IRQ low
+
+Settings:
+ * two bit crc
+ * fixed packet length of 32
+ * no debugger present
+
+Acuracy
+200.000Mhz
+=> samples of 5ns
+
+Messured on first low sample
+all results need a corection factor of 10.000ns due to time recording starting 2 samples before event
+
+from 1 to 2
+1,  5.355uS
+2,  5.745us
+3,  5.795us
+4,  5.765us
+5,  5.375us
+6,  5.320us
+7,  5.305us
+8,  5.305us
+9,  5.785us
+10, 5.335us
+
+from 2 to 1
+1,  5.340
+2,  5.320
+4,  5.295
+5,  5.785
+6,  5.765
+7,  5.740
+8,  5.305
+9,  5.305
+10, 5.325

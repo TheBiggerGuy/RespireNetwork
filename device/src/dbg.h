@@ -5,18 +5,16 @@
 
 #include "efm32_gpio.h"
 
+#include "config.h"
 #include "pins_and_ports.h"
 
-/* Config */
-#define DBG_ENABLE_LED
-
-// This will check if the needed info is present when 'DBG_ENABLE_LED' is enabled
-#if defined(DBG_ENABLE_LED)
-#if !defined(DBG_LED_PORT)
-#error "#if 'DBG_LED_PORT' needed for 'DBG_ENABLE_LED'"
+// This will check if the needed info is present when 'CONFIG_DBG_ENABLE_PROBES' is enabled
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+#if !defined(DBG_PROBE_PORT)
+#error "#if 'DBG_PROBE_PORT' needed for 'CONFIG_DBG_ENABLE_PROBES'"
 #endif
-#if !defined(DBG_LED_PIN)
-#error "#if 'DBG_LED_PIN' needed for 'DBG_ENABLE_LED'"
+#if !defined(DBG_PROBE_PIN0) || !defined(DBG_PROBE_PIN1) || !defined(DBG_PROBE_PIN2)
+#error "#if 'DBG_PROBE_PINx' needed for 'CONFIG_DBG_ENABLE_PROBES'"
 #endif
 #endif
 
@@ -37,8 +35,14 @@
 void DBG_init(void);
 void DBG_deinit(void);
 
-void DBG_LED_On(void);
-void DBG_LED_Off(void);
-void DBG_LED_Toggle(void);
+typedef enum {
+	DBG_Probe_0,
+	DBG_Probe_1,
+	DBG_Probe_2
+} DBG_Probe_typdef;
+
+void DBG_probe_on(DBG_Probe_typdef probe);
+void DBG_probe_off(DBG_Probe_typdef probe);
+void DBG_probe_toggle(DBG_Probe_typdef probe);
 
 #endif // __RESPIRENETWORK_DBG_H

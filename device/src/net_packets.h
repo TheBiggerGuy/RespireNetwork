@@ -6,6 +6,8 @@
 struct net_packet_broadcast {
 	uint8_t hello[5];
 	time_t time;
+	uint16_t tick;
+	uint8_t pad[32-11];
 } __attribute__((packed));
 
 struct net_packet_rt {

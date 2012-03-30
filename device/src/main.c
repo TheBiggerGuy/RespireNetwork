@@ -92,10 +92,14 @@ void SysTick_Handler(void) {
  * @param dlyTicks Number of ticks to delay
  *****************************************************************************/
 void delay(uint8_t dlyTicks) {
-	uint8_t till = (msTicks + dlyTicks);
+	uint8_t till;
+	/* Setup SysTick Timer for 1 msec interrupts  */
+	SysTick_Config(SystemCoreClock / 1400);
+	till = (msTicks + dlyTicks);
 	while (msTicks != till) {
 		__WFI();
 	}
+	NVIC_DisableIRQ(SysTick_IRQn);
 }
 
 volatile bool DO_MAIN_LOOP = true;
@@ -111,10 +115,6 @@ int main(void) {
 
 	/* Ensure core frequency has been updated */
 	SystemCoreClockUpdate();
-
-	/* Setup SysTick Timer for 1 msec interrupts  */
-	if (SysTick_Config(SystemCoreClock / 1400))
-		exit(EXIT_FAILURE);
 
 	/* Run the module initilizers */
 	i = 0;

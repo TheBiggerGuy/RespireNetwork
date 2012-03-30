@@ -13,7 +13,7 @@
 /* Defines */
 #define HFRCO_FREQUENCY         14000000
 #define SPI_PERCLK_FREQUENCY    HFRCO_FREQUENCY
-#define SPI_BAUDRATE            1000000
+#define SPI_BAUDRATE            7000000
 
 /* Auto generated defines from above info */
 #if SPI_USART_NUM == 0

@@ -35,8 +35,8 @@ void net_test_init(uint8_t test){
 	if (test == NET_TEST_TX_ONLY) {
 		struct net_packet_broadcast p;
 
+		Radio_enable(false);
 		Radio_setMode(Radio_Mode_TX, false);
-		Radio_enable(true);
 
 		p.hello[0] = 'h';
 		p.hello[1] = 'e';
@@ -50,12 +50,12 @@ void net_test_init(uint8_t test){
 			p.tick = RTC_getTickCount();
 			Radio_loadbuf_broadcast(&p);
 			Radio_enable(true);
-			for(volatile int i=0; i < 150; ++i) {
+			for(volatile uint8_t i=0; i < 9; ++i) {
 				__NOP();
 			}
 			Radio_enable(false);
 			while(radio_has_packets_to_sent()){
-				__WFE();
+				__WFI();
 			}
 			DBG_probe_off(DBG_Probe_1);
 			delay(250);
@@ -90,7 +90,7 @@ void net_test_init(uint8_t test){
 		Radio_setMode(Radio_Mode_TX, false);
 		Radio_loadbuf_broadcast(&sent);
 		Radio_enable(true);
-		for(volatile int i=0; i < 150; ++i) {
+		for(volatile int i=0; i < 10; ++i) {
 			__NOP();
 		}
 		Radio_enable(false);

@@ -36,6 +36,6 @@
 #define DBG_PROBE_PIN0 6
 #define DBG_PROBE_PIN1 7
 #define DBG_PROBE_PIN2 4
-#define DBG_SWO_LOC    0
+#define DBG_SWO_LOC    1
 
 #endif // __RESPIRENETWORK_PINS_AND_PORTS_H

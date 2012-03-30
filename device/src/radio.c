@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "efm32.h"
 
@@ -15,6 +16,7 @@
 #include "rtc.h"
 
 #include "net_packets.h"
+#include "net_utils.h"
 
 void Radio_clearIRQ(void);
 
@@ -43,12 +45,13 @@ struct radio_address *radio_local;
  *****************************************************************************/
 void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 {
+	struct radio_address comms_test;
+
 	/* Config the clocks ///////////////////////////////////////////////////// */
 	// Enable GPIO clock
 	CMU_ClockEnable(cmuClock_GPIO, true);
 
 	/* Config the IO pins /////////////////////////////////////////////////// */
-	// GPIO_PinModeSet(RADIO_PORT_CE, RADIO_PIN_CE,  gpioModeInputPull, 0);  // CE
 	GPIO_PinModeSet(RADIO_PORT_IRQ, RADIO_PIN_IRQ, gpioModeInput, 0);    // IRQ
 
 	/* Make sure the radio is not broadcasting ///////////////////////////// */
@@ -59,10 +62,10 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 
 	/* power down to allow config */
 	Radio_write_reg(RADIO_CONFIG, 0x00);
-	delay(20);
+	delay(10);
 	Radio_flush(RADIO_CMD_FLUSH_RX);
 	Radio_flush(RADIO_CMD_FLUSH_TX);
-	delay(20);
+	delay(2);
 
 	/* Config Radio /////////////////////////////////////////////////////// */
 	Radio_write_reg(RADIO_EN_AA,      0x00); // Disable all auto ack
@@ -80,6 +83,11 @@ void Radio_init(struct radio_address *local, struct radio_address *broadcast)
 	Radio_write_lreg(RADIO_RX_ADDR_P1, (uint8_t *) broadcast, 5); // set RX address 1
 	Radio_write_reg(RADIO_RX_PW_P1, sizeof(struct net_packet_broadcast));
 	radio_broadcast = broadcast;
+
+	Radio_read_lreg(RADIO_RX_ADDR_P1, (uint8_t *) &comms_test, 5);
+	if (!net_address_equal(broadcast, &comms_test)) {
+		exit(EXIT_FAILURE);
+	}
 
 	/* Config IRQ //////////////////// */
 	// select the port and pin

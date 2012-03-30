@@ -1,0 +1,12 @@
+pre systick
+
+StyTick,         659886
+Other,           33944
+spi_clear_rx,    11039
+radio_enable,    5233
+spi_flush_tx,    5002
+radio_write_reg, 4349
+radio_read_reg,  2288
+spi_load_buffer  815
+
+

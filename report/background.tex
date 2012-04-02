@@ -1,6 +1,7 @@
-%% Sample chapter file, for use in a thesis.
-%% Don't forget to put the \chapter{...} header onto each file.
-
+%%
+%% Copyright Guy Taylor 2012
+%%
+%%
 \chapter{Background}
 
 \section{Background}
@@ -16,18 +17,22 @@ With the aim to reach medical trials, a smaller and lower-powered device was des
 longer-term monitoring for further investigations of accelerometer-based respiratory monitoring on
 patients The new hardware was named the Respire and is a significant improvement over the
 prototype device. The Respire integrates four key components of the prototyped Orient-2/3 onto a
-single more accessible device to allow further development and testing:- a microcontroller,
+single more accessible device to allow further development and testing:- a \ac{MCU},
 accelerometer, radio and flash memory. However, the original Orient-3 firmware was incompatible
 with the Respire and therefore a new firmware needed to be designed and implemented, with an
 emphasis on reducing the power requirements of the system.
 
 \section{Power Management}
 To calculate the power needed to run a device you first need to measure the power use during
-active use ($P_active$), power use during sleeping ($P_sleep$) and the percentage of time in a state of
-activity ($D$uty).
-$P_average = D x P_active + (1-D) x P_sleep$
-$P_active >> P_speel$
-It is most common however that $P_active$ and $P_sleep$ are fixed or only small reductions can be
+active use \(P_(active)\), power use during sleeping \(P_(sleep)\) and the percentage of time in a state of
+activity \(Duty\).
+\[
+  P_(average) = D x P_(active) + (1-D) x P_(sleep)
+\]
+\[
+  P_(active) >> P_(sleep)
+\]
+It is most common however that \(P_(active)\) and \(P_(sleep)\) are fixed or only small reductions can be
 made. It is therefore most effective in normal applications to reduce the duty, this reduction is most
 assisted by faster wake up periods.
 
@@ -36,7 +41,7 @@ In any small wireless devices the main power consumer is the radio during use, t
 minimise its duty cycle. Mediation devices exist between the edge nodes and the core of a network,
 allowing data to be buffered and processed away from the edge. This mediation allows the edge
 devices to "sleep" more predictably and with greater duration and depth, decreasing the edge
-power needs\cite{Sapio & Tsouri, 2010}\cite{Edgar & Jr, 2003}.
+power needs\cite{Sapio & Tsouri, 2010, Edgar2003}. % TODO
 
 
 This system of moving the power towards the centre of the network is more effective in hierarchical networks
@@ -46,19 +51,19 @@ longer without the battery expectancy of the global networks decreasing.
 
 \section{Respire Device Components}
 
-\subsection{Energy Micro EFM32 Microcontroller}
-The Energy Micro EFM32 series of microcontroller is a system-on-a-chip designed from the bottom
-up for low energy applications. At the core of the EFM32 is an ARM Cortex-M3 MCU enabling the
+\subsection{Energy Micro EFM32 \ac{MCU}}
+The Energy Micro EFM32 series of \ac{MCU} is a system-on-a-chip designed from the bottom
+up for low energy applications. At the core of the EFM32 is an ARM Cortex-M3 \ac{MCU} enabling the
 power and flexibility to reduce energy needs by decreasing duty time and closely interacting with its
-peripherals. In the same silicon to the MCU is an array of specially designed low-power modules,
-many of them, that are independently wired together allowing MCU free communication and
-interaction enhanced by a DMA controller.
+peripherals. In the same silicon to the \ac{MCU} is an array of specially designed low-power modules,
+many of them, that are independently wired together allowing \ac{MCU} free communication and
+interaction enhanced by a \ac{DMA} controller.
 
 \subsection{ARM Cortex-M3}
-The ARM Cortex-M3 is a 32-bit Harvard style, Reduced Instruction Set Computer (RISC)
-Microcontroller (MCU). It is designed around the ARMv7 instruction set with the addition of Thumb
-and Thumb-2 compressed instruction sets. The Cortex-M is the sub series dedicated to system-on-a-
-chip microcontrollers, with the Cortex-M3 being the third and latest generation.
+The ARM Cortex-M3 is a 32-bit Harvard style, \ac{RISC} \ac{MCU}. It is designed
+around the ARMv7 instruction set with the addition of Thumb
+and Thumb-2 compressed instruction sets. The Cortex-M is the sub series dedicated to system-on-a-chip
+\acp{MCU}, with the Cortex-M3 being the third and latest generation.
 
 
 The Cortex-M3 series was designed to both provide good performance with low power but also
@@ -70,13 +75,13 @@ easily learnt. The assembly free interrupts allow all code to be viewed in a sin
 preventing hidden or obscured processes. This ease of implementation is assisted by a full debugging
 subsystem, with optional in-circuit emulator, accessible via a new 2 to 3 pin interface reducing the
 size on the device and thus allowing debugging be kept in the production layout. This new debugging
-interface, Serial Wire Debugging (SWD), has a built in ability to directly communicate back to the
-debugger using the optimal 3rd, Serial Wire Out (SWO), pin. With the SWV the programmer can use
+interface, \ac{SWD}, has a built in ability to directly communicate back to the
+debugger using the optimal 3rd, \ac{SWO}, pin. With the \ac{SWO} the programmer can use
 standard consoles printing techniques without disruption of the program flow.
 
 
 The Thumb reduced instruction set is a 16-bit wide subset of the main ARM set that allows multiple
-instructions to be compressed into a single instruction read, thus reducing IO latency. The Thumb-2
+instructions to be compressed into a single instruction read, thus reducing \ac{I/O} latency. The Thumb-2
 instruction set extend thumb set by the utilising 32-bit instructions and thus provide more
 functionality and packing, thus providing a 30\% improvement. This combination lowers the speed to
 power ratio and also the program memory needed. This performance is also achieved with the
@@ -99,22 +104,22 @@ Throughout all ARM architecture there is the CIMIS standardisation.....
 \cite{Sadasivan 2006} \cite{Arm2012, EnergyMicro2011}
 
 
-\subsection{PRS}
-The peripheral reflex system (PRS) is a technology that allows the peripherals in the system-on-a-
-chip, external to the MCU, to independently interact and thus not force the MCU to wake from
+\subsection{\acf{PRS}}
+The \ac{PRS} is a technology that allows the peripherals in the system-on-a-
+chip, external to the \ac{MCU}, to independently interact and thus not force the \ac{MCU} to wake from
 sleep. To enable such control, the system has predefined production and consumption interfaces on
-each module, these range from automated ADC every second triggered by the RTC to using receipt
-of USART data to trigger switching of a device pin . Many of these peripherals clock independently of
-the MCU so this system can even work in the deepest sleep states.
+each module, these range from automated ADC every second triggered by the \ac{RTC} to using receipt
+of \ac{USART} data to trigger switching of a device pin. Many of these peripherals clock independently of
+the \ac{MCU} so this system can even work in the deepest sleep states.
 
 \subsection{CMU}
-The EFM32s ground up approach of designing all models in the system, except from MCU and DMA,
+The EFM32s ground up approach of designing all models in the system, except from the \ac{MCU} and \ac{DMA} controller,
 allows a powerful clock and energy management system that allows individual clocking and enabling
 of each subsystem allowing modules to consume no power when not in use. The clock management
 system also enables several clock to be chosen for each module, allowing the programmer is most
 effectively choose the set of clocks needed. Thank you management system also extend directly into
-the MCU, allowing extra sleep states to be added to the cortex M3. These extra sleep states allow
-the MCU to gradually decrease the number of high frequency clocks the maintain state and
+the \ac{MCU}, allowing extra sleep states to be added to the cortex M3. These extra sleep states allow
+the \ac{MCU} to gradually decrease the number of high frequency clocks the maintain state and
 also includes full hibernation of the chip with only the externally clocked subsystems
 enabled. From these sleep states EFM32 has a fast wake-up time allowing shorter burst
 periods and deeper sleeps.

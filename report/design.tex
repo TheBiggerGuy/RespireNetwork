@@ -1,5 +1,7 @@
-%% Sample chapter file, for use in a thesis.
-%% Don't forget to put the \chapter{...} header onto each file.
+%%
+%% Copyright Guy Taylor 2012
+%%
+%%
 
 \chapter{Design}
 
@@ -151,7 +153,7 @@ transition if needed to the correct state.
 
 The silicon had a built in CRC generator and checker enabling good packer corruption checking
 during broadcast. The radio however does not attempt any forward correction and it was decided to
-implement this in software as it is shown to have a low effectiveness (Mohamed, 1998).
+implement this in software as it is shown to have a low effectiveness\cite{NetworkDesign1998}.
 The radio works within the 2.4GHz ISM band using a single or dual channel GFSK modulated signal.
 This provides 126 independent channels at 250kbps or 63 at 2Mbps and a speed-dependent
 sensitivity rage of -94dBm to -82dBm. This use of the 2.4GHz ISM band provides worldwide licensing

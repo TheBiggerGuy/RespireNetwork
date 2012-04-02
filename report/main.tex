@@ -1,12 +1,7 @@
- %%%%%%%%%%%%%%%%%%%%%%%%
-%% Sample use of the infthesis class to prepare a thesis. This can be used as 
-%% a template to produce your own thesis.
-%% 
-%% The title, abstract and so on are taken from Martin Reddy's csthesis class
-%% documentation.
 %%
-%% MEF, October 2002
-%%%%%%%%%%%%%%%%%%%%%%%%
+%% Copyright Guy Taylor 2012
+%%
+%%
 
 %% config the formatting
 \documentclass[bsc,logo,plainprepages,parskip,abbrevs,10pt]{infthesis}
@@ -29,15 +24,15 @@
 
 %% abstract
 \abstract{
-The Respire device provides low-power, unobtrusive respiratory monitoring of patients by use of
+The Respire device provides wireless low-power, unobtrusive respiratory monitoring of patients by use of
 accelerometers to detect breathing movements. Implementation of a wireless networking capability
 for this device will facilitate its widespread use in diagnosis and clinical management of respiratory
 disease. The aim of this project was to develop Respire network firmware based on the \acf{TDMA}
 method of network channel access, which was concluded to be the
 only large-network (\textgreater 6 device constraint of the Respire hardware) method suitable for the Respire. I
 produced and tested operational and debugging firmware for project development, which led to
-identification of problems implementing TDMA with the Send-Receive function of the low-power
-nRF24 radio onboard the Respire device. This has precluded testing of my design with the Respire
+identification of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
+nRF24l01+ radio onboard the Respire device. This has precluded testing of my design with the Respire
 devices in a large-network environment. An important aspect of firmware development was to
 include power-saving features where possible (\eg x\% reduction in power use when implementing
 delays relative to code provided by the manufacturer). The project material (firmware, debugging
@@ -72,6 +67,14 @@ devices.
 \begin{acronym}
 \acro{TDMA}[TDMA]{Time Division Multiple Access}
 \acro{ECG}[ECG]{Electrocardiogram}
+\acro{RISC}[RISC]{Reduced Instruction Set Computer}
+\acro{MCU}[MCU]{Microcontroller}
+\acro{PRS}[PRS]{Peripheral Reflex System}
+\acro{DMA}[DMA]{Direct Memory Access}
+\acro{SWD}[SWD]{Serial Wire Debugging}
+\acro{SWO}[SWO]{Serial Wire Out/Viewer}
+\acro{I/O}[I/O]{Input/Output}
+\acro{RTC}[RTC]{Real Time Clock}
 \end{acronym}
 
 \end{preliminary}

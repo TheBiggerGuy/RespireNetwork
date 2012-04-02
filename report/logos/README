@@ -1,0 +1,48 @@
+Files in the "logos" directory:
+==============================
+
+Edinburgh University shield:
+---------------------------
+The file "eushield.eps" contains the Edinburgh University shield. It can be
+displayed in five different ways:
+    0: regular monochrome
+    1: monochrome with no lines in the background
+    2: reverse monochrome
+    3: two colours: navy and red
+    4: full colour
+To select an appropriate display technique, use the "eushield" package:
+    \usepackage{eushield}
+and then use the "\shieldtype" command to select the version of the crest
+you want to include:
+    \shieldtype{3} % crest will be navy and red
+Note that if you are producing PostScript, all the shields will come out
+with the characteristics of the last \shieldtype command, since the
+different versions are obtained through PostScript "\special" commands in
+the DVI file.
+
+The "\eushield" command produces the appropriate filename for including;
+for example, using the graphics package:
+    \includegraphics{\eushield}
+The "\includeshield" command is exactly the same as
+"\includegraphics{\eushield}".
+
+
+Informatics logos:
+-----------------
+The file "school_of_informatics.eps" and "school_of_informatics.pdf"
+contains the School of Informatics logo, for use on official Informatics
+documents. The file "GraphicB-pale.eps" and ".pdf" contains the large,
+washed-out Informatics "i" for use on posters.
+
+
+Old files:
+---------
+The directory "old" contains all of the old logos and shields from previous
+installations. These should not be used -- and, indeed, are not used in any
+of the current Informatics classes -- but they are kept there for the
+benefit of users of old classes.
+
+
+Mary Ellen Foster
+M.E.Foster@ed.ac.uk
+2002/10/15

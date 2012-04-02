@@ -1,0 +1,808 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%Creator: FreeHand (Toby Morris et al) reconstructed by John Butler
+%%Title: crest 1.14
+%%CreationDate: 7/8/91 11:57 am
+%%BoundingBox: 20 283 567 830
+%%DocumentFonts: Times-Roman MPerpetua
+%%DocumentNeededFonts: Times-Roman MPerpetua
+%%EndComments
+
+%* -------------------------------------------------------.
+%* The University Corporate Visual Identity exercise Logo |
+%* -------------------------------------------------------'
+
+%* Bounding box is 547 * 547.
+%* v1.10: Colours corrected. Additional detail added.
+%*        Uses separate dictionary for drawing components.
+%*        Dark boundaries on full-colour saltire. Bounding box not coloured in.
+%* v1.11: Setcmykcolor used not setrgbcolor
+%* v1.12: Tiny flashes visible at enormous scale removed (mitrelimit problem)
+%*        Lettering redone to remove baroque positioning.
+%* v1.13: Version number added to castle base in tiny letters (commented out)
+%*	  Suffixes dropped from version nos.
+%* v1.14: Bug in font selection: GAW version tried.
+%*	  Bounding box painted black in reversed mode
+
+%* Note this requires font "Times-Roman" to be present.
+
+/normal     0 def %* normal monochrome
+/reversed   2 def %* white on a black background
+/twocolour  3 def %* two colour - red and black
+/fullcolour 4 def %* full colour
+
+% Size-related proportion controls e.g. Bordure Width for large logos
+/normalsize 1 def
+/largesize  2 def % use this for printed size > 12.5 cm (5")
+
+%* 1.000 dup scale %* nonstandard size - 101mm (4") circle, 130mm across type
+
+%* ---------------------------------------------------------------------------
+/crestdict 80 dict def
+
+crestdict begin
+
+
+% Numbers in [] are RGB values (actually 1-CMY). Other nos are Pantones.
+% Pantone equivalences taken from table in QMS printer manual.
+%Inslate  [1.00 0.69 0.00 0.55] def %* 282 Slate (uncoated)
+/Inslate  [1.00 0.59 0.00 0.55] def %* 289 Slate (coated)
+/Inblack  [0.00 0.00 0.00 1.00] def
+/Inwhite  [0.00 0.00 0.00 0.00] def
+/Inred    [0.00 1.00 0.63 0.00] def %* 199 Red (coated)
+%Inred    [0.00 0.84 0.63 0.00] def %* 192 Red (uncoated paper)
+/Inblue   [1.00 0.37 0.00 0.00] def %* 300 Mid Blue in the full colour saltire
+/Ingreen  [0.44 0.00 0.39 0.00] def %* 338 Green in the full colour thistle ball
+/Inpurple [0.15 1.00 0.00 0.00] def %* 233 Purple in the full colour thistle seeds
+/Inpages  [0.00 0.15 0.44 0.00] def %* 134 Yellow/Orange in the full colour inner pages
+/Inyellow [0.00 0.34 0.74 0.00] def %* 136 Yellow in the full colour book edges
+                          %*     and shield inner edge
+
+%*
+%* Define setcmykcolor in terms of rgb if not defined by current interpreter.
+%*
+/setcmykcolor where {pop}
+      { /setcmykcolor
+          { dup 10 eq {pop setrgbcolor}
+                    {1 sub 4 1 roll 3
+                        { 3 index add neg dup 0 lt {pop 0} if 3 1 roll
+                        } repeat
+                      setrgbcolor pop
+                    } ifelse
+           } bind def
+      } ifelse
+
+/setcolor{aload pop setcmykcolor} def
+
+/doline{
+setlinewidth setlinecap setlinejoin Inink setcolor stroke
+}def
+
+/doBWline{
+setlinewidth setlinecap setlinejoin InkOrWhite setcolor stroke
+}def
+
+/paint{
+closepath
+gsave
+setcolor fill
+grestore
+}def
+
+/thistleseeds{
+%* thistle seeds - painting order 1 (LH), 2, 6, 5, 3 ,4
+-26.7 96.2 moveto
+-27.5 95.1 -24.2 87.0 -23.7 86.4 curveto
+-23.2 84.9 -17.0 79.5 -15.2 77.8 curveto
+-14.6 76.2 -11.7 73.9 -11.4 73.9 curveto
+-11.1 72.8 -10.7 73.2 -10.0 74.6 curveto
+-20.9 88.7 lineto
+-24.2 94.0 -26.5 97.1 -26.7 96.2 curveto
+WhiteOrPurple paint
+newpath
+
+-18.4 90.7 moveto
+-18.8 89.5 -17.2 87.8 -15.9 87.4 curveto
+-15.9 86.5 -11.6 81.7 -11.0 80.8 curveto
+-10.5 79.7  -8.2 76.1  -7.6 75.7 curveto
+ -6.8 75.2  -7.9 79.1  -8.8 80.8 curveto
+-10.0 82.4 -11.1 84.9 -11.1 86.2 curveto
+-12.5 89.2 lineto
+-13.6 89.5 -13.6 90.8 -14.4 91.4 curveto
+-14.8 91.7 -14.5 94.7 -14.8 95.2 curveto
+-16.0 94.5 -17.8 92.4 -18.4 90.7 curveto
+WhiteOrPurple paint
+newpath
+
+ 26.6 95.8 moveto
+ 27.4 94.6  24.2 86.2  23.6 85.9 curveto
+ 19.6 82.8  17.1 81.1  15.2 77.2 curveto
+ 14.5 75.9  11.8 74.1  11.5 74.1 curveto
+ 11.2 73.0   9.3 73.2   8.6 74.6 curveto
+  8.6 74.6  12.0 76.2  12.0 79.2 curveto
+ 13.5 79.2  17.8 82.7  17.8 82.7 curveto
+ 20.4 88.4 lineto
+ 21.4 89.9  22.6 91.1  23.5 92.1 curveto
+ 25.6 94.6  26.5 96.4  26.6 95.8 curveto
+WhiteOrPurple paint
+newpath
+
+ 17.6 90.8 moveto
+ 18.0 89.6  16.4 87.2  15.0 86.8 curveto
+ 15.0 85.9  10.8 80.2  10.2 79.4 curveto
+  9.8 78.2   7.5 76.2   6.8 75.8 curveto
+  6.0 75.2   7.1 79.2   8.0 80.9 curveto
+  9.2 82.5  10.3 85.0  10.3 86.4 curveto
+ 11.8 89.2 lineto
+ 12.8 89.6  12.8 90.9  13.6 91.5 curveto
+ 14.0 91.8  13.8 94.8  14.0 95.4 curveto
+ 15.2 94.6  17.0 92.5  17.6 90.8 curveto
+WhiteOrPurple paint
+newpath
+
+ -2.2 76.2 moveto
+ -1.6 78.4  -2.8 81.4  -2.8 83.7 curveto
+ -2.8 87.6  -0.7 94.9  -4.4 94.9 curveto
+ -5.6 94.7  -8.4 91.6  -9.9 91.1 curveto
+-10.8 89.5  -8.1 85.9  -7.6 84.2 curveto
+ -7.6 82.8  -6.7 82.2  -6.0 80.8 curveto
+ -5.5 79.5  -3.7 75.9  -2.2 76.2 curveto
+WhiteOrPurple paint
+newpath
+
+  2.1 75.8 moveto
+  1.4 78.0   1.6 82.0   1.6 84.2 curveto
+  1.6 88.2  -0.1 94.8   3.6 94.8 curveto
+  4.8 94.6   7.6 91.5   9.1 91.0 curveto
+ 10.0 89.4   7.4 87.2   6.9 85.6 curveto
+  6.9 84.2   5.9 82.1   5.2 80.7 curveto
+  4.8 79.4   3.5 75.5   2.1 75.8 curveto
+WhiteOrPurple paint
+newpath
+} def
+
+/thistleball{
+%* thistle ball
+%* Outline sphere
+-15.4 62.8 moveto
+-15.4 69.1  -8.9 74.2  -0.9 74.2 curveto
+  7.1 74.2  13.6 69.1  13.6 62.8 curveto
+ 13.6 56.5   7.1 51.2  -0.9 51.2 curveto
+ -8.9 51.2 -15.4 56.5 -15.4 62.8 curveto
+WhiteOrGreen paint
+0 1 2 doline
+
+%* highlight
+  1.8 62.1 moveto
+  2.8 62.5   2.8 63.0   3.8 63.2 curveto
+  3.8 61.8   2.6 62.9   3.5 60.7 curveto
+  3.6 60.2   2.3 62.1   1.8 62.1 curveto
+Inink paint
+0 1 1 doline
+} def
+
+/thistlehatch{
+
+%* hatching - 6 diagonal stripes
+-10.2 71.2 moveto
+ -4.8 62.2   8.8 53.9   8.8 53.9 curveto
+ 11.1 56.4 lineto
+ -0.6 62.2  -2.4 63.2 -10.2 71.2 curveto
+Inink paint
+0 1 1 doline
+
+ -1.6 74.2 moveto
+ -0.5 70.2  13.2 60.6  13.2 60.6 curveto
+ 13.8 63.2 lineto
+  8.9 65.4   2.4 69.8  -1.6 74.2 curveto
+Inink paint
+0 1 1 doline
+
+-14.8 64.2 moveto
+-10.8 59.2  -0.1 51.6  -0.1 51.6 curveto
+  4.9 52.5 lineto
+ -1.2 55.2  -9.9 60.1 -14.8 64.2 curveto
+Inink paint
+0 1 1 doline
+
+-12.1 55.7 moveto
+ -6.8 56.7  11.5 68.4  11.5 68.4 curveto
+  9.0 71.2 lineto
+  0.1 61.6 -12.1 55.7 -12.1 55.7 curveto
+Inink paint
+0 1 1 doline
+
+-14.6 61.2 moveto
+ -7.1 64.2   3.8 73.5   3.8 73.5 curveto
+  0.8 73.9 lineto
+ -2.7 69.9  -7.9 64.9 -14.6 61.2 curveto
+Inink paint
+0 1 1 doline
+
+ -5.2 52.1 moveto
+ -1.7 52.4  13.5 61.9  13.5 61.9 curveto
+ 13.2 65.6 lineto
+  8.9 60.5  -5.2 52.1  -5.2 52.1 curveto
+Inink paint
+0 1 1 doline
+} def
+
+/thistledetails{
+%* details - 8 small patches
+  1.2 54.6 moveto
+  2.2 55.0   2.2 55.5   3.2 55.7 curveto
+  3.2 54.2   2.0 55.4   2.9 53.2 curveto
+  3.0 52.8   1.8 54.6   1.2 54.6 curveto
+Inink paint
+0 1 1 doline
+
+ -5.1 58.1 moveto
+ -4.1 58.5  -4.1 59.0  -3.1 59.2 curveto
+ -3.1 57.8  -4.2 58.9  -3.4 56.7 curveto
+ -3.2 56.2  -4.6 58.1  -5.1 58.1 curveto
+Inink paint
+0 1 1 doline
+
+ -5.6 66.6 moveto
+ -4.6 67.0  -4.6 67.5  -3.6 67.7 curveto
+ -3.6 66.2  -4.8 67.4  -3.9 65.2 curveto
+ -3.8 64.8  -5.1 66.6  -5.6 66.6 curveto
+Inink paint
+0 1 1 doline
+
+-12.2 62.2 moveto
+-11.2 62.7 -11.2 63.2 -10.2 63.4 curveto
+-10.2 62.0 -11.5 63.1 -10.6 60.9 curveto
+-10.5 60.5 -11.8 62.2 -12.2 62.2 curveto
+Inink paint
+0 1 1 doline
+
+  8.4 58.5 moveto
+  9.4 58.9   9.4 59.4  10.4 59.6 curveto
+ 10.4 58.2   9.2 59.2  10.1 57.1 curveto
+ 10.2 56.7   8.9 58.5   8.4 58.5 curveto
+Inink paint
+0 1 1 doline
+
+  8.8 66.2 moveto
+  9.8 66.7   9.8 67.2  10.8 67.4 curveto
+ 10.8 66.0   9.5 67.1  10.4 64.9 curveto
+ 10.5 64.5   9.2 66.2   8.8 66.2 curveto
+Inink paint
+0 1 1 doline
+
+  1.2 71.8 moveto
+  2.2 72.2   2.2 72.7   3.2 72.9 curveto
+  3.2 71.5   2.0 72.6   2.9 70.4 curveto
+  3.0 70.0   1.8 71.8   1.2 71.8 curveto
+Inink paint
+0 1 1 doline
+
+-13.4   62.6 moveto
+-14.4 63.0 -14.5 63.9 -15.5 64.1 curveto
+-15.5 62.7 -14.5 63.0 -15.4 60.8 curveto
+-15.5 60.4 -13.9 62.6 -13.4 62.6 curveto
+Inink paint
+0 1 1 doline
+} def
+
+/thistlemain{
+newpath
+
+%* thistle seed outline
+-38.1 99.1 moveto
+-10.5 69.2 lineto
+  9.0 68.1 lineto
+ 36.8 98.8 lineto
+-38.1 99.1 lineto
+Inink paint
+0 1 1 doline
+thistleseeds
+
+%* thistle stem
+ -3.4 38.2 moveto
+ -2.4 47.2 lineto
+ -7.4 50.2  -5.4 56.2  -5.4 56.2 curveto
+  4.6 56.2 lineto
+  5.6 49.2   0.6 47.2   0.6 47.2 curveto
+  1.6 38.2 lineto
+Inink paint
+0 1 2 doline
+} def
+
+/castle{
+%* 1st castle outline
+newpath
+  -21.4 -116.7 moveto
+  -21.4  -97.7 lineto
+  -12.4  -96.7 lineto
+   -6.4  -80.7 lineto
+   13.6  -80.7 lineto
+   17.6  -94.7 lineto
+   26.6  -95.7 lineto
+   26.6 -116.7 lineto
+    5.6 -117.7 lineto
+    3.4 -113.9 lineto
+    3.6  -99.7 lineto
+    3.6  -99.7   -2.4  -99.7   -2.4 -105.7 curveto
+   -2.4 -110.7   -2.4 -116.7   -2.4 -116.7 curveto
+Inwhite paint
+0 1 2 doline
+
+%* 2nd castle outline
+  -26.9 -113.7 moveto
+  -26.9  -94.7 lineto
+  -17.9  -93.7 lineto
+  -11.9  -77.7 lineto
+    8.1  -77.7 lineto
+   13.1  -93.7 lineto
+   21.1  -94.7 lineto
+   21.1 -113.7 lineto
+    3.4 -113.7 lineto
+    3.1 -104.2 lineto
+    3.6  -98.2   -1.9  -96.7   -1.9  -96.7 curveto
+   -1.9  -96.7   -7.9  -96.7   -7.4 -101.7 curveto
+   -7.9 -105.7   -7.9 -113.7   -7.9 -113.7 curveto
+Inink paint
+0 0 2 doline
+   % Code to put a version I.D. in the base of the castle
+   % gsave
+   % -7.5 -117.15 moveto 1 setgray 0.04 0.04 scale (v1.14) show
+   %  260 -22 rmoveto 2.8 rotate (John Butler, 1992) show
+   % grestore
+
+%* castle ramparts
+  -28.4  -60.7 moveto
+  -28.4  -75.7 lineto
+  -24.4  -79.7 lineto
+   27.6  -79.7 lineto
+   28.6  -60.7 lineto
+   11.6  -60.7 lineto
+   16.6  -67.7 lineto
+    3.6  -67.7 lineto
+    8.6  -60.7 lineto
+   -8.4  -60.7 lineto
+   -3.4  -67.7 lineto
+  -16.4  -67.7 lineto
+  -11.4  -60.7 lineto
+Inink paint
+0 0 0.3 doline
+
+%* LH crenellation "relief"
+  -15.5  -61.7 moveto
+  -13.5  -61.7 lineto
+  -17.8  -67.7 lineto
+  -19.8  -67.7 lineto
+Inwhite paint
+% newpath
+
+%* middle crenellation "relief"
+    4.2  -61.7 moveto
+    6.2  -61.7 lineto
+    1.8  -67.7 lineto
+   -0.2  -67.7 lineto
+Inwhite paint
+% newpath
+
+%* crenellation overhang "relief"
+  -25.4  -75.7 moveto
+  -23.4  -77.7 lineto
+   25.6  -77.7 lineto
+   25.6  -69.7 lineto
+   23.6  -66.7 lineto
+   23.6  -75.7 lineto
+Inwhite paint
+newpath
+} def
+
+/saltire{
+%* remodelled saltire
+% left- and right-hand paths (x) of inner shield edge 
+/x0 -90.9 def
+/x1  91.1 def
+
+% four intersection points (y) of saltire and l and r edges
+/y3  129.0 def
+/y2   57.5 def
+/y1  -53.5 def
+/y0 -124.5 def
+
+% four derived re-entrant vertices top,right,left,bottom of saltire
+/dx {x1 x0 sub} def
+/tvx {dx 2 div x0 add} def
+/rvx {dx y3 y0 sub mul y2 y3 add y0 sub y1 sub div x0 add} def
+/bvx {dx 2 div x0 add} def
+/lvx {dx y2 y1 sub mul y2 y3 add y0 sub y1 sub div x0 add} def
+/tvy {y3 y1 sub dx div tvx x0 sub mul y1 add} def
+/rvy {y2 y0 sub dx div rvx x0 sub mul y0 add} def
+/bvy {y2 y0 sub dx div bvx x0 sub mul y0 add} def
+/lvy {y3 y1 sub dx div lvx x0 sub mul y1 add} def
+   x0  y3   moveto
+   tvx tvy lineto
+   x1  y3 lineto
+   x1  y2 lineto
+   rvx rvy lineto
+   x1  y1 lineto
+   x1  y0 lineto
+   bvx bvy lineto
+   x0  y0 lineto
+   x0  y1 lineto
+   lvx lvy lineto
+   x0  y2 lineto
+InkOrBlue paint
+newpath
+2 setlinecap 0 setlinejoin Inink setcolor
+
+2.5 setlinewidth
+x0 y3 moveto tvx tvy lineto x1 y3 lineto stroke
+x0 y1 moveto lvx lvy lineto stroke
+x1 y1 moveto rvx rvy lineto stroke
+
+6 setlinewidth
+x0 y2 moveto lvx lvy lineto stroke
+x1 y2 moveto rvx rvy lineto stroke
+x0 y0 moveto bvx bvy lineto x1 y0 lineto stroke
+} def
+
+/book{
+%* Book vertices. t/b: top/bottom, i/o: inner/outer. l/r/c: left/right/centre
+/tlo {-36.4  31.5} def
+/tli {-30.0  39.9} def
+/tc  {  0.9  27.7} def
+/tri { 31.0  37.9} def
+/tro { 37.1  28.0} def
+/blo {-36.4 -29.5} def
+/bli {-29.9 -19.5} def
+/bro { 36.1 -28.9} def
+/bci {  0.1 -26.8} def
+/bri { 30.7 -20.4} def
+
+gsave
+0 2 translate
+%* book LH shadow. The notch is to avoid overlaying the white area.
+newpath
+tlo moveto
+tlo exch 3 sub exch lineto
+% -39.4 3 lineto
+% -35.4 0 lineto
+% -39.4 -2 lineto
+blo exch 3 sub exch 1 sub lineto
+blo 1 sub lineto
+Inink paint
+% 0 0 1 doline
+
+%* book RH shadow
+newpath
+tro moveto
+tro exch 3 add exch lineto
+% 40.1 3 lineto
+% 36.1 0 lineto
+% 40.1 -3 lineto
+bro exch 3 add exch 1 sub lineto
+bro 1 sub lineto
+Inink paint
+% 0 0 1 doline
+
+%* book outer outline
+newpath
+tlo moveto
+-37.4   15.5  -36.9  -30.0 blo curveto
+ -3.9  -30.0 lineto
+ -4.9  -32.6   -3.9  -36.0    0.1  -36.0 curveto
+  4.1  -36.0    5.1  -32.6    4.1  -30.0 curveto
+bro lineto
+tro lineto
+ 36.5   28.4   31.5   37.4 tri curveto
+  7.9   37.2    1.1   28.5 tc curveto
+  1.1   28.5  -10.4   35.8 tli curveto
+-31.7   39.0  -34.9   32.9 tlo curveto
+WhiteOrYellow paint
+0 0 2 doline
+
+%* book RH page edges
+1.0 setmiterlimit
+bri moveto
+bro lineto
+
+tro lineto
+ 36.5   28.4   31.5   37.4 tri curveto
+% closepath
+WhiteOrYellow paint
+0 0 2 doline
+3.863693 setmiterlimit
+
+%* book inner outline
+tli moveto
+bli lineto
+-29.9  -20.0   -6.9  -13.8 bci curveto
+  7.1  -13.8   30.9  -20.5 bri curveto
+tri lineto
+ 31.1   38.0    4.6   45.0 tc curveto
+ -9.4   46.0  -29.9   40.0 tli curveto
+WhiteOrPages paint
+0 0 2 doline
+
+%* book LH corner
+blo moveto
+bli lineto
+0 0 2.5 doline
+
+%* book RH corner
+bro moveto
+bri lineto
+0 0 2.5 doline
+
+%* book flecks
+
+/lefthand 1 def
+/righthand -1 def
+
+/fleck{
+/hand exch def
+gsave
+newpath
+translate
+0 0 moveto
+10.7  hand mul  0.2 17.2 hand mul -4.7  20.7 hand mul -10.0 curveto
+18.2  hand mul -7.0 12.9 hand mul -6.0   8.7 hand mul  -4.8 curveto
+ 1.7  hand mul -2.8 -0.2 hand mul -5.2  -0.2 hand mul   0.1 curveto
+Inink paint
+0 1 0.3 doline
+grestore
+}def
+-24.6   26.8 lefthand  fleck %* LH top
+-25.1   10.8 lefthand  fleck %* LH middle
+-25.6   -5.2 lefthand  fleck %* LH bottom
+ 24.8   26.8 righthand fleck %* RH top
+ 25.3   10.8 righthand fleck %* RH middle
+ 25.8   -5.2 righthand fleck %* RH bottom
+
+%* book spine
+  1.4   28.0 moveto
+  1.4   28.0   -0.1   27.5   -0.1   27.8 curveto
+ -0.4   18.0   -0.7   -9.4   -2.6  -22.8 curveto
+ -0.9  -24.8    0.1  -26.0    0.1  -26.0 curveto
+  4.4  -21.5 lineto
+  0.6  -19.8    1.4   28.0    1.4   28.0 curveto
+Inink paint
+0 1 1 doline
+
+%* book RH page edges
+ 33.4   32.0 moveto
+ 34.4   32.0   35.0   31.4   35.0   31.4 curveto
+ 32.4    3.0   34.6  -25.4   34.6  -25.4 curveto
+ 32.6  -25.4 lineto
+ 32.6  -25.4   34.6    7.2   33.4   32.0 curveto
+Inink paint
+
+grestore
+} def
+
+/lettering{
+0 0 5.7 doBWline
+/Rtop 157 def  % 161 def
+/Rbot -185 def
+/letter{
+gsave
+rotate
+InkOrWhite setcolor
+/offset exch def
+0 0 moveto
+dup stringwidth pop 2 div neg offset moveto show
+grestore
+}def
+
+(T) Rtop  79 letter
+(H) Rtop  65.5 letter
+(E) Rtop  52 letter
+
+(U) Rtop  31.75 letter
+(N) Rtop  17.5 letter
+(I) Rtop   6 letter
+(V) Rtop  -6 letter
+(E) Rtop -19 letter
+(R) Rtop -32 letter
+(S) Rtop -44 letter
+(I) Rtop -54.5 letter
+(T) Rtop -65 letter
+(Y) Rtop -78 letter
+
+(O) Rbot -75.5 letter
+(F) Rbot -61 letter
+
+(E) Rbot -39 letter
+(D) Rbot -25 letter
+(I) Rbot -13 letter
+(N) Rbot   0 letter
+(B) Rbot  15 letter
+(U) Rbot  30 letter
+(R) Rbot  46 letter
+(G) Rbot  60 letter
+(H) Rbot  75.5 letter
+} def
+
+/dots{
+%* LH dot
+newpath
+ -172.4 -5.0 3 0 360 arc
+InkOrWhite paint
+0 0 1.4 doBWline
+
+%* RH dot
+  171.6 -5.0 3 0 360 arc
+InkOrWhite paint
+0 0 1.4 doBWline
+} def
+
+/shield{
+%* shield outer edge: Takes parameter "size", used to narow the bordure
+largesize eq {
+-98.4 1.0 add  100.8 1 sub moveto
+-98.4 1.0 add  -88.2 1 add lineto
+-98.4 1.0 add -114.2 1 add -70.2 1.0 add -116.0 0.8 add -48.4 0.2 add -118.2 0.8 add curveto
+-19.4 0.1 add -121.2 1 add -14.9 0.1 add -115.1 1 add  -0.9         -142.2 1 add curveto
+ 22.1 0.1 sub -111.2 1 add  25.5 0.1 sub -120.1 1 add  46.6 0.2 sub -118.2 0.8 add curveto
+ 68.6 0.4 sub -116.2 0.8 add  97.6 1.0 sub -117.2 1 add  97.6 1.0 sub  -87.2 1 add curveto
+ 97.6 1.0 sub  100.8 1 sub lineto
+WhiteOrYellow paint
+2 1 5 doline
+}{
+-98.4  100.8 moveto
+-98.4  -88.2 lineto
+-98.4 -114.2  -70.2 -116.0 -48.4 -118.2 curveto
+-19.4 -121.2  -14.9 -115.1  -0.9 -142.2 curveto
+ 22.1 -111.2   25.5 -120.1  46.6 -118.2 curveto
+ 68.6 -116.2   97.6 -117.2  97.6  -87.2 curveto
+ 97.6  100.8 lineto
+WhiteOrYellow paint
+2 1 4 doline
+} ifelse
+
+%* shield inner edge
+-90.9   93.9 moveto
+-90.9  -83.6 lineto
+-90.9 -112.3 -66.3 -110.2 -45.8 -112.3 curveto
+-18.6 -115.1 -12.9 -110.2  -0.1 -130.7 curveto
+ 16.6 -109.2  23.5 -114.1  43.3 -112.3 curveto
+ 63.9 -110.3  91.1 -112.3  91.1  -83.6 curveto
+ 91.1   93.9 lineto
+Inwhite paint
+} def
+
+/outercircle{
+%* outer circle
+/x0 0 def /y0 0 def
+x0 y0 143.15 0 360 arc
+WhiteOrInkOrRed paint
+gsave
+clip newpath
+
+/hatching{
+  /hatch{
+    newpath
+    -143.15 exch moveto
+     286.30 0 rlineto
+    0 0 1.4 doBWline
+  }def
+  0 1 26 {10.37 mul 134.95 sub hatch} for
+  % unapproved JHB 48-line experiment: 0 1 47 {5.9  mul 136 sub hatch} for
+}def
+
+normal version eq reversed version eq or {hatching} if
+grestore
+} def
+
+/boundingbox{
+%* Bounding Box: 20 283 567 830
+%* logo centre
+/x0 0 def /y0 0 def
+%* Bounding Box: [xl,yb] ... [xr,yt]
+/xl x0 273.35 sub def /xr x0 273.65 add def
+/yb y0 274.05 sub def /yt y0 272.95 add def
+xl yb moveto
+xl yt lineto
+xr yt lineto
+xr yb lineto
+WhiteOrInk paint
+newpath
+} def
+end
+
+/crest{
+crestdict begin
+
+/size exch def
+/version exch def
+
+gsave
+
+%* define colours
+/Inink              twocolour  version eq {Inslate} {Inblack} ifelse def
+/InkOrWhite         reversed   version eq {Inwhite} {Inink}   ifelse def
+/WhiteOrInk         reversed   version eq {Inink}   {Inwhite} ifelse def
+
+/WhiteOrRed         twocolour  version eq {Inred}   {Inwhite} ifelse def
+
+% Thistle seeds
+/WhiteOrPurple      fullcolour version eq {Inpurple}{Inwhite} ifelse def
+
+% Circle background
+/WhiteOrInkOrRed    twocolour  version eq fullcolour version eq or
+                                          {Inred}   {WhiteOrInk} ifelse def
+
+% Saltire
+/InkOrBlue          fullcolour version eq {Inblue}  {Inink}   ifelse def
+
+% Shield Bordure
+/WhiteOrYellow      fullcolour version eq {Inyellow}{Inwhite} ifelse def
+
+% Thistle Ball
+/WhiteOrGreen       fullcolour version eq {Ingreen} {Inwhite} ifelse def
+
+% Book Pages
+/WhiteOrPages       fullcolour version eq {Inpages} {Inwhite} ifelse def
+
+%%IncludeFont: MPerpetua Times-Roman
+
+% Angus version:
+%* /f1 FontDirectory /MPerpetua known
+%*     {true} {mark {(fonts/MPerpetua) (r) file closefile pop true} stopped
+%*                  {cleartomark false} if} ifelse
+%*     {mark {/MPerpetua findfont /fontis /MPerpetua def pop false} stopped
+%*           {cleartomark true} if} {true} ifelse
+%*     {/Times-Roman findfont /fontis /Times-Roman def} if def
+
+% Graeme Wood version:
+/f1 FontDirectory /MPerpetua known
+    {true} {mark {(fonts/MPerpetua) (r) file closefile pop true} stopped
+                 {cleartomark false} if} ifelse
+    {{/MPerpetua findfont /fontis /MPerpetua def false} stopped
+          {true} if} {true} ifelse
+    {/Times-Roman findfont /fontis /Times-Roman def} if def
+
+%* lettering
+f1 [36 0 0 36 0 0] makefont setfont
+
+3.863693 setmiterlimit
+
+293.35 557.05 translate
+save
+  version reversed eq {boundingbox} if
+  outercircle
+  lettering
+restore
+save
+  dots
+  size shield
+  gsave
+    clip
+    thistlemain
+    thistleball
+    thistlehatch
+    thistledetails
+    castle
+    %* debugging line: gsave 12 12 scale 0 100 translate castle grestore
+    saltire
+    book
+    %* debugging line: gsave 8 8 -100 -100 translate scale book grestore
+  grestore
+  0 0 1.9 doline %* shield inner outline
+restore
+grestore
+end
+} def
+
+% Pick one of normal, twocolour, reversed, fullcolour
+% set up parameters for "crest" call
+/crestversion where
+  {pop crestversion dup type /nametype eq {cvx exec} if}
+  {normal} ifelse
+/crestsize where
+  {pop crestsize dup type /nametype eq {cvx exec} if}
+  {normalsize} ifelse
+
+crest % create crest
+
+% and display it
+showpage
+
+%%EOF

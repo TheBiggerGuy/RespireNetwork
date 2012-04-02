@@ -48,11 +48,6 @@ devices.
 %% Now we start with the actual document.
 \begin{document}
 
-\begin{acronym}
-\acro{TDMA}[TDMA]{Time Division Multiple Access}
-\acro{ECG}[ECG]{Electrocardiogram}
-\end{acronym}
-
 %% First, the preliminary pages
 \begin{preliminary}
 
@@ -74,6 +69,11 @@ devices.
 \listoffigures
 \listoftables
 
+\begin{acronym}
+\acro{TDMA}[TDMA]{Time Division Multiple Access}
+\acro{ECG}[ECG]{Electrocardiogram}
+\end{acronym}
+
 \end{preliminary}
 
 %%%%%%%%
@@ -81,6 +81,9 @@ devices.
 %% format.
 
 \include{introduction}
+\include{background}
+\include{design}
+\include{implementation_and_testing}
 \include{discussion}
 \include{conclusion}
 

@@ -2,7 +2,7 @@
 ; * @file:    
 ; * @purpose: CMSIS Cortex-M3 Core Device Startup File 
 ; *           for the Energy Micro 'EFM32LG/GG' Device Series 
-; * @version 2.3.2
+; * @version 2.4.0
 ; * @date:    January 2011
 ; *----------------------------------------------------------------------------
 ; *

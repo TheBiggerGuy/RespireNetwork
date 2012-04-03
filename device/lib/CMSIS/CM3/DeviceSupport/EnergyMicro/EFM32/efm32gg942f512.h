@@ -3,7 +3,7 @@
  * @brief CMSIS Cortex-M3 Peripheral Access Layer Header File
  *        for EFM EFM32GG942F512
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  ******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -209,6 +209,8 @@ typedef enum IRQn
 #define PRS_COUNT           1
 #define DMA_PRESENT
 #define DMA_COUNT           1
+#define OPAMP_PRESENT
+#define OPAMP_COUNT         1
 #define USB_PRESENT
 #define USB_COUNT           1
 #define USBC_PRESENT
@@ -1241,6 +1243,20 @@ typedef struct
 } ETM_TypeDef;                   /** @} */
 
 /**************************************************************************//**
+ * @defgroup EFM32GG942F512_DMA_DESCRIPTOR EFM32GG942F512 DMA Descriptor
+ * @{
+ *****************************************************************************/
+typedef struct
+{
+  /* Note! Use of double __IO (volatile) qualifier to ensure that both */
+  /* pointer and referenced memory are declared volatile. */
+  __IO void * __IO SRCEND;     /**< DMA source address end */
+  __IO void * __IO DSTEND;     /**< DMA destination address end */
+  __IO uint32_t    CTRL;       /**< DMA control register */
+  __IO uint32_t    USER;       /**< DMA padding register, available for user */
+} DMA_DESCRIPTOR_TypeDef;      /** @} */
+
+/**************************************************************************//**
  * @defgroup EFM32GG942F512_DEVINFO EFM32GG942F512 Device Information and Calibration
  * @{
  *****************************************************************************/
@@ -1482,7 +1498,7 @@ typedef struct
 /** @} End of group EFM32GG942F512_PRS */
 
 /**************************************************************************//**
- * @defgroup EFM32GG942F512_DMA_Defines EFM32GG942F512 DMA Descriptor, Register and Bit fields
+ * @defgroup EFM32GG942F512_DMAREQ_BitFields  EFM32GG942F512_DMAREQ Bit Fields
  * @{
  *****************************************************************************/
 #define DMAREQ_ADC0_SINGLE            ((8 << 16) + 0)  /**< DMA channel select for ADC0_SINGLE */
@@ -1545,21 +1561,11 @@ typedef struct
 #define DMAREQ_EBI_PXLFULL            ((51 << 16) + 2) /**< DMA channel select for EBI_PXLFULL */
 #define DMAREQ_EBI_DDEMPTY            ((51 << 16) + 3) /**< DMA channel select for EBI_DDEMPTY */
 
-/**************************************************************************//**
- * @brief DMA channel control data structure (descriptor) for PL230 controller.
- *****************************************************************************/
-typedef struct
-{
-  /* Note! Use of double __IO (volatile) qualifier to ensure that both */
-  /* pointer and referenced memory are declared volatile. */
-  __IO void * __IO SRCEND;     /**< DMA source address end */
-  __IO void * __IO DSTEND;     /**< DMA destination address end */
-  __IO uint32_t    CTRL;       /**< DMA control register */
-  __IO uint32_t    USER;       /**< DMA padding register, available for user */
-} DMA_DESCRIPTOR_TypeDef;
+/** @} End of group EFM32GG942F512_DMAREQ */
 
 /**************************************************************************//**
- * DMA Control CTRL Register defines
+ * @defgroup EFM32GG942F512_DMACTRL_BitFields  EFM32GG942F512_DMACTRL Bit Fields
+ * @{
  *****************************************************************************/
 #define _DMA_CTRL_DST_INC_MASK                         0xC0000000UL  /**< Data increment for destination, bit mask */
 #define _DMA_CTRL_DST_INC_SHIFT                        30            /**< Data increment for destination, shift value */

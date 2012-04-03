@@ -2,7 +2,7 @@
  * @file
  * @brief Energy management unit (EMU) peripheral API for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -102,6 +102,15 @@ typedef enum
   /** Main power and backup power connected without diode */
   emuPower_NoDiode = EMU_BUINACT_PWRCON_NODIODE,
 } EMU_Power_TypeDef;
+
+/** BOD threshold setting selector, active or inactive mode */
+typedef enum
+{
+  /** Configure BOD threshold for active mode */
+  emuBODMode_Active,
+  /** Configure BOD threshold for inactive mode */
+  emuBODMode_Inactive,
+} EMU_BODMode_TypeDef;
 #endif
 
 /*******************************************************************************
@@ -151,23 +160,10 @@ typedef struct
   bool                 voutMed;
   /** BU_VOUT weak enable */
   bool                 voutWeak;
-
-  /* Backup Power Domain inactive configuration */
   /** Power connection, when not in Backup Mode */
   EMU_Power_TypeDef  inactivePower;
-  /** Threshold range for backup BOD sensing on VDD_DREG, when not in Backup Mode */
-  uint32_t           inactiveThresRange;
-  /** Threshold for backup BOD sesning on VDD_DREG, when not in Backup Mode */
-  uint32_t           inactiveThreshold;
-
-  /* Backup Power Domain active configuration */
   /** Power connection, when in Backup Mode */
   EMU_Power_TypeDef  activePower;
-  /** Threshold range for backup BOD sensing when in Backup Mode */
-  uint32_t           activeThresRange;
-  /** Threshold for backup BOD sesning on VDD_DREG, when in Backup Mode */
-  uint32_t           activeThreshold;
-
   /** Enable backup power domain, and release reset, enable BU_VIN pin  */
   bool               enable;
 } EMU_BUPDInit_TypeDef;
@@ -184,14 +180,8 @@ typedef struct
     false,            /* Don't enable weak switch */                             \
                                                                                  \
     emuPower_None,    /* No connection between main and backup power (inactive mode) */  \
-    0,                /* Default threshold range for backup BOD sense (inactive mode) */ \
-    0,                /* Default threshold for backup BOD snese (inactive mode) */       \
-                                                                                         \
-    emuPower_None,    /* No connection between main and backup power (active mode) */  \
-    0,                /* Default threshold range for backup BOD sense (active mode) */ \
-    0,                /* Default threshold for backup BOD snese (active mode) */       \
-                                                                                       \
-    true              /* Enable BUPD enter on BOD, enable BU_VIN pin, release BU reset  */                   \
+    emuPower_None,    /* No connection between main and backup power (active mode) */    \
+    true              /* Enable BUPD enter on BOD, enable BU_VIN pin, release BU reset  */  \
   }
 #endif
 
@@ -218,7 +208,29 @@ void EMU_MemPwrDown(uint32_t blocks);
 void EMU_UpdateOscConfig(void);
 #if defined(_EFM32_GIANT_FAMILY)
 void EMU_EM4Init(EMU_EM4Init_TypeDef *em4init);
-void EMU_BUPDInit(EMU_BUPDInit_TypeDef *budpdInit);
+void EMU_BUPDInit(EMU_BUPDInit_TypeDef *bupdInit);
+void EMU_BUThresholdSet(EMU_BODMode_TypeDef mode, uint32_t value);
+void EMU_BUThresRangeSet(EMU_BODMode_TypeDef mode, uint32_t value);
+
+/***************************************************************************//**
+ * @brief
+ *   Enable or disable EM4 lock configuration
+ * @param[in] enable
+ *   If true, locks down EM4 configuration
+ ******************************************************************************/
+static __INLINE void EMU_EM4Lock(bool enable)
+{
+  BITBAND_Peripheral(&(EMU->EM4CONF), _EMU_EM4CONF_LOCKCONF_SHIFT, enable);
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Halts until backup power functionality is ready
+ ******************************************************************************/
+static __INLINE void EMU_BUReady(void)
+{
+  while(!(EMU->STATUS & EMU_STATUS_BURDY));
+}
 
 /***************************************************************************//**
  * @brief

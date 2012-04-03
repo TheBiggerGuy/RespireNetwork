@@ -2,7 +2,7 @@
  * @file
  * @brief Clock management unit (CMU) Peripheral API for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -52,6 +52,8 @@
 #define CMU_MAX_FREQ_0WS    16000000
 /** Maximum allowed core frequency when using 1 wait states on flash access */
 #define CMU_MAX_FREQ_1WS    32000000
+/** Maximum frequency before HFLE needs to be enabled on Giant Gecko */
+#define CMU_MAX_FREQ_HFLE   32000000
 
 /** Low frequency A group identifier */
 #define CMU_LFA             0
@@ -107,9 +109,9 @@ static void CMU_FlashWaitStateMax(void)
  * @brief Convert dividend to prescaler logarithmic value. Only works for even
  *        numbers equal to 2^n
  * @param[in] div Unscaled dividend,
- * @return Logarithm of 2, as used by fixed prescalers
+ * @return Base 2 logarithm of input, as used by fixed prescalers
  ******************************************************************************/
-static uint32_t CMU_DivToLog2(CMU_ClkDiv_TypeDef div)
+static __INLINE uint32_t CMU_DivToLog2(CMU_ClkDiv_TypeDef div)
 {
   uint32_t log2;
 
@@ -128,7 +130,7 @@ static uint32_t CMU_DivToLog2(CMU_ClkDiv_TypeDef div)
  * @param[in] log2
  * @return Dividend
  ******************************************************************************/
-static uint32_t CMU_Log2ToDiv(uint32_t log2)
+static __INLINE uint32_t CMU_Log2ToDiv(uint32_t log2)
 {
   return 1<<log2;
 }
@@ -740,7 +742,7 @@ void CMU_ClockDivSet(CMU_Clock_TypeDef clock, CMU_ClkDiv_TypeDef div)
   {
 #if defined (_EFM32_GIANT_FAMILY)
   case CMU_HFCLKDIV_REG:
-    EFM_ASSERT((div>=1) && (div<=8));
+    EFM_ASSERT((div>=cmuClkDiv_1) && (div<=cmuClkDiv_8));
 
     /* Configure worst case wait states for flash access before setting divisor */
     CMU_FlashWaitStateMax();
@@ -1021,7 +1023,6 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
     defined(_CMU_HFPERCLKEN0_ADC0_MASK) || \
     defined(_CMU_HFPERCLKEN0_I2C0_MASK) || \
     defined(_CMU_HFPERCLKEN0_I2C1_MASK) || \
-    defined(_CMU_HFPERCLKEN0_USB_MASK) || \
     defined(PRS_PRESENT) || \
     defined(VCMP_PRESENT)|| \
     defined(GPIO_PRESENT)
@@ -1041,8 +1042,8 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
 #if defined(AES_PRESENT) || \
     defined(DMA_PRESENT) || \
     defined(EBI_PRESENT) || \
-    defined(USB_PRESENT) || \
-    defined(USBC_PRESENT)
+    defined(USBC_PRESENT) || \
+    defined(USB_PRESENT)
     case (CMU_HFCORE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
     {
       ret = SystemCoreClockGet();
@@ -1125,7 +1126,7 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
       ret  = CMU_AUXClkGet();
     } break;
 
-#if defined(USB_PRESENT)
+#if defined(USBC_PRESENT)
     case (CMU_USBC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
     {
       ret = CMU_USBCClkGet();
@@ -1362,7 +1363,7 @@ void CMU_ClockSelectSet(CMU_Clock_TypeDef clock, CMU_Select_TypeDef ref)
 #if defined(_EFM32_GIANT_FAMILY)
       /* Adjust HFXO buffer current for high frequencies, enable HFLE for */
       /* frequencies above 32MHz */
-      if(SystemHFXOClockGet() > 32000000)
+      if(SystemHFXOClockGet() > CMU_MAX_FREQ_HFLE)
       {
         CMU->CTRL |= (_CMU_CTRL_HFXOBUFCUR_MASK|CMU_CTRL_HFLE);
       }
@@ -1448,14 +1449,14 @@ void CMU_ClockSelectSet(CMU_Clock_TypeDef clock, CMU_Select_TypeDef ref)
 #if defined(_EFM32_GIANT_FAMILY)
       /* If core frequency is > 32MHz on Giant/Leopard, enable HFLE and DIV4 */
       freq = SystemCoreClockGet();
-      if(freq > CMU_MAX_FREQ_1WS)
+      if(freq > CMU_MAX_FREQ_HFLE)
       {
         /* Enable CMU HFLE */
         BITBAND_Peripheral(&(CMU->CTRL), _CMU_CTRL_HFLE_SHIFT, 1);
 
         /* Enable DIV4 factor for peripheral clock */
-        CMU->HFCORECLKDIV = (CMU->HFCORECLKDIV & ~(_CMU_HFCORECLKDIV_HFCORECLKLEDIV_MASK))|
-          CMU_HFCORECLKDIV_HFCORECLKLEDIV_DIV4;
+        BITBAND_Peripheral(&(CMU->HFCORECLKDIV), 
+                           _CMU_HFCORECLKDIV_HFCORECLKLEDIV_SHIFT, 1);
       }
 #endif
       break;

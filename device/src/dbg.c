@@ -16,81 +16,120 @@ char debug_string[128];
  */
 void DBG_init(void)
 {
-	uint32_t *dwt_ctrl = (uint32_t *) 0xE0001000;
+	uint32_t *dwt_ctrl       = (uint32_t *) 0xE0001000;
 	uint32_t *tpiu_prescaler = (uint32_t *) 0xE0040010;
-	uint32_t *tpiu_protocol = (uint32_t *) 0xE00400F0;
+	uint32_t *tpiu_protocol  = (uint32_t *) 0xE00400F0;
 
+	// Config the clocks //////////////////////////////////////////////////////
 	// Enable GPIO clock
-	CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_GPIO;
-	// Enable debug clock AUXHFRCO
-	CMU->OSCENCMD |= CMU_OSCENCMD_AUXHFRCOEN;
-	while (!(CMU->STATUS & CMU_STATUS_AUXHFRCORDY))
-		;
+	CMU_ClockEnable(cmuClock_GPIO, true);
+	// Enable debug ocillator branch AUXHFRCO
+	CMU_OscillatorEnable(cmuOsc_AUXHFRCO, true, false);
 
 	// Enable Serial wire output pin
 	GPIO->ROUTE |= GPIO_ROUTE_SWOPEN;
 
-#if DEBUG_LOCATION == 0
+#if DBG_SWO_LOC == 0
 	//Set location 0 (PF2)
-	GPIO->ROUTE = (GPIO->ROUTE
-			& ~(_GPIO_ROUTE_SWLOCATION_MASK)) | GPIO_ROUTE_SWLOCATION_LOC0;
+	GPIO->ROUTE |= GPIO_ROUTE_SWLOCATION_LOC0;
 	// Enable output on pin
-	GPIO->P[4].MODEH &= ~(_GPIO_P_MODEL_MODE2_MASK);
-	GPIO->P[4].MODEH |= GPIO_P_MODEL_MODE2_PUSHPULL;
-#elif DEBUG_LOCATION == 1
+	GPIO_PinModeSet(gpioPortF, 2,  gpioModePushPull, 0);
+#elif DBG_SWO_LOC == 1
 	// Set location 1 (PC15)
-	GPIO->ROUTE = (GPIO->ROUTE & ~(_GPIO_ROUTE_SWLOCATION_MASK)) | GPIO_ROUTE_SWLOCATION_LOC1;
+	GPIO->ROUTE |= GPIO_ROUTE_SWLOCATION_LOC1;
 	// Enable output on pin
-	GPIO->P[2].MODEH &= ~(_GPIO_P_MODEH_MODE15_MASK);
-	GPIO->P[2].MODEH |= GPIO_P_MODEH_MODE15_PUSHPULL;
-#else
-#error "Invalid DEBUG_LOCATION"
+	GPIO_PinModeSet(gpioPortC, 15,  gpioModePushPull, 0);
 #endif
 
 	// Enable trace in core debug
-	CoreDebug->DHCSR |= 1;
-	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	/*
+	 * DBGKEY
+	 * ------
+	 * Debug Key. 0xA05F must be written whenever this register is written.
+	 *
+	 * C_DEBUGEN
+	 * ---------
+	 * Enables debug. This can only be written by AHB-AP and not by the core.
+	 * It is ignored when written by the core, which cannot set or clear it.
+	 */
+	CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk && (0xA05F << CoreDebug_DHCSR_DBGKEY_Pos);
+	/*
+	 * TRCENA
+	 * ------
+	 * This bit must be set to 1 to enable use of the trace and debug blocks:
+	 *  * Data Watchpoint and Trace (DWT)
+	 *  * Instrumentation Trace Macrocell (ITM)
+	 *  * Embedded Trace Macrocell (ETM)
+	 *  * Trace Port Interface Unit (TPIU).
+	 *
+	 * MON_EN
+	 * ------
+	 * Enable the debug monitor. When enabled, the System handler priority
+	 * register controls its priority level. If disabled, then all debug
+	 * events go to Hard fault. C_DEBUGEN in the Debug Halting Control and
+	 * Statue register overrides this bit.
+	 *
+	 */
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk | CoreDebug_DEMCR_MON_EN_Msk;
 
 	// Enable PC and IRQ sampling output
 	*dwt_ctrl = 0x400113FF;
-	// Set TPIU prescaler to 16
-	*tpiu_prescaler = 0xf;
+	// Set TPIU prescaler to 16 (14MHz/16 = 875KHz)
+	*tpiu_prescaler = 16 - 1;
 	// Set protocol to NRZ
 	*tpiu_protocol = PROTOCOL_SERIALWIRE_NRZ;
 	// Unlock ITM and output data
 	ITM->LAR = ITM_UNLOCK_CODE;
-	ITM->TCR = 0x10009;
+	ITM->TCR = ITM_TCR_ITMENA_Msk | ITM_TCR_DWTENA_Msk | (1 << ITM_TCR_ATBID_Pos);
 
 	/* Guy Edit */
 	//ITM->TPR = ITM_TPR_PRIVMASK_Msk & 0x03; // ITM Trace Privilege Register
 	//ITM->TER = 0xFFFFFFFF; // ITM Trace Privilege Register
 	/* End */
 
-#ifdef DBG_ENABLE_LED
-	/* Configure GPIO port 'DBG_LED_PORT' 'DBG_LED_PIN' as LED control outputs */
-	/* Disable the LED by default */
-	GPIO_PinModeSet(DBG_LED_PORT, DBG_LED_PIN, gpioModePushPull, 0);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN0, gpioModePushPull, 0);
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN1, gpioModePushPull, 0);
+	GPIO_PinModeSet(DBG_PROBE_PORT, DBG_PROBE_PIN2, gpioModePushPull, 0);
 #endif
 }
 
-void DBG_LED_On(void)
+void DBG_probe_on(DBG_Probe_typdef probe)
 {
-#ifdef DBG_ENABLE_LED
-	GPIO_PinOutSet(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTSET = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 
-void DBG_LED_Off(void)
+void DBG_probe_off(DBG_Probe_typdef probe)
 {
-#ifdef DBG_ENABLE_LED
-	GPIO_PinOutClear(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTCLR = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 
-void DBG_LED_Toggle(void)
+void DBG_probe_toggle(DBG_Probe_typdef probe)
 {
-#ifdef DBG_ENABLE_LED
-	GPIO_PinOutToggle(DBG_LED_PORT, DBG_LED_PIN);
+#if defined(CONFIG_DBG_ENABLE_PROBES)
+	if (probe == DBG_Probe_0) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN0;
+	} else if (probe == DBG_Probe_1) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN1;
+	} else if (probe == DBG_Probe_2) {
+		GPIO->P[DBG_PROBE_PORT].DOUTTGL = 1 << DBG_PROBE_PIN2;
+	}
 #endif
 }
 

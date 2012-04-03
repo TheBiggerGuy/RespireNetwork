@@ -2,7 +2,7 @@
  * @file
  * @brief External Bus Iterface (EBI) peripheral API for EFM32
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2010 Energy Micro AS, http://www.energymicro.com</b>
@@ -525,9 +525,9 @@ typedef struct
     2,                          /* Vertical Synchronization Pulse Width */            \
     0x0000,                     /* Address offset to EBI memory base */               \
     5,                          /* DCLK Period */                                     \
-    2,                          /* DCLK Start */                                           \
-    1,                          /* DCLK Setup cycles */                                     \
-    1,                          /* DCLK Hold cycles */                                    \
+    2,                          /* DCLK Start */                                      \
+    1,                          /* DCLK Setup cycles */                               \
+    1,                          /* DCLK Hold cycles */                                \
   }
 
 #endif
@@ -564,8 +564,6 @@ void EBI_BankByteLaneEnable(uint32_t bank, bool enable);
 void EBI_BankPage(uint32_t bank, bool enable);
 void EBI_AltMapEnable(bool enable);
 
-/* TBD: NAND support */
-/* TBD: ECC support */
 /***************************************************************************//**
  * @brief
  *   Enable or disable TFT Direct Drive

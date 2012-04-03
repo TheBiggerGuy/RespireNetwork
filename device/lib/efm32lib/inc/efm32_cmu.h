@@ -2,7 +2,7 @@
  * @file
  * @brief Clock management unit (CMU) API for EFM32.
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  *******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -417,13 +417,16 @@ typedef enum
                  (CMU_HFCORE_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #endif
 
-#if defined(USB_PRESENT)
+#if defined(USBC_PRESENT)
   cmuClock_USBC = (CMU_NODIV_REG << CMU_DIV_REG_POS) | 
                   (CMU_USBCCLKSEL_REG << CMU_SEL_REG_POS) |
                   (CMU_HFCORECLKEN0_EN_REG << CMU_EN_REG_POS) |
                   (_CMU_HFCORECLKEN0_USBC_SHIFT << CMU_EN_BIT_POS) |
                   (CMU_USBC_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 
+#endif
+
+#if defined(USB_PRESENT)
   cmuClock_USB = (CMU_NODIV_REG << CMU_DIV_REG_POS) | 
                  (CMU_NOSEL_REG << CMU_SEL_REG_POS) |
                  (CMU_HFCORECLKEN0_EN_REG << CMU_EN_REG_POS) |
@@ -540,6 +543,7 @@ typedef enum
                      (_CMU_LFBCLKEN0_LEUART1_SHIFT << CMU_EN_BIT_POS) |
                      (CMU_LEUART1_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #endif
+  cmuClock_NONE = -1
 } CMU_Clock_TypeDef;
 
 

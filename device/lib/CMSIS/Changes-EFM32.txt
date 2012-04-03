@@ -1,4 +1,10 @@
 ================ Revision history ============================================
+2.4.0:
+ - Removed unused OPAMP_TypeDef for Tiny Gecko
+ - Added OPAMP_PRESENT/COUNT for Giant Gecko
+ - efm32lib updates, see Changes file in efm32lib folder
+ - efm32usb updates, see Changes filr in efm32usb folder
+
 2.3.2:
  - Fixed IAR startup files, corrected alignment of interrupt vector table
  - Updated efm32usb library with fixes

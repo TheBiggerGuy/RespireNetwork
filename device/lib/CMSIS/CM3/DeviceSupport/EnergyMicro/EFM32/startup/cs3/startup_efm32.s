@@ -16,7 +16,7 @@
  * they apply.
  *
  * Energy Micro release version
- * @version 2.3.2
+ * @version 2.4.0
  */
         .section ".cs3.interrupt_vector", "ax"
         .globl  __cs3_interrupt_vector_efm32g
@@ -68,6 +68,7 @@ __cs3_interrupt_vector_efm32g:
         .long   LCD_IRQHandler
         .long   MSC_IRQHandler
         .long   AES_IRQHandler
+
         .size   __cs3_interrupt_vector_efm32g, . - __cs3_interrupt_vector_efm32g
 
         .thumb
@@ -221,3 +222,4 @@ _IRQHandlerinterrupt:
         .weak   AES_IRQHandler
         .globl  AES_IRQHandler
         .set    AES_IRQHandler, _IRQHandlerinterrupt
+

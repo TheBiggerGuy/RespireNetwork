@@ -2,7 +2,7 @@
  * @file
  * @brief CMSIS Compatible EFM32 startup file in C for IAR EWARM
  * @author Energy Micro AS
- * @version 2.3.2
+ * @version 2.4.0
  ******************************************************************************
  * @section License
  * <b>(C) Copyright 2011 Energy Micro AS, http://www.energymicro.com</b>
@@ -288,4 +288,5 @@ const void * const __vector_table[]=  {
     (void *) LCD_IRQHandler,  /* 27 - LCD */
     (void *) MSC_IRQHandler,  /* 28 - MSC */
     (void *) AES_IRQHandler,  /* 29 - AES */
+
 };

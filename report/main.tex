@@ -28,21 +28,24 @@
 
 %% abstract
 \abstract{
-The Respire device provides wireless low-power, unobtrusive respiratory monitoring of patients by use of
+The Respire device provides unobtrusive respiratory monitoring of patients by use of
 accelerometers to detect breathing movements. Implementation of a wireless networking capability
 for this device will facilitate its widespread use in diagnosis and clinical management of respiratory
 disease.
 The aim of this project was to develop Respire network firmware based on the \acf{TDMA} to
 allow use in large hospital environments.
-I produced, tested and debugged firmware for project development, which led to identification
+I produced, tested and debugged firmware for project, which led to identification
 of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
-\acf{NRF24} radio onboard the Respire device. This has precluded testing of my design with the Respire
+\acf{NRF24} onboard the Respire device. This has precluded testing of my design with the Respire
 devices in a large-network environment.
-An important aspect of firmware development was to include power-saving features
-where possible (\eg x\% reduction in power use when implementing delays relative to
-code provided by the manufacturer). The project material (firmware, debugging and
-testing systems) provides a basis for future development and application of the
-Respire family of devices.
+A base of reusable system modules was produced which will be able to support later
+development of the Respire platform.
+
+%An important aspect of firmware development was to include power-saving features
+%where possible (\eg x\% reduction in power use when implementing delays relative to
+%code provided by the manufacturer). The project material (firmware, debugging and
+%testing systems) provides a basis for future development and application of the
+%Respire family of devices.
 }
 
 %% Now we start with the actual document.
@@ -128,12 +131,14 @@ Respire family of devices.
 %% Any appendices should go here. The appendix files should look just like the
 %% chapter files.
 \appendix
+\include{test_rx_tx_only}
 \include{code_analysis}
 \include{appendix1}
 
 
 %% Choose your favourite bibliography style here.
-\bibliographystyle{apalike}
+%\bibliographystyle{apalike}
+\bibliographystyle{plain}
 
 %% If you want the bibliography single-spaced (which is allowed), uncomment
 %% the next line.

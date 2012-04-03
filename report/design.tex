@@ -279,7 +279,6 @@ a device or to control retransmission of key messages.
 The application layer is separated into three parts: real-time data, bulk data and administration data.
 This separation is based around the differing network patterns that are needed.
 
-%% TODO DAVE PROOF READ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Real-time Data}
 Real-time data is buffered and transmitted with no retransmission or confirmation. This data has
@@ -300,15 +299,14 @@ consciously been produced so any attempt to retransmit may overflow the buffers.
   \end{center}
 \end{figure}
 
-As the requirment for this real-time data is 3x14bits at least at 12.5Hz I have decided to
-optimise this to meet the spesific charateristics of the \ac{NRF24} as it can be
-closely aligned. With the \ac{NRF24}'s 3 packet pipline and maximum packet size of 32bytes
-combined with the wish for independant packets a value of 5 full samples a packet (less than 27bytes).
-To allow the reciver determen the exact time these samples are vaild a 7bit time feild
-is included, providing an accuracy of 63miliseconds within a 4 second period of time
-(outwith the 4second timeout period).
+As the requirement for this real-time data is 3x14bits at a minimum of 12.5Hz, I
+have decided to optimise the packet design to meet the specific characteristics of
+the \ac{NRF24} as it allows close alignment. With the \ac{NRF24}'s 3 packet pipeline
+and maximum packet size of 32bytes combined with the design for independent packets
+a value of 5 full samples a packet (less than 27bytes) was chosen. In addition,
+a 7-bit time field is included to allowing the receiver to determine the exact time
+the samples are valid, providing an accuracy of 63miliseconds within a 4 second period.
 
-%% TODO DAVE PROOF READ END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Bulk Data}
 Bulk data is sent via a request to the relay for a bulk \ac{TDMA} time slot. The data is then fragmented
@@ -405,16 +403,13 @@ void wakeup(sleep from);
 void deinit(void);
 \end{lstlisting}
 
-% TODO DAVID PROOF %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-The modularity of the code also assisted in reusability and supported the use of a readable single
-code base. The entire system was hosted in a single code base, without the separation of node and
-base station, and the use of a pre-processor was used to facilitate this. A pre-processor can lead to complex
-and often hidden errors when used without modularity and so could be used more safely with the
-modular system. Listing \ref{lst:PreProsError} show clearley that the pre-processor also aide the proggrammer
-be producing compile time errors, saving the time required to flash the devices.
-
-% TODO DAVID PROOF END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The modularity of the code also assisted in reusability and supported the use of a
+readable single code base. The use of a pre-processor was used to facilitate the
+entire system being hosted in a single code base, without the separation of node
+and base station. A pre-processor can lead to complex and often hidden errors when
+used without modularity and so could be used safely with the design.
+Listing \ref{lst:PreProsError} show clearly that the pre-processor also aids the
+programmer by producing compile time errors, saving the time required to flash the devices.
 
 \begin{minipage}[b]{0.5\linewidth}
   \vspace{+10pt}

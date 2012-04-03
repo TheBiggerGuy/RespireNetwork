@@ -1,0 +1,130 @@
+%%
+%% Copyright Guy Taylor 2012
+%%
+%%
+
+%% config the formatting
+\documentclass[bsc,logo,plainprepages,parskip,abbrevs,10pt]{infthesis}
+
+%% define the type of doc
+\course{Software Engineering}
+\project{Fourth Year Project Report}
+
+%% import extra packages needed
+%\usepackage{natbib}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{acronym}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+
+%% information about the doc
+\title{Design and Implemenation of a Low Power Wireless Medical Respirotory Network}
+\author{Guy Taylor}
+\submityear{2012}
+\graduationdate{June 2012}
+
+%% abstract
+\abstract{
+The Respire device provides wireless low-power, unobtrusive respiratory monitoring of patients by use of
+accelerometers to detect breathing movements. Implementation of a wireless networking capability
+for this device will facilitate its widespread use in diagnosis and clinical management of respiratory
+disease. The aim of this project was to develop Respire network firmware based on the \acf{TDMA}
+method of network channel access, which was concluded to be the
+only large-network (\textgreater 6 device constraint of the Respire hardware) method suitable for the Respire. I
+produced and tested operational and debugging firmware for project development, which led to
+identification of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
+nRF24l01+ radio onboard the Respire device. This has precluded testing of my design with the Respire
+devices in a large-network environment. An important aspect of firmware development was to
+include power-saving features where possible (\eg x\% reduction in power use when implementing
+delays relative to code provided by the manufacturer). The project material (firmware, debugging
+and testing systems) provides a basis for future development and application of the Respire family of
+devices.
+}
+
+%% Now we start with the actual document.
+\begin{document}
+
+%% First, the preliminary pages
+\begin{preliminary}
+
+%% This creates the title page
+\maketitle
+
+%% Acknowledgements
+\begin{acknowledgements}
+  Todo
+\end{acknowledgements}
+
+%% Next we need to have the declaration.
+\standarddeclaration
+
+%% Create the table of contents
+\tableofcontents
+
+%% If you want a list of figures or tables, uncomment the appropriate line(s)
+\listoffigures
+\listoftables
+
+\begin{acronym}
+\acro{TDMA}[TDMA]{Time Division Multiple Access}
+\acro{FDMA}[FDMA]{Frequency-Division Multiple Access}
+\acro{CSMA}[CSMA]{Carrier Sense Multiple Access}
+\acro{ECG}[ECG]{Electrocardiogram}
+\acro{RISC}[RISC]{Reduced Instruction Set Computer}
+\acro{MCU}[MCU]{Microcontroller}
+\acro{PRS}[PRS]{Peripheral Reflex System}
+\acro{DMA}[DMA]{Direct Memory Access}
+\acro{SWD}[SWD]{Serial Wire Debugging}
+\acro{SWO}[SWO]{Serial Wire Out/Viewer}
+\acro{I/O}[I/O]{Input/Output}
+\acro{RTC}[RTC]{Real Time Clock}
+\acro{USART}[USART]{Universal asynchronous receiver/transmitter}
+\acro{CMU}[CMU]{Clock Managment Unit}
+\acro{EMU}[EMU]{Energy Managment Unit}
+\acro{PHY}[PHY]{Physical}
+\acro{DL}[DL]{Data Link}
+\acro{GPIO}[GPIO]{General Purpose Input Output}
+\acro{FIFO}[FIFO]{First In First Out}
+\acro{OS}[OS]{Operating System}
+\acro{API}[API]{Application Programming Interface}
+\acro{SPI}[SPI]{Serial Peripheral Interface (Bus)}
+\acro{NRF24}[NRF24]{Nordic nRF24L01+ Radio}
+\acro{PCB}[PCB]{Printed Circuit Board}
+\acro{ISM}[ISM]{Industrial, Scientific and Medical}
+\end{acronym}
+
+\end{preliminary}
+
+%%%%%%%%
+%% Include your chapter files here. See the sample chapter file for the basic
+%% format.
+
+\include{introduction}
+\include{background}
+\include{design}
+\include{implementation_and_testing}
+\include{discussion}
+\include{conclusion}
+
+%%%%%%%%
+%% Any appendices should go here. The appendix files should look just like the
+%% chapter files.
+\appendix
+\include{code_analysis}
+\include{appendix1}
+
+
+%% Choose your favourite bibliography style here.
+\bibliographystyle{apalike}
+
+%% If you want the bibliography single-spaced (which is allowed), uncomment
+%% the next line.
+% \singlespace
+
+%% Specify the bibliography file.
+\bibliography{references}
+
+%% ... that's all, folks!
+\end{document}
+

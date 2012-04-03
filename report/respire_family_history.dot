@@ -1,0 +1,29 @@
+digraph G {
+
+  subgraph cluster_0 {
+    style=filled;
+    color=lightgrey;
+    node [style=filled,color=white];
+    "Orient" -> "Orient-2" -> "Orient-3" -> "Orient-4";
+    label = "Motioncapture";
+  }
+
+  subgraph cluster_1 {
+    style=filled;
+    color=lightgrey;
+    node [style=filled,color=white];
+    "ProSpeckz" -> "ProSpeckz-IIK" -> "ProSpeckz-III" -> "ProSpeckz-IV";
+    label = "Networking";
+  }
+
+  subgraph cluster_2 {
+    style=filled;
+    color=lightgrey;
+    node [style=filled,color=white];
+    "Respire";
+    label = "Medical";
+  }
+
+"Orient-3" -> "Respire";
+
+}

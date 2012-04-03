@@ -1,0 +1,748 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%% This version for embedding, e.g. for Word 4.0
+%%Creator: FreeHand (Toby Morris et al) reconstructed by John Butler
+%%Title: crest 1.05/tr x
+%%CreationDate: 26/4/91 11:57 am
+%%BoundingBox: 243 507 344 607
+%%OldBoundingBox: 53 317 534 797
+%AI3_ColorUsage: Color
+%%DocumentCustomColors: (Pantone 199C)
+%%+ (Pantone 289C)
+%%CMYKCustomColor: 0 1 0.65 0 (Pantone 199C)
+%%+ 1 0.6 0 0.56 (Pantone 289C)
+%% Bounding box is 481 * 480. actually smaller than permitted
+%% v1.06: correct positioning for \crestversion 0
+%% v1.05: New font substitution hook. Bounding box integerised, syntax corrected
+%%        better version selection.  Thanks ajcd.
+%% More minor mods by thomas@cogsci on Wed Feb 17 16:44:51 1993
+%% Minor mods by Henry Thompson ;; Last edited: Fri May 10 13:27:22 1991
+%% Text border redone and colors fixed by Miles Bader (miles@cogsci.ed.ac.uk)
+%%
+%%DocumentFonts: Times-Roman
+%%DocumentNeededFonts: Times-Roman
+%%EndComments
+
+%% -----------------------------------------------------------.
+%% The New University Corporate Visual Identity exercise Logo |
+%% -----------------------------------------------------------'
+
+%% Note this requires font "Perpetua" to be present.
+%% Note that all postscript distances start out in points, 72/inch,
+%% but may be realised differently if affected by a 'scale' directive
+
+save
+%% Use our own dictionary, to make embedding, e.g. in MS Word, easier
+%% 50 dict is known to be too small, but I don't actually know how much
+%% space 65 dict leaves for further changes . . .
+/CrestDict 65 dict def
+CrestDict begin
+
+/normal     0 def %% normal - use this one
+/nolines    1 def %% don't use this
+/reversed   2 def %% unlikely you'll want this
+/twocolour  3 def %% don't use this for now - colours not right
+/fullcolour 4 def %% hook
+
+%% ---------------------------------------------------------------------------
+%% patch variable "crestversion" to  switch between normal/reversed
+/crestversion where
+  {pop}
+  {/crestversion normal def} ifelse
+
+%% Scaling and positioning options
+
+/onemm 72 25.4 div def
+
+%% use this if embedding in MS Word 4, to correct first printed page offset bug,
+%% as described in “Word 4.0/PostScript Glossary/Using PostScript with Word”
+%% what a hack --  we diagnose on the x translation in force -- should be negative, 
+%% is positive if the  first page bug is about to get us
+%%matrix currentmatrix 4 get  0 gt {-17 22 translate} if
+
+%% The version as distributed is not actually properly centred
+%% horizontally, nor is it much of anywhere vertically, so what
+%% follows now includes translations to put each version flush in the
+%% lower left hand corner, i.e. in a box with lower-left corner at 0,0.
+%% Conceptually, first we translate to place the centre at 0,0, by negating the
+%% offset given in the definition below of x0 and y0,
+%% but this has to be done after the scaling.
+%% Then we can translate to where we want to be.
+
+%% The net consequence is that each scaling which follows
+%% is accompanied by two translations, in millimetres.
+%% The first alone will position the crest flush in the lower left hand
+%% corner.
+%% The two TOGETHER will position the crest in the approved upper
+%% right position.
+
+%% Always uncomment one scaling command and one or two translations.
+%% With nothing uncommented, you'll only get the upper-right quadrant
+%% of the 4 inch version!
+
+%% Note that A4 paper is officially 210 by 297 mm,
+%% but in practice 209 by 296.
+%% So for instance the command to put permitted size 3 in the approved top right
+%% position is calculated by subtracting 37.5 (width plus required margin)
+%% from 209 and 37.5 (height plus required margin) from 296
+%% Alternative (unapproved) positions can be achieved by replacing
+%% this translation with one of your own.
+
+%%-----------------------------------------------------------------------------
+%% nonstandard size, as created below - 101mm (4") circle, 130mm across type
+%% onemm 65 mul dup translate %% to lower left
+%% onemm 39.5 mul onemm 130 mul translate %% to middle
+%% 1.000 dup scale
+
+%% permitted size 4 - 40mm crest - should be in 60mm box
+%% onemm 20 mul dup translate %% to lower left
+%% onemm 159 mul onemm 246 mul translate %% additional to top right,
+					 %% as for Bulletin (which as printed
+					 %% e.g. 18 April actually is too
+					 %% close to the margins!
+%% 0.307 dup scale
+
+%% permitted size 3 - 30mm crest - should be in 45mm box
+onemm 15 mul dup translate
+%% onemm 171.5 mul onemm 258.5 mul translate %% additional to top right,
+	         %% as for letterhead
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% placement parameters (x, y)
+onemm -14.5 mul onemm -15 mul translate 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+0.231 dup scale
+
+%% permitted size 2 - 25mm crest - should be in 38mm box
+%% onemm 12.5 mul dup translate %% to lower left
+%% onemm 116.5 mul onemm 177.5 mul translate %% additional to top right of
+					     %% A5 -- no examples given of
+					     %% this one in broadsheet
+%% 0.195 dup scale
+
+%% permitted size 1 - 20mm crest - should be in 30mm box
+%%onemm 10 mul dup translate %% to lower left
+%%onemm 28 mul onemm 59 mul translate %% additional to top right of portrait
+				       %% mode (yuk!) business card.  Note top
+				       %% margin is too small on broadsheet
+%%0.154 dup scale
+%% ---------------------------------------------------------------------------
+
+%% this moves the whole thing to be centred on 0,0 plus
+%% any translation given above -- DONT CHANGE THIS UNLESS YOU ARE SURE
+%% YOU KNOW WHAT YOU ARE DOING
+-293.35 -557.05 translate
+
+
+3.863693 setmiterlimit
+
+%% Red: Pantone 192 (uncoated paper) 199 (coated)
+%% Slate blue: Pantone 282 (uncoated) 289 (coated)
+%% Pantone 199CV = 0,100,65,0 cmyk
+%% Pantone 289CV = 100,60,0,56 cmyk
+%% "Black" will eventually map to the slate blue for two-colour version
+/Inblack twocolour crestversion eq {[1 .6 0 .56]}{[0 0 0 1]} ifelse def
+/Inwhite [0 0 0 0] def
+/Inred   [0 1 .65 0] def
+%% /Inred   [0 0 0 0.2] def %% grey actually, for testing
+/WhiteOrRed   twocolour crestversion eq {Inred}  {Inwhite} ifelse def
+/BlackOrWhite reversed crestversion eq {Inwhite}{Inblack} ifelse def
+/WhiteOrBlack reversed crestversion eq {Inblack}{Inwhite} ifelse def
+/WhiteOrBlackOrRed twocolour crestversion eq {Inred} {WhiteOrBlack} ifelse def
+
+/max{2 copy lt{exch}if pop}def
+/ccmyk{dup 5 -1 roll sub 0 max exch}def
+/setcmykcolor{1 exch sub ccmyk ccmyk ccmyk pop setrgbcolor}def
+/setcolor{aload pop setcmykcolor} def
+
+/doline{
+setlinewidth setlinecap setlinejoin Inblack setcolor stroke
+}def
+
+/doBWline{
+setlinewidth setlinecap setlinejoin BlackOrWhite setcolor stroke
+}def
+
+/paint{
+closepath
+gsave
+setcolor fill
+grestore
+}def
+
+%%%%
+/letter_scale 50 def
+/text_radius 143 def
+
+save
+
+%% logo centre
+/x0 293.35 def /y0 557.05 def
+%% Bounding Box: [xl,yb] ... [xr,yt]
+/xl x0 240.35 sub def /xr x0 240.65 add def
+/yb y0 240 sub def /yt y0 240 add def
+xl yb moveto
+xl yt lineto
+xr yt lineto
+xr yb lineto
+WhiteOrBlack paint
+newpath
+
+%% outer circle
+x0 y0 143.15 0 360 arc
+WhiteOrBlackOrRed paint
+gsave
+clip newpath
+%% the reticule separation is based on 8 to the centimetre in the published
+%% 80mm outer diameter version, giving a formula of
+%% 72/25.4 (points/mm) * 10/8 (mm/stripe) * 13/8 (scale up)
+/retsep 72 10 13 mul mul 25.4 8 8 mul mul div def
+/hatching{
+  /hatch{
+    /param1 exch def
+    newpath
+    152 param1 moveto
+    438.3 param1 lineto
+    0 0 1.4 doBWline
+  }def
+  0 1 48 {retsep mul 422.1 add hatch} for
+}def
+
+normal crestversion eq reversed crestversion eq or {hatching} if
+
+grestore
+0 0 5.7 doBWline
+%%IncludeFont: Perpetua
+%/f1 /MPerpetua findfont def
+/f1 /Times-Roman findfont def
+
+%% next 3 lines are the prototype font selection code (no resizing)
+%% -- %%IncludeFont: Perpetua Perpetua
+%% -- /f1 {/Perpetua findfont /fontis /Perpetua def} stopped
+%% -- {/Perpetua findfont /fontis /Perpetua def} if def
+
+%% lettering
+/upper_y_offset 0.32 def
+/lower_y_offset -0.89 def
+
+%f1 [ letter_scale 0 0 letter_scale 0 0 ] makefont setfont
+f1 46 scalefont setfont
+
+/letter	{
+    /text exch def
+    /y_offs exch def
+    /x_offs exch def
+    /letter_angle exch def
+    /position_angle exch def
+
+    gsave
+    BlackOrWhite setcolor
+
+    x0 y0 translate		% center of crest
+
+    %% position letter at some angle on the circle around this center
+    position_angle rotate
+    0 text_radius translate
+
+    %% now rotate the letter around its own origin (usually to flip it)
+    letter_angle rotate
+
+    %% apply any tweaking adjustments, and draw it
+    x_offs letter_scale mul y_offs letter_scale mul moveto
+    text show
+
+    grestore
+} def
+
+ 78   0   -0.30555 upper_y_offset (T) letter
+ 65   0   -0.36111 upper_y_offset (H) letter
+ 51   0   -0.30555 upper_y_offset (E) letter
+
+ 32   0   -0.36111 upper_y_offset (U) letter
+ 17   0   -0.36111 upper_y_offset (N) letter
+  4.5 0   -0.16666 upper_y_offset (I) letter
+ -7.5 0   -0.36111 upper_y_offset (V) letter
+-19.8 0   -0.30555 upper_y_offset (E) letter
+-33.2 0   -0.33333 upper_y_offset (R) letter
+-45.8 0   -0.27777 upper_y_offset (S) letter
+-56   0   -0.16666 upper_y_offset (I) letter
+-66.5 0   -0.30555 upper_y_offset (T) letter
+-79.5 0   -0.36111 upper_y_offset (Y) letter
+
+107   180 -0.36111 lower_y_offset (O) letter
+121   180 -0.27777 lower_y_offset (F) letter
+
+142   180 -0.30555 lower_y_offset (E) letter
+156   180 -0.36111 lower_y_offset (D) letter
+168   180 -0.16666 lower_y_offset (I) letter
+180   180 -0.30000 lower_y_offset (N) letter
+196   180 -0.33333 lower_y_offset (B) letter
+210   180 -0.36111 lower_y_offset (U) letter
+226   180 -0.33333 lower_y_offset (R) letter
+238.5 180 -0.36111 lower_y_offset (G) letter
+253   180 -0.36111 lower_y_offset (H) letter
+
+%% Text dots
+newpath
+gsave
+
+.07 letter_scale mul setlinewidth
+1 setlinecap
+BlackOrWhite setcolor
+
+text_radius letter_scale .6 mul add 	% offset from the logo center
+dup
+
+%% LH dot
+x0 exch sub y0 5 sub moveto 0 0 rlineto stroke
+%% RH dot
+x0 exch add y0 5 sub moveto 0 0 rlineto stroke
+
+grestore
+
+restore save
+
+%% shield outer edge
+195 657.8 moveto
+195 468.8 lineto
+195 442.8 223.2 441 245 438.8 curveto
+274 435.8 278.5 441.9 292.5 414.8 curveto
+315.5 445.8 318.9 436.9 340 438.8 curveto
+362 440.8 391 439.8 391 469.8 curveto
+391 657.8 lineto
+Inwhite paint
+2 1 4 doline
+
+%% shield inner edge
+202.5 650.9 moveto
+202.5 473.4 lineto
+202.5 444.7 227.1 446.8 247.6 444.7 curveto
+274.8 441.9 280.5 446.8 293.3 426.3 curveto
+310 447.8 316.9 442.9 336.7 444.7 curveto
+357.3 446.7 384.5 444.7 384.5 473.4 curveto
+384.5 650.9 lineto
+Inwhite paint
+gsave
+clip newpath
+
+[1 0 0 1 0.5 -1.2] concat
+
+%% saltire
+newpath
+187.5 620.5 moveto
+251.5 556.5 lineto
+184.5 489.5 lineto
+197.5 426.5 lineto
+291.5 519.5 lineto
+381.5 427.5 lineto
+418.5 465.5 lineto
+331.5 556.5 lineto
+395.5 621.5 lineto
+379.5 686.5 lineto
+291.5 596.5 lineto
+214.5 676.5 lineto
+187.5 620.5 lineto
+Inblack paint
+0 0 2 doline
+[1 0 0 1 -2 0.5] concat
+
+%% thistle seed outline
+256.8 656.8 moveto
+284.4 627 lineto
+303.9 625.8 lineto
+331.6 656.5 lineto
+256.8 656.8 lineto
+Inblack paint
+0 1 1 doline
+
+%% thistle seeds - painting order 1 (LH), 2, 6, 5, 3 ,4
+268.2 654 moveto
+267.4 652.8 270.6 644.7 271.2 644.1 curveto
+271.7 642.6 277.9 637.2 279.6 635.5 curveto
+280.3 634 283.2 631.6 283.5 631.6 curveto
+283.8 630.5 284.2 631 284.9 632.3 curveto
+274 646.4 lineto
+270.7 651.7 268.4 654.8 268.2 654 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+276.5 648.4 moveto
+276.1 647.2 277.6 645.5 279 645.1 curveto
+279 644.2 283.3 639.4 283.9 638.5 curveto
+284.4 637.4 286.6 633.8 287.3 633.4 curveto
+288.1 632.9 287 636.8 286.1 638.5 curveto
+284.9 640.1 283.8 642.6 283.8 644 curveto
+282.4 646.9 lineto
+281.3 647.2 281.3 648.5 280.5 649.1 curveto
+280.1 649.4 280.4 652.4 280.1 653 curveto
+278.9 652.2 277.1 650.1 276.5 648.4 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+321.5 653.5 moveto
+322.3 652.3 319.1 644 318.5 643.6 curveto
+314.5 640.5 312 638.8 310.1 635 curveto
+309.4 633.6 306.7 631.8 306.4 631.8 curveto
+306.1 630.7 304.2 631 303.5 632.3 curveto
+303.5 632.3 306.9 633.9 306.9 636.9 curveto
+308.4 637 312.6 640.4 312.6 640.4 curveto
+315.3 646.1 lineto
+316.3 647.6 317.5 648.8 318.4 649.8 curveto
+320.5 652.3 321.4 654.1 321.5 653.5 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+312.5 648.5 moveto
+312.9 647.3 311.3 644.9 309.9 644.5 curveto
+309.9 643.6 305.7 638 305.1 637.1 curveto
+304.6 636 302.4 633.9 301.7 633.5 curveto
+300.9 633 302 636.9 302.9 638.6 curveto
+304.1 640.2 305.2 642.7 305.2 644.1 curveto
+306.6 647 lineto
+307.7 647.3 307.7 648.6 308.5 649.2 curveto
+308.9 649.5 308.6 652.5 308.9 653.1 curveto
+310.1 652.3 311.9 650.2 312.5 648.5 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+292.6 633.9 moveto
+293.3 636.1 292.1 639.1 292.1 641.4 curveto
+292.1 645.3 294.2 652.6 290.5 652.6 curveto
+289.3 652.4 286.5 649.3 285 648.8 curveto
+284.1 647.2 286.8 643.6 287.3 641.9 curveto
+287.3 640.5 288.2 639.9 288.9 638.5 curveto
+289.4 637.2 291.2 633.6 292.6 633.9 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+297 633.5 moveto
+296.3 635.7 296.5 639.7 296.5 642 curveto
+296.5 645.9 294.8 652.5 298.5 652.5 curveto
+299.7 652.3 302.5 649.2 304 648.7 curveto
+304.9 647.1 302.3 645 301.8 643.3 curveto
+301.8 641.9 300.8 639.8 300.1 638.4 curveto
+299.6 637.1 298.4 633.2 297 633.5 curveto
+% WhiteOrRed paint
+Inwhite paint
+newpath
+
+%% thistle stem
+291.5 596 moveto
+292.5 605 lineto
+287.5 608 289.5 614 289.5 614 curveto
+299.5 614 lineto
+300.5 607 295.5 605 295.5 605 curveto
+296.5 596 lineto
+Inblack paint
+0 1 2 doline
+
+%% thistle ball
+%% Outline sphere
+279.5 620.5 moveto
+279.5 626.8 286 632 294 632 curveto
+302 632 308.5 626.8 308.5 620.5 curveto
+308.5 614.2 302 609 294 609 curveto
+286 609 279.5 614.2 279.5 620.5 curveto
+Inwhite paint
+0 1 2 doline
+
+%% highlight
+296.7 619.8 moveto
+297.7 620.2 297.7 620.7 298.7 620.9 curveto
+298.7 619.5 297.5 620.6 298.4 618.4 curveto
+298.5 618 297.2 619.8 296.7 619.8 curveto
+Inblack paint
+0 1 1 doline
+
+%% hatching - 6 diagonal stripes
+284.6 628.9 moveto
+290.1 619.9 303.6 611.6 303.6 611.6 curveto
+306 614.1 lineto
+294.3 620 292.5 621 284.6 628.9 curveto
+Inblack paint
+0 1 1 doline
+
+293.3 632 moveto
+294.4 628 308.1 618.3 308.1 618.3 curveto
+308.6 620.9 lineto
+303.8 623.1 297.3 627.5 293.3 632 curveto
+Inblack paint
+0 1 1 doline
+
+280.1 621.9 moveto
+284.1 616.9 294.8 609.3 294.8 609.3 curveto
+299.8 610.2 lineto
+293.6 612.9 285 617.8 280.1 621.9 curveto
+Inblack paint
+0 1 1 doline
+
+282.8 613.4 moveto
+288.1 614.4 306.4 626.1 306.4 626.1 curveto
+303.9 628.9 lineto
+295 619.3 282.8 613.4 282.8 613.4 curveto
+Inblack paint
+0 1 1 doline
+
+280.3 619 moveto
+287.8 621.9 298.6 631.2 298.6 631.2 curveto
+295.7 631.6 lineto
+292.2 627.6 287 622.6 280.3 619 curveto
+Inblack paint
+0 1 1 doline
+
+289.6 609.8 moveto
+293.2 610.1 308.4 619.6 308.4 619.6 curveto
+308.1 623.3 lineto
+303.8 618.2 289.6 609.8 289.6 609.8 curveto
+Inblack paint
+0 1 1 doline
+
+%% details - 8 small patches
+296.1 612.3 moveto
+297.1 612.7 297.1 613.2 298.1 613.4 curveto
+298.1 612 296.9 613.1 297.8 610.9 curveto
+297.9 610.5 296.6 612.3 296.1 612.3 curveto
+Inblack paint
+0 1 1 doline
+
+289.8 615.8 moveto
+290.8 616.2 290.8 616.7 291.8 616.9 curveto
+291.8 615.5 290.6 616.6 291.5 614.4 curveto
+291.6 614 290.3 615.8 289.8 615.8 curveto
+Inblack paint
+0 1 1 doline
+
+289.3 624.3 moveto
+290.3 624.7 290.3 625.2 291.3 625.4 curveto
+291.3 624 290.1 625.1 291 622.9 curveto
+291.1 622.5 289.8 624.3 289.3 624.3 curveto
+Inblack paint
+0 1 1 doline
+
+282.6 620 moveto
+283.6 620.4 283.6 620.9 284.6 621.1 curveto
+284.6 619.7 283.4 620.8 284.3 618.6 curveto
+284.4 618.2 283.1 620 282.6 620 curveto
+Inblack paint
+0 1 1 doline
+
+303.3 616.2 moveto
+304.3 616.6 304.3 617.1 305.3 617.3 curveto
+305.3 615.9 304.1 617 305 614.8 curveto
+305.1 614.4 303.8 616.2 303.3 616.2 curveto
+Inblack paint
+0 1 1 doline
+
+303.6 624 moveto
+304.6 624.4 304.6 624.9 305.6 625.1 curveto
+305.6 623.7 304.4 624.8 305.3 622.6 curveto
+305.4 622.2 304.1 624 303.6 624 curveto
+Inblack paint
+0 1 1 doline
+
+296.1 629.5 moveto
+297.1 629.9 297.1 630.4 298.1 630.6 curveto
+298.1 629.2 296.9 630.3 297.8 628.1 curveto
+297.9 627.7 296.6 629.5 296.1 629.5 curveto
+Inblack paint
+0 1 1 doline
+
+281.5 620.3 moveto
+280.5 620.7 280.4 621.6 279.4 621.8 curveto
+279.4 620.4 280.4 620.7 279.5 618.5 curveto
+279.4 618.1 281 620.3 281.5 620.3 curveto
+Inblack paint
+0 1 1 doline
+
+[1 0 0 1 2 -0.5] concat
+
+%% 1st castle outline
+newpath
+271.5 441.5 moveto
+271.5 460.5 lineto
+280.5 461.5 lineto
+286.5 477.5 lineto
+306.5 477.5 lineto
+310.5 463.5 lineto
+319.5 462.5 lineto
+319.5 441.5 lineto
+298.5 440.5 lineto
+296.3 444.3 lineto
+296.5 458.5 lineto
+296.5 458.5 290.5 458.5 290.5 452.5 curveto
+290.5 447.5 290.5 441.5 290.5 441.5 curveto
+Inwhite paint
+0 1 2 doline
+
+%% 2nd castle outline
+266 444.5 moveto
+266 463.5 lineto
+275 464.5 lineto
+281 480.5 lineto
+301 480.5 lineto
+306 464.5 lineto
+314 463.5 lineto
+314 444.5 lineto
+296.3 444.5 lineto
+296 454 lineto
+296.5 460 291 461.5 291 461.5 curveto
+291 461.5 285 461.5 285.5 456.5 curveto
+285 452.5 285 444.5 285 444.5 curveto
+Inblack paint
+0 0 2 doline
+
+%% castle ramparts
+264.5 497.5 moveto
+264.5 482.5 lineto
+268.5 478.5 lineto
+320.5 478.5 lineto
+321.5 497.5 lineto
+304.5 497.5 lineto
+309.5 490.5 lineto
+296.5 490.5 lineto
+301.5 497.5 lineto
+284.5 497.5 lineto
+289.5 490.5 lineto
+276.5 490.5 lineto
+281.5 497.5 lineto
+Inblack paint
+0 0 0.3 doline
+
+%% LH crenellation "relief"
+277.4 496.5 moveto
+279.4 496.5 lineto
+275.1 490.5 lineto
+273.1 490.5 lineto
+Inwhite paint
+newpath
+
+%% middle crenellation "relief"
+297.1 496.5 moveto
+299.1 496.5 lineto
+294.6 490.5 lineto
+292.6 490.5 lineto
+Inwhite paint
+newpath
+
+[1 0 0 1 -0.5 1.2] concat
+%% crenellation overhang "relief"
+268 481.3 moveto
+270 479.3 lineto
+319 479.3 lineto
+319 487.3 lineto
+317 490.3 lineto
+317 481.3 lineto
+Inwhite paint
+newpath
+
+%% Book vertices. t/b: top/bottom, i/o: inner/outer. l/r/c: left/right/centre
+/tlo {257    588.5}  def
+/tli {263.4  596.9}  def
+/tc  {294.25 584.75} def
+/tri {324.4  594.9}  def
+/tro {330.5  585}    def
+/blo {257    527.5}  def
+/bli {263.5  537.5}  def
+/bro {329.5  528.15} def
+/bci {293.5  530.3}  def
+/bri {324.05 536.65} def
+
+%% book outer outline
+tlo moveto
+256 572.5 256.5 527 blo curveto
+289.5 527 lineto
+288.5 524.4 289.5 521 293.5 521 curveto
+297.5 521 298.5 524.4 297.5 527 curveto
+bro lineto
+tro lineto
+329.9 585.4 324.9 594.4 tri curveto
+301.3 594.3 294.5 585.5 tc curveto
+294.5 585.5 283 592.8 tli curveto
+261.7 596 258.5 589.9 tlo curveto
+% WhiteOrRed paint
+Inwhite paint
+0 0 2 doline
+
+%% book RH page edges
+bri moveto
+bro lineto
+tro lineto
+329.9 585.4 324.9 594.4 tri curveto
+closepath
+Inwhite paint
+0 0 2 doline
+
+%% book inner outline
+tli moveto
+bli lineto
+263.5 537 286.5 543.3 bci curveto
+300.5 543.3 324.3 536.5 bri curveto
+tri lineto
+324.5 595 298 602 tc curveto
+284 603 263.5 597 tli curveto
+Inwhite paint
+0 0 2 doline
+
+%% book LH corner
+blo moveto
+bli lineto
+0 0 2.5 doline
+
+%% book RH corner
+bro moveto
+bri lineto
+0 0 2.5 doline
+
+%% book flecks
+
+/lefthand 1 def
+/righthand -1 def
+
+/fleck{
+/hand exch def
+gsave
+newpath
+translate
+0 0 moveto
+ 10.7  hand mul  0.2 17.2 hand mul -4.7  20.7 hand mul -10.0 curveto
+ 18.2  hand mul -7.0 12.9 hand mul -6.0   8.7 hand mul  -4.8 curveto
+  1.7  hand mul -2.8 -0.2 hand mul -5.2  -0.2 hand mul   0.1 curveto
+Inblack paint
+0 1 0.3 doline
+grestore
+}def
+268.8 583.8 lefthand  fleck %% LH top
+268.3 567.8 lefthand  fleck %% LH middle
+267.8 551.8 lefthand  fleck %% LH bottom
+318.2 583.8 righthand fleck %% RH top
+318.7 567.8 righthand fleck %% RH middle
+319.2 551.8 righthand fleck %% RH bottom
+
+%% book spine
+294.8 585 moveto
+294.8 585 293.3 584.5 293.3 584.8 curveto
+293 575 292.7 547.6 290.8 534.3 curveto
+292.5 532.3 293.5 531 293.5 531 curveto
+297.8 535.5 lineto
+294 537.3 294.8 585 294.8 585 curveto
+Inblack paint
+0 1 1 doline
+
+%% book RH page edges
+326.8 589 moveto
+327.8 589 328.4 588.4 328.4 588.4 curveto
+325.8 560 328 531.6 328 531.6 curveto
+326 531.6 lineto
+326 531.6 328 564.3 326.8 589 curveto
+Inblack paint
+
+grestore
+0 0 1.9 doline
+
+restore
+end %% CrestDict
+restore

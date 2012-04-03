@@ -1,0 +1,15 @@
+digraph G {
+
+"radio" -> "SPI";
+"net_base" -> "radio";
+"net_node" -> "radio";
+"net_base" -> "letimer";
+"net_node" -> "letimer";
+"letimer"  -> "rtc";
+
+"Application" -> "net_base";
+"Application" -> "net_node";
+"Application" -> "debug";
+"Application" -> "NewLib";
+
+}

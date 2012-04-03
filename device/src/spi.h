@@ -9,9 +9,9 @@
 #include "efm32_cmu.h"
 
 #include "pins_and_ports.h"
+#include "config.h"
 
 /* Defines */
-#define HFRCO_FREQUENCY         14000000
 #define SPI_PERCLK_FREQUENCY    HFRCO_FREQUENCY
 #define SPI_BAUDRATE            7000000
 

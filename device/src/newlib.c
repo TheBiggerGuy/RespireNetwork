@@ -234,7 +234,8 @@ int _write(int file, char *ptr, int len) {
 	switch (file) {
 	case STDOUT:
 		//memcpy(debug_string, ptr, len);
-		for (i = 0; i < len; i++) {
+		i = len;
+		while (i--) {
 			ITM_SendChar(*ptr++);
 		}
 		return len;

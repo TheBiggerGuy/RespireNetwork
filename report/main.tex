@@ -17,6 +17,8 @@
 \usepackage{acronym}
 \usepackage{graphicx}
 \usepackage{wrapfig}
+\usepackage{bytefield}
+%\usepackage{hyperref}
 
 %% information about the doc
 \title{Design and Implemenation of a Low Power Wireless Medical Respirotory Network}
@@ -29,17 +31,18 @@
 The Respire device provides wireless low-power, unobtrusive respiratory monitoring of patients by use of
 accelerometers to detect breathing movements. Implementation of a wireless networking capability
 for this device will facilitate its widespread use in diagnosis and clinical management of respiratory
-disease. The aim of this project was to develop Respire network firmware based on the \acf{TDMA}
-method of network channel access, which was concluded to be the
-only large-network (\textgreater 6 device constraint of the Respire hardware) method suitable for the Respire. I
-produced and tested operational and debugging firmware for project development, which led to
-identification of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
-nRF24l01+ radio onboard the Respire device. This has precluded testing of my design with the Respire
-devices in a large-network environment. An important aspect of firmware development was to
-include power-saving features where possible (\eg x\% reduction in power use when implementing
-delays relative to code provided by the manufacturer). The project material (firmware, debugging
-and testing systems) provides a basis for future development and application of the Respire family of
-devices.
+disease.
+The aim of this project was to develop Respire network firmware based on the \acf{TDMA} to
+allow use in large hospital environments.
+I produced, tested and debugged firmware for project development, which led to identification
+of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
+\acf{NRF24} radio onboard the Respire device. This has precluded testing of my design with the Respire
+devices in a large-network environment.
+An important aspect of firmware development was to include power-saving features
+where possible (\eg x\% reduction in power use when implementing delays relative to
+code provided by the manufacturer). The project material (firmware, debugging and
+testing systems) provides a basis for future development and application of the
+Respire family of devices.
 }
 
 %% Now we start with the actual document.
@@ -77,7 +80,7 @@ devices.
 \acro{DMA}[DMA]{Direct Memory Access}
 \acro{SWD}[SWD]{Serial Wire Debugging}
 \acro{SWO}[SWO]{Serial Wire Out/Viewer}
-\acro{I/O}[I/O]{Input/Output}
+\acro{IO}[I/O]{Input/Output}
 \acro{RTC}[RTC]{Real Time Clock}
 \acro{USART}[USART]{Universal asynchronous receiver/transmitter}
 \acro{CMU}[CMU]{Clock Managment Unit}
@@ -92,6 +95,20 @@ devices.
 \acro{NRF24}[NRF24]{Nordic nRF24L01+ Radio}
 \acro{PCB}[PCB]{Printed Circuit Board}
 \acro{ISM}[ISM]{Industrial, Scientific and Medical}
+\acro{RTOS}[RTOS]{Real Time Operating Systems}
+\acro{LETIMER}[LETIMER]{Low Energy Timer}
+\acro{GDB}[GDB]{The GNU Project Debugger}
+\acro{GCC}[GCC]{GNU Compiler Collation}
+\acro{IDE}[IDE]{Integrated Development Environment}
+\acro{CRC}[CRC]{Cyclic Redundancy Check}
+\acro{GFSK}[GFSK]{Gaussian Frequency-Shift Keying}
+\acro{IRQ}[IRQ]{Interrupt Request}
+\acro{MPSSE}[MPSSE]{Multi-Protocol Synchronous Serial Engine}
+\acro{DHCP}[DHCP]{Dynamic Host Configuration Protocol}
+\acro{NDP}[NDP]{IPv6 Neighbor Discovery Protocol}
+\acro{WFI}[WFI]{Wait For Interrupt}
+\acro{WFE}[WFE]{Wait For Event}
+\acro{SEV}[SEV]{Set Event}
 \end{acronym}
 
 \end{preliminary}

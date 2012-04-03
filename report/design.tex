@@ -42,15 +42,15 @@ The Respire consists of a single self contained \ac{PCB} with attached battery. 
 central microcontroller, low power radio with antenna, three-axis accelerometer and flash storage.
 At every level the Respire tries to reduce the power needs (\eg by reducing the chip count), and thus
 each device selected is designed to be used in low power environments. Attributes of the Respire
-include:-
-Strengths
+include:-\\
+\large{Strengths}
 \begin{itemize}
   \item A single 32bit ARM Cortex-M3 microcontroller, enabling local data processing.
   \item All low power chips by design.
   \item Devices have low power sleep states, including four in the microcontroller.
   \item The radio transmits with a high bandwidth, allowing shortened duty cycles.
 \end{itemize}
-Weaknesses
+\large{Weaknesses}
 \begin{itemize}
   \item Proprietary radio \ac{PHY}/\ac{DL} layer, non-standard and sufficiently different to prevent implementation of a standard.
   \item Problematic state machines due to sleep states.
@@ -124,7 +124,7 @@ microcontroller provides an accurate clock. This choice had the benefit of allow
 choose the least congested frequency band within the overcrowded \ac{ISM} bands and effectively
 utilises Respires low power devices.
 
-
+%TODO 
 {discussion of why TDMA}
 
 
@@ -139,7 +139,7 @@ wireless keyboards and mice). There are six separate receiving addresses but onl
 be independently configured. This solution was therefore not used as the restriction of a network
 size to six nodes per repeater was inadequate.
 
-
+%TODO 
 {add resspipline diagram}
 
 
@@ -212,13 +212,12 @@ providing flexibility to the designer.
 The network topology chosen for the project is a clustered-tree as this best encapsulates the
 physical topology of a hospital; that is, many patients in many rooms with a few data collection
 points. This topology also encapsulates the ideas of a Mediation Device with the differing power
-availabilities (battery to larger battery or mains)\cite{Cuomo, Della Luna, Cipollone, Todorova, & Suihko,
-2008}.
+availabilities (battery to larger battery or mains)\cite{4517407}.
 
 \subsubsection{Connecting, Moving and Disconnecting to Networks}
 There are two main categories of address registration in networks. The first actively requests
 addresses from a central source using the DL layer broadcast (\eg \ac{DHCP}). The second listens to the
-network and tries to attempt to join using the information learned (\eg \ac{IPv6 NDP}). It was decided to
+network and tries to attempt to join using the information learned (\eg \ac{NDP}). It was decided to
 use a mixed model for the Respire network in an attempt to optimise the network.
 
 
@@ -233,7 +232,7 @@ reason suggests an inability to connect to that relay, it should be blacklisted.
 nodes to know if a network is accepting connections, the address to use and the additional
 information in the broadcast (all before connecting) and also minimises denial of service and packet
 collisions. Again this design allows effective device sleeping as during the wait periods there is a
-known duration of sleep (Figure 1).
+known duration of sleep (Figure x). % TODO
 
 
 On the device wishing to disconnect from the network, a simple disconnect request is sent. If the
@@ -243,8 +242,7 @@ time division slot in situations, such as busy hospital wards, where the parent 
 On the device wishing to transfer to a different relay in the same network, the device will first send a
 disconnect request- with intent to transfer- to the current relay. Whether the last packet is received
 or not, the device connects to the new relay. The last packet received from the previous relay
-provides the ability, currently not used, for quick switching (Figure 3). {add about quick switching
-help crypto if used}
+provides the ability, currently not used, for quick switching (Figure x). % TODO
 
 \subsubsection{Addressing}
 Along with a globally unique \ac{DL} Address the network layer will register for a transient network
@@ -281,9 +279,36 @@ a device or to control retransmission of key messages.
 The application layer is separated into three parts: real-time data, bulk data and administration data.
 This separation is based around the differing network patterns that are needed.
 
+%% TODO DAVE PROOF READ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsubsection{Real-time Data}
 Real-time data is buffered and transmitted with no retransmission or confirmation. This data has
 consciously been produced so any attempt to retransmit may overflow the buffers.
+
+\begin{figure}
+  \vspace{-10pt}
+  \begin{center}
+    \begin{bytefield}{32}
+      \bitheader[b]{0,7,8,15,16,23,24,31} \\
+      \bitbox{6}{Time} & \bitbox{14}{Sample 1 X} & \bitbox{12}{Sample 1 Y} \\
+      \bitbox{2}{} & \bitbox{14}{Sample 1 Z} & \bitbox{14}{Sample 2 X} & \bitbox{2}{} \\
+      \wordbox[lrt]{1}{Samples 2, 3 and 4} \\
+      \skippedwords \\
+      \wordbox[lrb]{1}{} \\
+      \bitbox{4}{} & \bitbox{14}{Sample 5 Y} & \bitbox{14}{Sample 5 Z} \\
+    \end{bytefield}
+  \end{center}
+\end{figure}
+
+As the requirment for this real-time data is 3x14bits at least at 12.5Hz I have decided to
+optimise this to meet the spesific charateristics of the \ac{NRF24} as it can be
+closely aligned. With the \ac{NRF24}'s 3 packet pipline and maximum packet size of 32bytes
+combined with the wish for independant packets a value of 5 full samples a packet (less than 27bytes).
+To allow the reciver determen the exact time these samples are vaild a 7bit time feild
+is included, providing an accuracy of 63miliseconds within a 4 second period of time
+(outwith the 4second timeout period).
+
+%% TODO DAVE PROOF READ END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Bulk Data}
 Bulk data is sent via a request to the relay for a bulk \ac{TDMA} time slot. The data is then fragmented
@@ -298,7 +323,7 @@ confirmed and on timeout, retransmitted. Data sent via this channel takes priori
 real-time data flow through the \ac{TDMA} slot; it does not interfere with the bulk data \ac{TDMA} slot.
 
 
-\subsection{Duty Cycle}
+\section{Duty Cycle}
 The power consumption of a device is determined by its power usage and how long the device is on
 for. Thus reducing the power needed during use and/or reducing the period of use will help meet
 the requirements of a low-power device. The percentage of time on as a ratio of the total time is
@@ -308,7 +333,7 @@ assists in reducing the device’s duty cycle as it allows the radio to know whe
 operate, and therefore permits prolonged use of the low power states.
 
 
-\subsection{Power Management}
+\section{Power Management}
 With each chip in the Respire having its own set of sleep states and particular sequences moving
 between them, it is imperative that there is a clear and correct state machine for controlling them.
 
@@ -351,10 +376,6 @@ systems can be powered down. This de-initialisation was found to be most importa
 development as the many of the peripherals continue to interact with the system after use, causing
 faults.
 
-
-{Insert graph of the modules and dependencies}
-
-
 Each module then has a public \ac{API} to simplify and abstract its internal processes. This is also
 important as the C programming module does not support the protection of functions or variables
 and so the use and separation of public interfaces allowed immediate warning throughout the use of
@@ -363,17 +384,69 @@ locally in each module by the use of getters and setter forcing data localisatio
 coding conventions. These abstractions can be easily compiled out so does not incur a performance
 reduction.
 
+% TODO
+\clearpage
+\clearpage
+\lstset{language=[ANSI]C, frame=single, caption={Module \ac{API}}}
+\begin{lstlisting}
+/* Called to (re)configure the module */
+void init(void);
+/* Called to configure the module only if not
+ * already done so
+ */
+void required(void);
+/* Called to asses the minimum sleep state the
+ * system can achive */
+sleep min_sleep(void);
+/* Called to (re)configure the module if needed
+ * after a sleep state */
+void wakeup(sleep from);
+/* Called to unconfigure the module */
+void deinit(void);
+\end{lstlisting}
 
-{insert code sniper of the API}
-
+% TODO DAVID PROOF %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The modularity of the code also assisted in reusability and supported the use of a readable single
 code base. The entire system was hosted in a single code base, without the separation of node and
-relay, and the use of a pre-processor was used to facilitate this. A pre-processor can lead to complex
+base station, and the use of a pre-processor was used to facilitate this. A pre-processor can lead to complex
 and often hidden errors when used without modularity and so could be used more safely with the
-modular system.
+modular system. Listing \ref{lst:PreProsError} show clearley that the pre-processor also aide the proggrammer
+be producing compile time errors, saving the time required to flash the devices.
 
+% TODO DAVID PROOF END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{insert code snippet of \#defines}
-
+\begin{minipage}[b]{0.5\linewidth}
+  \vspace{+10pt}
+  \begin{center}
+    \lstset{language=[ANSI]C, frame=single, caption={Run-time Configuration}}
+    \begin{lstlisting}
+if (function == BASE) {
+  run_base();
+} else if (function == NODE){
+  run_node();
+} else {
+  exit(EXIT_FAILURE);
+}
+    \end{lstlisting}
+    %\caption[ToDo]{ToDo}
+  \end{center}
+\end{minipage}
+\hspace{0.1cm}
+\begin{minipage}[b]{0.5\linewidth}
+  \vspace{+10pt}
+  \begin{center}
+    \lstset{language=[ANSI]C, frame=single, caption={Compile-time Configuration}, label=lst:PreProsError}
+    \begin{lstlisting}
+#if FUNCTION == BASE
+  run_base();
+#elif function == NODE
+  run_node();
+#else
+#error "Invalid 'FUNCTION'"
+#endif
+    \end{lstlisting}
+    %\caption[ToDo]{ToDo}
+  \end{center}
+\end{minipage}
 

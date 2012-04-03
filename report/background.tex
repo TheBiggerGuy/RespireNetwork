@@ -13,11 +13,21 @@ to this task that might be suitable for longer-term clinical use. The accelerome
 trial was a prototype based on the Orient-3 wireless sensor platform originally designed for use in
 real-time motion capture. For the trial however, the monitoring system did not use the wireless
 transceiver but instead used off-line analysis.
+
+\begin{wrapfigure}{r}{0.45\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.35\textwidth, keepaspectratio=true]{images/respire_block.png}
+  \end{center}
+  \caption[Respire Block Diagram]{Respire Block Diagram}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 With the aim to reach medical trials, a smaller and lower-powered device was designed to allow
 longer-term monitoring for further investigations of accelerometer-based respiratory monitoring on
 patients The new hardware was named the Respire and is a significant improvement over the
 prototype device. The Respire integrates four key components of the prototyped Orient-2/3 onto a
-single more accessible device to allow further development and testing:- a \ac{MCU},
+single more accessible device to allow further development and testing: a \ac{MCU},
 accelerometer, radio and flash memory. However, the original Orient-3 firmware was incompatible
 with the Respire and therefore a new firmware needed to be designed and implemented, with an
 emphasis on reducing the power requirements of the system.
@@ -50,7 +60,7 @@ In any small wireless devices the main power consumer is the radio during use, t
 minimise its duty cycle. Mediation devices exist between the edge nodes and the core of a network,
 allowing data to be buffered and processed away from the edge. This mediation allows the edge
 devices to "sleep" more predictably and with greater duration and depth, decreasing the edge
-power needs\cite{Sapio & Tsouri, 2010, Edgar2003}. % TODO
+power needs\cite{Edgar2003}. % TODO
 
 
 This system of moving the power towards the centre of the network is more effective in hierarchical networks
@@ -100,7 +110,7 @@ standard consoles printing techniques without disruption of the program flow.
 
 
 The Thumb reduced instruction set is a 16-bit wide subset of the main ARM set that allows multiple
-instructions to be compressed into a single instruction read, thus reducing \ac{I/O} latency. The Thumb-2
+instructions to be compressed into a single instruction read, thus reducing \ac{IO} latency. The Thumb-2
 instruction set extend thumb set by the utilising 32-bit instructions and thus provide more
 functionality and packing, thus providing a 30\% improvement. This combination lowers the speed to
 power ratio and also the program memory needed. This performance is also achieved with the
@@ -113,7 +123,7 @@ sleep and also allows chaining, with priority. chaining of interrupts significan
 latency in instances where interrupts are likely to happen simultaneously. The priority system allows
 key events to be reordered reducing the chance of delay, producing a more deterministic system. A
 new bit manipulation system allows individual bits to be changed without reading, modifying and
-writing the whole byte, reducing IO. The "bit-banding" is also combined with the previous
+writing the whole byte, reducing \ac{IO}. The "bit-banding" is also combined with the previous
 generation unaligned memory system allowing single bit, byte, half word and the full 32-bit word to
 be uniquely addressed.
 

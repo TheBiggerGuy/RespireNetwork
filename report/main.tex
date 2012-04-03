@@ -15,6 +15,8 @@
 \usepackage{url}
 \usepackage{listings}
 \usepackage{acronym}
+\usepackage{graphicx}
+\usepackage{wrapfig}
 
 %% information about the doc
 \title{Design and Implemenation of a Low Power Wireless Medical Respirotory Network}
@@ -66,6 +68,8 @@ devices.
 
 \begin{acronym}
 \acro{TDMA}[TDMA]{Time Division Multiple Access}
+\acro{FDMA}[FDMA]{Frequency-Division Multiple Access}
+\acro{CSMA}[CSMA]{Carrier Sense Multiple Access}
 \acro{ECG}[ECG]{Electrocardiogram}
 \acro{RISC}[RISC]{Reduced Instruction Set Computer}
 \acro{MCU}[MCU]{Microcontroller}
@@ -75,6 +79,19 @@ devices.
 \acro{SWO}[SWO]{Serial Wire Out/Viewer}
 \acro{I/O}[I/O]{Input/Output}
 \acro{RTC}[RTC]{Real Time Clock}
+\acro{USART}[USART]{Universal asynchronous receiver/transmitter}
+\acro{CMU}[CMU]{Clock Managment Unit}
+\acro{EMU}[EMU]{Energy Managment Unit}
+\acro{PHY}[PHY]{Physical}
+\acro{DL}[DL]{Data Link}
+\acro{GPIO}[GPIO]{General Purpose Input Output}
+\acro{FIFO}[FIFO]{First In First Out}
+\acro{OS}[OS]{Operating System}
+\acro{API}[API]{Application Programming Interface}
+\acro{SPI}[SPI]{Serial Peripheral Interface (Bus)}
+\acro{NRF24}[NRF24]{Nordic nRF24L01+ Radio}
+\acro{PCB}[PCB]{Printed Circuit Board}
+\acro{ISM}[ISM]{Industrial, Scientific and Medical}
 \end{acronym}
 
 \end{preliminary}
@@ -94,6 +111,7 @@ devices.
 %% Any appendices should go here. The appendix files should look just like the
 %% chapter files.
 \appendix
+\include{code_analysis}
 \include{appendix1}
 
 

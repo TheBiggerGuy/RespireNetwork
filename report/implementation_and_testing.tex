@@ -44,6 +44,14 @@ GNU Project Debugger (GDB) was chosen. The GDB platform is the reference impleme
 separated front and back end debugging system and the Mentor Graphics branch of this project was
 utilised to best interact with the chosen compiler.
 
+\begin{wrapfigure}{r}{0.6\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth, keepaspectratio=true]{images/debug_system.png}
+  \end{center}
+  \caption[Debug System Architecture]{Debug System Architecture}
+  \vspace{-10pt}
+\end{wrapfigure}
 
 The debugging backend is highly coupled with the debugging emulator hardware adaptor used in the
 project. The Energy Micro development boards used have an embedded SEGGER J-Link debugger
@@ -78,6 +86,8 @@ At the hardware level, I produced a 20pin JTAG/SWO connector to the 9pin Respire
 allowed quick insertion and removal of connectors without damaging the fragile header pins, whilst
 also regulating the 5Volts supply to the required 3.3Volts. A small circuit was also produced to
 enable error-free monitoring of SPI communications.
+
+% TODO
 {insert pic}
 
 

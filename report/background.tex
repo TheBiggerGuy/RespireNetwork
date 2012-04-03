@@ -37,6 +37,15 @@ made. It is therefore most effective in normal applications to reduce the duty, 
 assisted by faster wake up periods.
 
 
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/lowenergysystemsoverview_croped.jpg}
+  \end{center}
+  \caption[Sleep Graph]{Sleep Graph \cite{EFM32Tech}}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 In any small wireless devices the main power consumer is the radio during use, therefore it is key to
 minimise its duty cycle. Mediation devices exist between the edge nodes and the core of a network,
 allowing data to be buffered and processed away from the edge. This mediation allows the edge
@@ -52,6 +61,16 @@ longer without the battery expectancy of the global networks decreasing.
 \section{Respire Device Components}
 
 \subsection{Energy Micro EFM32 \ac{MCU}}
+
+\begin{wrapfigure}{r}{0.8\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.7\textwidth, keepaspectratio=true]{images/efm32_block_croped.jpg}
+  \end{center}
+  \caption[EFM32 Block Diagram]{EFM32 Block Diagram \cite{EFM32Tech}}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 The Energy Micro EFM32 series of \ac{MCU} is a system-on-a-chip designed from the bottom
 up for low energy applications. At the core of the EFM32 is an ARM Cortex-M3 \ac{MCU} enabling the
 power and flexibility to reduce energy needs by decreasing duty time and closely interacting with its
@@ -62,8 +81,8 @@ interaction enhanced by a \ac{DMA} controller.
 \subsection{ARM Cortex-M3}
 The ARM Cortex-M3 is a 32-bit Harvard style, \ac{RISC} \ac{MCU}. It is designed
 around the ARMv7 instruction set with the addition of Thumb
-and Thumb-2 compressed instruction sets. The Cortex-M is the sub series dedicated to system-on-a-chip
-\acp{MCU}, with the Cortex-M3 being the third and latest generation.
+and Thumb-2 compressed instruction sets. The Cortex-M is the sub series dedicated to low power
+system-on-a-chip \acp{MCU}, with the Cortex-M3 being specifically for realtime applications.
 
 
 The Cortex-M3 series was designed to both provide good performance with low power but also
@@ -105,6 +124,16 @@ Throughout all ARM architecture there is the CIMIS standardisation.....
 
 
 \subsection{\acf{PRS}}
+
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/peripheralreflexsystem_croped.jpg}
+  \end{center}
+  \caption[EFM32 \ac{PRS} Diagram]{EFM32 \ac{PRS} Diagram \cite{EFM32Tech}}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 The \ac{PRS} is a technology that allows the peripherals in the system-on-a-
 chip, external to the \ac{MCU}, to independently interact and thus not force the \ac{MCU} to wake from
 sleep. To enable such control, the system has predefined production and consumption interfaces on
@@ -112,19 +141,27 @@ each module, these range from automated ADC every second triggered by the \ac{RT
 of \ac{USART} data to trigger switching of a device pin. Many of these peripherals clock independently of
 the \ac{MCU} so this system can even work in the deepest sleep states.
 
-\subsection{CMU}
+\subsection{\acf{CMU} and \acf{EMU}}
+
+\begin{wrapfigure}{r}{0.4\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.3\textwidth, keepaspectratio=true]{images/efm32_sleep_states.png}
+  \end{center}
+  \caption[EFM32 \ac{EMU} Diagram]{EFM32 \ac{EMU} Diagram \cite{EFM32Ref}}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 The EFM32s ground up approach of designing all models in the system, except from the \ac{MCU} and \ac{DMA} controller,
 allows a powerful clock and energy management system that allows individual clocking and enabling
 of each subsystem allowing modules to consume no power when not in use. The clock management
 system also enables several clock to be chosen for each module, allowing the programmer is most
 effectively choose the set of clocks needed. Thank you management system also extend directly into
-the \ac{MCU}, allowing extra sleep states to be added to the cortex M3. These extra sleep states allow
+the \ac{MCU}, allowing extra sleep states to be added to the Cortex-M3. These extra sleep states allow
 the \ac{MCU} to gradually decrease the number of high frequency clocks the maintain state and
 also includes full hibernation of the chip with only the externally clocked subsystems
 enabled. From these sleep states EFM32 has a fast wake-up time allowing shorter burst
 periods and deeper sleeps.
-
-{Diagram of 4 sleep states}
 
 \subsection{Nordic nRF24L01+}
 The Nordic nRF24L01+ (hereafter referred to as NRF24) is a low-power digital radio
@@ -137,7 +174,7 @@ This component was included to support the high-accuracy measurements needed to 
 breathing movements in a small, low-energy package.
 
 \subsection{Flash Memory}
-A 64-Mbit Flash Memory chip is included in the Respire to facilitate offline storage of sensor data
+A 64-Mbit flash memory chip is included in the Respire to facilitate offline storage of sensor data
 when no network is available.
 
 

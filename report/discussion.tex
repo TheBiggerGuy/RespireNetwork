@@ -28,6 +28,12 @@ prevent the NRF24 entering the ‘standby- II’ state or (b) to progress it out
 reset procedure. We tested these modifications using a digital probe linked to the SPI bus but no
 permanent solution was found within the time constraints of this project.
 
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio=true]{images/git_work_time.png}
+  \caption{Work over time}
+  \label{fig:git_work_time}
+\end{figure}
 
 Concurrent to this project, I assisted in the successful production of a wireless sensor network using
 the ProSpeckz IIK (your ref) which contained a CC2420 IEEE 802.15.4 radio with a chip configuration
@@ -159,4 +165,5 @@ As many people believe strongly in their privacy, especially when concerning the
 should be considered if cryptography should be implemented on the system. This feature should not
 impose as big an effect on the energy efficiency as most devices as the EFM32 has hardware
 accelerated encryption, however it does not include any acceleration for hashes.
+
 

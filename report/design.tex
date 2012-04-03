@@ -10,7 +10,7 @@ My task was to design and implement a low power wireless network for the Respire
 network should be effective in both reducing the power consumption of the Respire device and
 allow the required data to be accessible in real-time. An extension of the design should allow bulk
 data upload if the device re-enters the network after a period of disconnection. The network should
-also allow a simple device initialisation within the network, so as to be as “plug-and-play” as possible
+also allow a simple device initialisation within the network, so as to be as "plug-and-play" as possible
 and also allow the device to actively maintain a connection as the patient moves between relays or
 networks. The network should allow relay devices to extend the signal from the data collection
 destination, so simplifying any wiring requirements.
@@ -38,7 +38,7 @@ monitoring (Mann, J; personal communication).
 
 
 \section{The Device}
-The Respire consists of a single self contained PCB with attached battery. The PCB contains the
+The Respire consists of a single self contained \ac{PCB} with attached battery. The PCB contains the
 central microcontroller, low power radio with antenna, three-axis accelerometer and flash storage.
 At every level the Respire tries to reduce the power needs (\eg by reducing the chip count), and thus
 each device selected is designed to be used in low power environments. Attributes of the Respire
@@ -52,11 +52,19 @@ Strengths
 \end{itemize}
 Weaknesses
 \begin{itemize}
-  \item Proprietary radio PHY/DL layer, non-standard and sufficiently different to prevent implementation of a standard.
+  \item Proprietary radio \ac{PHY}/\ac{DL} layer, non-standard and sufficiently different to prevent implementation of a standard.
   \item Problematic state machines due to sleep states.
 \end{itemize}
 
 \section{Network Design}
+\begin{wrapfigure}{r}{0.7\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.6\textwidth, keepaspectratio=true]{images/respire_network.png}
+  \end{center}
+  \caption{Network Design}
+  \vspace{-10pt}
+\end{wrapfigure}
 In this project I will propose a design for a low power wireless network system, this will be laid out in
 a layered approach. Due to the unique hardware of the Respire no previous network has been
 produced at the time of commencing this project address an entire radio stack by designing the
@@ -66,36 +74,36 @@ and modular approach.
 \subsection{Multiplexing}
 As many Respire devices will be working in the same area there is a requirement that some sort of
 multiple access system is implemented. In the wireless, and wired, domain there are three main
-groups of multiplexing; TDMA, FDMA and CSMA.
+groups of multiplexing; \ac{TDMA}, \ac{FDMA} and \ac{CSMA}.
 
-\subsubsection{Frequency-Division Multiple Access (FDMA)}
+\subsubsection{\acf{FDMA}}
 FDMA separates the signal spectrum into several channels, each with its own unique frequency
 range. Each separate device then only transmits in its allotted channel. This provides the maximum
 single throughput per device but comes with the requirement of either a separate receiver per
-frequency or a more-expensive and energy-intensive broad frequency receiver. FDMA is typically
+frequency or a more-expensive and energy-intensive broad frequency receiver. \ac{FDMA} is typically
 used in managed environments, where one can guarantee each device has its own frequency.
-FDMA cannot be effectively implemented on the nRF24L01+ as it cannot receive on more than one
-channel and channel-hopping would be less effective than TDMA. This would however reduce the
-risk of noise on a single channel that TDMA is susceptible to.
+\ac{FDMA} cannot be effectively implemented on the \ac{NRF24} as it cannot receive on more than one
+channel and channel-hopping would be less effective than \ac{TDMA}. This would however reduce the
+risk of noise on a single channel that \ac{TDMA} is susceptible to.
 
-\subsubsection{Carrier Sense Multiple Access}
-CSMA has several variations all based around a single concept; that is, a device that wishes to
+\subsubsection{\acf{CSMA}}
+\ac{CSMA} has several variations all based around a single concept; that is, a device that wishes to
 transmit, first senses the spectrum to ascertain whether it is free to transmit and if so, transmits its
 data. The different variations diverge in respect to how they handle the situation if another device is
 transmitting or the situation where more than one device has transmitted at the same time.
-A key issue with CSMA is the ‘hidden terminal problem’, where two devices out of range of each
+A key issue with \ac{CSMA} is the "hidden terminal problem", where two devices out of range of each
 other but visible to a third compete for spectrum. One of the possible mitigation schemes is to use a
 mediation device to share node information more globally in the network without high memory
 costs, this could be achieved.
 
 
-CDMA however is not possible on the nRF24L01+ as it does not adequately provide this built-in
+\ac{CSMA} however is not possible on the \ac{NRF24} as it does not adequately provide this built-in
 ability or an effective equivalent software alternative to sense the channel. This would reduce the
-need for accurate clocks and a highly managed TDMA solution.
+need for accurate clocks and a highly managed \ac{TDMA} solution.
 
 
 \subsubsection{\acf{TDMA}}
-TDMA allocates a time slot for each device, or as requested, for a single device to transmit within
+\ac{TDMA} allocates a time slot for each device, or as requested, for a single device to transmit within
 uniquely. This distribution allows many devices to use a single channel without the need for sensing
 or frequency change. However it requires an accurate time to be kept, and implemented on, for the
 bandwidth to be used effectively. The requirement for accurate timekeeping and synchronisation
@@ -105,15 +113,15 @@ the clocks synchronised without adjustment can cause one device to transmit in a
 Time division multiplexing in its simplest form is most efficient when the data being transmitted is
 both consistent and equally shared among the timeslots. This can be mitigated by giving devices that
 need more bandwidth longer time periods but this requires predictable data requirements.
-TDMA also has an intrinsic but fixed maximum latency in communication and so can be used in time
+\ac{TDMA} also has an intrinsic but fixed maximum latency in communication and so can be used in time
 critical applications, such as telecommunications. This benefit however, can only be achieved if each
-device can be serviced in sufficient time before the cycle repeats. This often leads to TDMA being
+device can be serviced in sufficient time before the cycle repeats. This often leads to \ac{TDMA} being
 used in high frequency spectrum.
 
 
-TDMA was chosen for the Respire network as the radio can transmit at precise intervals and the
+\ac{TDMA} was chosen for the Respire network as the radio can transmit at precise intervals and the
 microcontroller provides an accurate clock. This choice had the benefit of allowing the network to
-choose the least congested frequency band within the overcrowded ISM bands and effectively
+choose the least congested frequency band within the overcrowded \ac{ISM} bands and effectively
 utilises Respires low power devices.
 
 
@@ -121,7 +129,7 @@ utilises Respires low power devices.
 
 
 \subsection{Physical layer}
-The physical (PHY) layer of the nRF24L01+ has many unique hardware features and to reduce power
+The \acf{PHY} layer of the \ac{NRF24} has many unique hardware features and to reduce power
 it was decided to attempt to integrate these as much as possible.
 
 
@@ -136,9 +144,9 @@ size to six nodes per repeater was inadequate.
 
 
 An unusual feature of the chip is the use of the address as the sync in the air. This increases the
-packet efficiency as it removes sections unused by the DL layer and instead uses them instead. This
+packet efficiency as it removes sections unused by the \ac{DL} layer and instead uses them instead. This
 however restricts the address choices at the DL layer and disables any packet sniffing for debugging
-or more custom DL layer. As the address is sued as the sink pattern there is a need for many bit
+or more custom \ac{DL} layer. As the address is sued as the sink pattern there is a need for many bit
 changes within the sequence to give a high probability it is indeed the sync. This reduces the possible
 addresses that can be used either by black listing the unacceptable addresses or by encoding them
 and thus reducing the width (\eg Manchester encoding).
@@ -151,24 +159,24 @@ device to needed to known ahead of time if it needs to transmit or receive a pac
 transition if needed to the correct state.
 
 
-The silicon had a built in CRC generator and checker enabling good packer corruption checking
+The silicon had a built in \ac{CRC} generator and checker enabling good packer corruption checking
 during broadcast. The radio however does not attempt any forward correction and it was decided to
 implement this in software as it is shown to have a low effectiveness\cite{NetworkDesign1998}.
-The radio works within the 2.4GHz ISM band using a single or dual channel GFSK modulated signal.
+The radio works within the 2.4GHz ISM band using a single or dual channel \ac{GFSK} modulated signal.
 This provides 126 independent channels at 250kbps or 63 at 2Mbps and a speed-dependent
 sensitivity rage of -94dBm to -82dBm. This use of the 2.4GHz ISM band provides worldwide licensing
 for use at the power required and without the need to device identification. However due to the
 relaxed licensing this region of the spectrum is highly noisy, with systems such as Bluetooth and
-microwaves effectively denying service.
+microwave ovens effectively denying service.
 
-\subsection{Data Link Layer}
-Closely coupled to the multiplexing and PHY properties of the radio, the Data Link (DL) layer provides
+\subsection{\acf{DL} Layer}
+Closely coupled to the multiplexing and \ac{PHY} properties of the radio, the \ac{DL} layer provides
 a foundation that affects the direction of the layers above. The PHY layer has restricted the device
 address to 2-5bytes, the one independent and 5 linked addresses and the packet size between 1-32bytes.
 
 
 \subsubsection{Addressing}
-Given the address limitations of the DL layer, it was decided to only use two receiving addresses on
+Given the address limitations of the \ac{DL} layer, it was decided to only use two receiving addresses on
 each device, one globally unique and one for broadcasts. This ability to broadcast and uniquely
 address every device was chosen to both emulate the success of Ethernet and IEEE 802.15.4 but also
 to simplify the higher link layer. This does require a globally unique address to be programmed
@@ -180,26 +188,26 @@ the total number of devices possible.
 
 \subsubsection{Packet Assembly}
 At this low level only a packet based design is possible with the radio. Enabling the built-in packet
-assembly on the nRF24L01+ was chosen to facilitate hardware CRC checksums and reduce the
+assembly on the \ac{NRF24} was chosen to facilitate hardware \ac{CRC} checksums and reduce the
 microcontroller duty cycle. The automated packet assembly will prepend a single "magic number"
 byte along with the "to" address, length and a few command bits and then append a two byte CRC
-checksum. This also was chosen to allow dynamic packet sizes at the DL layer to again reduce power
+checksum. This also was chosen to allow dynamic packet sizes at the \ac{DL} layer to again reduce power
 at the radio by reducing broadcast time. The command bytes will not be used but cannot be
 removed. The commands consist of bit fields indicating if the receiver should acknowledge the
 packet and a short packet ID to assist in packet retransmission.
 
-\subsubsection{SPI}
-The DL layer is shared between the radio and microcontroller via a SPI connection that is dedicated
+\subsubsection{\acf{SPI}}
+The \ac{DL} layer is shared between the radio and microcontroller via a \ac{SPI} connection that is dedicated
 to the radio. This therefore provides more than sufficient bandwidth for the application. The latency
-is also low as there is no SPI multiplexing and the radio provides an IRQ signal to the microcontroller.
+is also low as there is no \ac{SPI} multiplexing and the radio provides an \ac{IRQ} signal to the \ac{MCU}.
 A known silicon flaw in the EFM32G series does however increases the complexity of using the
 double buffer, putting it beyond the scope of this project\cite{EnergyMicroErata2012}. The importance
-of interrupts in TDMA prevents the use of the popular FTDI MPSSE series of chips due to the lack of
+of interrupts in \ac{TDMA} prevents the use of the popular FTDI \ac{MPSSE} series of chips due to the lack of
 interrupt support.
 
 \subsection{Network Layer}
 The network layer abstracts the inner workings of the network to the application whilst also
-monitoring and controlling the DL layer. This is also the first layer solely within the microcontroller
+monitoring and controlling the \ac{DL} layer. This is also the first layer solely within the \ac{MCU}
 providing flexibility to the designer.
 The network topology chosen for the project is a clustered-tree as this best encapsulates the
 physical topology of a hospital; that is, many patients in many rooms with a few data collection
@@ -209,15 +217,15 @@ availabilities (battery to larger battery or mains)\cite{Cuomo, Della Luna, Cipo
 
 \subsubsection{Connecting, Moving and Disconnecting to Networks}
 There are two main categories of address registration in networks. The first actively requests
-addresses from a central source using the DL layer broadcast (\eg DHCP). The second listens to the
-network and tries to attempt to join using the information learned (\eg IPv6 NDP). It was decided to
+addresses from a central source using the DL layer broadcast (\eg \ac{DHCP}). The second listens to the
+network and tries to attempt to join using the information learned (\eg \ac{IPv6 NDP}). It was decided to
 use a mixed model for the Respire network in an attempt to optimise the network.
 
 
 Periodic broadcasts are sent with next available address to be used by a new child device. An
 unconnected node listens for a broadcast, by first-found or strongest-signal, and then randomly
 waits 1 to 16 more broadcasts from that relay, this prevent self denial of service on a full network
-reset. After the wait the node will then transmit a connection request in the TDMA block defined by
+reset. After the wait the node will then transmit a connection request in the \ac{TDMA} block defined by
 the address in the broadcast field (Add info on the event if the address is taken on attempted use
 before first attempt). The relay will reply with accept or deny, with the denial reason. In failure, due
 to packet collision by another device trying to connect, the 1 to 16 delay is repeated. If the denial
@@ -239,8 +247,8 @@ provides the ability, currently not used, for quick switching (Figure 3). {add a
 help crypto if used}
 
 \subsubsection{Addressing}
-Along with a globally unique DL Address the network layer will register for a transient network
-address. This address has several purposes: it enables packet routing, is used as the TDMA time slot
+Along with a globally unique \ac{DL} Address the network layer will register for a transient network
+address. This address has several purposes: it enables packet routing, is used as the \ac{TDMA} time slot
 and controls the bandwidth allocation.
 
 
@@ -251,17 +259,17 @@ for that channel. Several separate networks on independent channels would allow 
 devices.
 
 
-The TDMA time slot is decided by the device address. The initial period is separated into 128 relay
+The \ac{TDMA} time slot is decided by the device address. The initial period is separated into 128 relay
 blocks which in turn are separated into 128 node blocks. This system guarantees that every device
 connected to the network, even across relays, has a unique time slot to transmit in. The nodes’ radio
 use is then condensed into a short period, allowing long periods of uninterrupted sleep, reducing
 duty.
 
 
-\subsubsection{Data Link Layer Monitoring}
-With more knowledge than the DL layer, the network layer can make better decisions on power
-management and buffer control than the DL layer. It is also important for the network layer to be
-aware of the DL layer’s state in the project as it is so intertwined in the PHY layer and the thus power
+\subsubsection{\acf{DL} Layer Monitoring}
+With more knowledge than the \ac{DL} layer, the network layer can make better decisions on power
+management and buffer control than the \ac{DL} layer. It is also important for the network layer to be
+aware of the \ac{DL} layer’s state in the project as it is so intertwined in the \ac{PHY} layer and the thus power
 management.
 
 \subsubsection{Link Management}
@@ -278,16 +286,16 @@ Real-time data is buffered and transmitted with no retransmission or confirmatio
 consciously been produced so any attempt to retransmit may overflow the buffers.
 
 \subsubsection{Bulk Data}
-Bulk data is sent via a request to the relay for a bulk TDMA time slot. The data is then fragmented
+Bulk data is sent via a request to the relay for a bulk \ac{TDMA} time slot. The data is then fragmented
 and sent with confirmation received via the administration interface. A timeout and full
 retransmission will be initially implemented but this does not prevent a more effective sliding
 window algorithm implementation.
 
 \subsubsection{Administration}
-In every beacon there is a bitmap informing every node whether, during their TDMA slot, they will
+In every beacon there is a bitmap informing every node whether, during their \ac{TDMA} slot, they will
 be requested to receive a packet or not. Data sent and received via the administration channel is
 confirmed and on timeout, retransmitted. Data sent via this channel takes priority over the normal
-real-time data flow through the TDMA slot; it does not interfere with the bulk data TDMA slot.
+real-time data flow through the \ac{TDMA} slot; it does not interfere with the bulk data \ac{TDMA} slot.
 
 
 \subsection{Duty Cycle}
@@ -295,7 +303,7 @@ The power consumption of a device is determined by its power usage and how long 
 for. Thus reducing the power needed during use and/or reducing the period of use will help meet
 the requirements of a low-power device. The percentage of time on as a ratio of the total time is
 referred to as the duty cycle. In the Respire during use the radio is the main consumer of power,
-therefore reducing its duty cycle will best enable lower power needs. The use of TDMA in the project
+therefore reducing its duty cycle will best enable lower power needs. The use of \ac{TDMA} in the project
 assists in reducing the device’s duty cycle as it allows the radio to know when it is not required to
 operate, and therefore permits prolonged use of the low power states.
 
@@ -308,23 +316,32 @@ between them, it is imperative that there is a clear and correct state machine f
 The EFM32 microcontroller contains 4 sleep states as well as independent clocks and individually
 enabled peripherals. This complexity brings great value with its low power but forces complex
 configuration and undefined errors if incorrectly implemented. As several sates (2, 3 and 4) in the
-microcontroller disable the SPI’s clock, it is required that the SPI is reconfigured and the clock started
-manually again. The EFM32 however has a “Peripheral Reflex System” that enables peripherals on
+microcontroller disable the \ac{SPI}'s clock, it is required that the SPI is reconfigured and the clock started
+manually again. The EFM32 however has a "Peripheral Reflex System" that enables peripherals on
 the chip to interact with each other when the microcontroller is off. This feature allows the radio
-First In First Out (FIFO) transmit buffer to be loaded, the chip to sleep and then independently the
-RTC to enable the General Purpose Input Output (GPIO) line to transmit the packet at the precise
+\ac{FIFO} transmit buffer to be loaded, the chip to sleep and then independently the
+\ac{RTC} to enable the \ac{GPIO} line to transmit the packet at the precise
 time without the need to wake the microcontroller. There are however several aspects of the design
 of the EFM32G series\cite{Energy Micro AS, 2012} that mean extra reconfiguration is needed entering
 and leaving sleep states (TODO in To do in code); these have caused many problems and
 complexities during development of the current project.
 
 
-An important feature on the nRFL01+ radio is that it can maintain its state allowing FIFO accesses
+An important feature on the \ac{NRF24} radio is that it can maintain its state allowing \ac{FIFO} accesses
 without the need for the receiver or transmitter to be active. This greatly reduces the power
 consumption as both receiving and transmitting states require significant power.
 
 
-\section{The Operating System}
+\section{The \acf{OS}}
+
+\begin{wrapfigure}{r}{0.6\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth, keepaspectratio=true]{images/archatechture.png}
+  \end{center}
+  \caption[System Architecture]{System Architecture}
+  \vspace{-10pt}
+\end{wrapfigure}
 
 \subsection{Modularity}
 Following the design of the modular system it was key to implement to system from the ground up
@@ -338,10 +355,10 @@ faults.
 {Insert graph of the modules and dependencies}
 
 
-Each module then has a public API to simplify and abstract its internal processes. This is also
+Each module then has a public \ac{API} to simplify and abstract its internal processes. This is also
 important as the C programming module does not support the protection of functions or variables
 and so the use and separation of public interfaces allowed immediate warning throughout the use of
-the compiler when functions or data where misused. The API was used to abstract all data stored
+the compiler when functions or data where misused. The \ac{API} was used to abstract all data stored
 locally in each module by the use of getters and setter forcing data localisation through the use of
 coding conventions. These abstractions can be easily compiled out so does not incur a performance
 reduction.

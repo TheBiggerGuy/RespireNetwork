@@ -106,13 +106,6 @@ currently in use.  I hope that this document detailing the issues around \ac{TDM
 with the \ac{NRF24} will be of use to further developing the Respire and other
 \ac{NRF24} products.
 
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=\textwidth, keepaspectratio=true]{images/git_work_time.png}
-  \caption{Work over time}
-  \label{fig:git_work_time}
-\end{figure}
-
 External to Edinburgh University, the \ac{NRF24} radio is currently used principally for use in wireless
 keyboards and mice, with a maximum of 6 devices in each network. The recent family of Logitech
 Unifying\textregistered devices, which allows these devices to to communicate with a single \ac{USB}
@@ -139,11 +132,11 @@ market by both allowing the immediate use of the Cortex-M3 line, with knowledge 
 compatibility, and by using a more powerful chip allowing over time with optimisations lower power
 replacements. I would of wished this design desision had also extended towards the radio circuitry.
 
-\section{Power Reductions}
-By Utilising the low-powe 32Khz clock on the EFM32 my design tried aimed to provide minumin MCU
-interation during the radio prosses. ...
-About the code in the respire that reduces it power in general and aid development
-Accuracy of the packet transmission time estimates
+%\section{Power Reductions}
+%By Utilising the low-powe 32Khz clock on the EFM32 my design tried aimed to provide minumin MCU
+%interation during the radio prosses. ...
+%About the code in the respire that reduces it power in general and aid development
+%Accuracy of the packet transmission time estimates
 
 \section{Wireless Medical Devices and their Standardisation}
 
@@ -194,22 +187,22 @@ been shown that a frequency-hopping system to reduce the susceptibility to inter
 implemented on the NRF24. (ref)
 
 
-\section{Related Work}
-
-\subsection{Edinburgh University}
-Edinburgh University, under the leadership of J Mann, has also produced a separate implementation
-of a radio interface for the Respire. This implementation was designed with power efficiency as the
-only goal. To this end the system is designed such that the radio is only on, and only broadcasts
-when data needs to be sent. This system therefore produces the most efficient power solution that
-could be implemented on the device, ignoring optimisations of the design. The system also uses the
-hardware accelerated ShockBurst\textregistered and MultiCeiver\textregistered system designed by Nordic Semiconductors.
-With a brief of a fully managed network system suitable for hospital use, this design was decided not
-to be suitable.Also by the extended use of the NRF24.the design has underused the features of the
-EFM32. With the ability for asynchronously clocked serial transfer automated by and interrupts and
-managed by the DMA not been utilised a similar chip could have been used.
-
-\subsection{Alabama University}
-To do
+%\section{Related Work}
+%
+%\subsection{Edinburgh University}
+%Edinburgh University, under the leadership of J Mann, has also produced a separate implementation
+%of a radio interface for the Respire. This implementation was designed with power efficiency as the
+%only goal. To this end the system is designed such that the radio is only on, and only broadcasts
+%when data needs to be sent. This system therefore produces the most efficient power solution that
+%could be implemented on the device, ignoring optimisations of the design. The system also uses the
+%hardware accelerated ShockBurst\textregistered and MultiCeiver\textregistered system designed by Nordic Semiconductors.
+%With a brief of a fully managed network system suitable for hospital use, this design was decided not
+%to be suitable.Also by the extended use of the NRF24.the design has underused the features of the
+%EFM32. With the ability for asynchronously clocked serial transfer automated by and interrupts and
+%managed by the DMA not been utilised a similar chip could have been used.
+%
+%\subsection{Alabama University}
+%To do
 
 \section{Future Work}
 I an attempt to improve the systems lower use it was found that the SPI connection to the radio is

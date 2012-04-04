@@ -65,14 +65,14 @@ debug the system.
 
 For additional ease of use, I produced a \ac{GDB} proxy to implement a \ac{SWO} viewer and work around
 issues as they arose. A Python TCP \ac{GDB} proxy was produced as the project continued and new
-features were needed, which included:-
+features were needed, which included:
 \begin{itemize}
   \item Managing multiple \ac{GDB} connections to a single backend. The system will cleanly terminate
         the current connection allowing the new connection to take over. This is important as it
         prevents the Eclipse debugger from freezing for minutes at a time.
   \item Viewing of the raw \ac{GDB} communications. Important in diagnosing the location of
         problematic events within the long opaque chain of systems.
-  \item Displaying \ac{SWO} output when enabled, separating the different types of information (e.g.
+  \item Displaying \ac{SWO} output when enabled, separating the different types of information (\eg
         printf, interrupts and timings). For the project environment using GDB, the system was
         unable to read live \ac{SWO} output due to the SEGGER \ac{GDB} server not passing the values on.
 \end{itemize}
@@ -116,10 +116,11 @@ used as it allowed:
 \end{itemize}
 
 \subsection{Developmental Hardware}
-Throughout development, I used two EFM32-SDK development boards produced by the processor
-manufacturer (Energy Micro HA) and a specially-adapted Respire unit which had a replacement
-connection between the LETIMER and the NRF24 radio (inseret pin x and y; produced by J. Mann at
-my request). This equipment was sufficient to test a 3-node network.
+Throughout development, I used two (only one in the first half) EFM32-SDK development
+boards produced by the processor manufacturer and a specially-adapted Respire unit
+which had a replacement connection between the \ac{LETIMER} and the \ac{NRF24} radio
+(insereted pin x   and y; produced by J. Mann at my request).
+This equipment was sufficient to test a 3-node network.
 
 \section{Firmware}
 
@@ -130,38 +131,27 @@ interrupt coincidence, increasing delays in time-critical sections of code. To c
 issue, I gave each interrupt a priority to allow the advanced interrupt controller to reorder the
 interrupts.
 
-{code nippet of NVIC SetPriority}
-
 In many interrupts, I also chose to release the interrupt lock early to prevent missed events. This was
 carefully planned in each occurrence as misuse of the feature can cause an infinite interrupt loop.
 This more complex system was chosen as it works in bursts suitable for TDMA, with multiple time-
 critical sections condensed together.
 
-
-{code snippet to show interrupt reset}
-
-
 I also utilised the Cortex-M3s SysTick feature in combination with the interrupt system to enable a
 power efficient delay function for delays over 2msec.
-{code snippet}
 
 
 \subsection{Events and Interrupts}
 Throughout the code base, I made extensive use of \acf{WFI}, \acf{WFE} and \acf{SEV}
 which are allowable in the Cortex-M3. These instructions set extensions,
 facilitate reducing the inefficient nature of polling for change. The common implementation of the
-'while-loop' polling for a required change of state prevents the system from powering down. By
+``while-loop'' polling for a required change of state prevents the system from powering down. By
 using the above instructions correctly, I aimed to power down the system without introducing
 latency, by configuring the loops to exit after an interrupt where appropriate.
-{insert graph}
 
 
-In events where a software interrupt was required, I used the SEV instruction, SEVs are more
-efficient than interrupts for this purpose as they do not have an Interrupt Service Routine (ISR)
+In events where a software interrupt was required, I used the \ac{SEV} instruction, \ac{SEV} are more
+efficient than interrupts for this purpose as they do not have an \ac{ISR}
 connected to their behaviour.
-
-
-{insert code snippet}
 
 
 \subsection{Peripheral Reflex System (PRS)}
@@ -181,26 +171,33 @@ pulse initiates the following sequence of events in each device at the beginning
 \end{enumerate}
 
 
-This recurrent sequence is illustrated in Figure ZZ. The EFM32 microcontroller remains in a low-energy
+\begin{figure}{p}
+  \begin{tikztimingtable}
+    RTC     & 1l 1l; 4h60l 4h20l  \\
+    Base1   & 1l 1l;  [red]  4h; 4l; [blue] 4h; [blue] 4h; 48l; [red]  4h; 4l; [blue] 4h; [blue] 4h; 7l; \\
+    Node1.1 & 1l 1l;  [blue] 4h; 4l; [red]  4h;        4l; 48l; [blue] 4h; 4l; [red]  4h;        4l; 7l; \\
+    Node1.2 & 1l 1l;  [blue] 4h; 4l;        4l; [red]  4h; 48l; [blue] 4h; 4l;        4l; [red]  4h; 7l; \\
+    Base2   & 1l 33l; [red]  4h; 4l; [blue] 4h; [blue] 4h; 39l; \\
+    Node2.1 & 1l 33l; [blue] 4h; 4l; [red]  4h;        4l; 39l; \\
+    Node2.2 & 1l 33l; [blue] 4h; 4l;        4l; [red]  4h; 39l; \\
+  \end{tikztimingtable}
+  \caption[\ac{LETIMER} Timing]{\ac{LETIMER} timing, recive blue and transmit red}
+  \label{fig:letimertiming}
+\end{figure}
+
+This recurrent sequence is illustrated in Figure \ref{fig:letimertiming}. The EFM32 microcontroller remains in a low-energy
 state throughout each sequence, except for interrupts from the \ac{LETIMER} (configured to
 trigger when the \ac{NRF24} enable pin switches off) or the radio (on receipt or transmission of packet)
 within the network section of the code.
-
-
-Insert diagram here
-
 
 During implementation of this system I encountered difficulties when enabling the \ac{PRS} to coordinate
 the \ac{RTC} and \ac{LETIMER} triggers, which had both worked independently. After further
 research and analysis, it was discovered that the \ac{RTC} and \ac{LETIMER} are required to have the same
 periodicity for this \ac{PRS} configuration. I chose to increase the \ac{RTC} period (away from the most
 efficient value) to match that required by the \ac{LETIMER}, which resulted in an insignificant power
-increase which was likely to be far outweighed by the power efficiency gains of the \ac{PRS}. (numbers
-required)
+increase which was likely to be far outweighed by the power efficiency gains of the \ac{PRS}.
 
 \subsection{Implementation of Firmware Modules}
-The Firmware was implemented to the design of Figure X by incorporating the modules and systems
-described below.
 
 \begin{wrapfigure}{r}{0.6\textwidth}
   \vspace{-10pt}
@@ -208,8 +205,12 @@ described below.
     \includegraphics[width=0.5\textwidth, keepaspectratio=true]{images/modules_dep.png}
   \end{center}
   \caption[System Architecture]{System Architecture}
+  \label{fig:imp_modules}
   \vspace{-10pt}
 \end{wrapfigure}
+
+The Firmware was implemented to the design of Figure \ref{fig:imp_modules} by incorporating the modules and systems
+described below.
 
 \subsubsection{Serial Peripheral Interface (SPI)}
 An initial baud rate of 1MHz was chosen to coincide with the Energy Micro application notes. At
@@ -221,32 +222,33 @@ many of the system events in the highest power states is dependent on the speed 
 be transferred to and from the \ac{NRF24}. However, it was found that increasing the baud rate to 7MHz
 (the EFM32 maximum) made no improvement.
 
-After analysis using the digital probe (ref fig z.) it was found that although the period taken for each
+\begin{figure}[T]
+  \begin{center}
+    \includegraphics[width=1\textwidth, keepaspectratio=true]{images/digital_probe_fast_spi.png}
+  \end{center}
+  \caption[Fast SPI Trace]{Fast SPI trace}
+  \label{fig:fast_spi}
+\end{figure}
+
+After analysis using the digital probe (Figure \ref{fig:fast_spi}) it was found that although the period taken for each
 byte decreased, the period between byte transmission did not change. This suggested that the \ac{MCU}
 was unable to sustain transfer with only a single buffer (note that a race condition may occur
 without correct flushing of the transmit buffer due to an incorrect Chip Select Pin state). A fix was
 attempted by the use of the double hardware buffer but I was unsuccessful due to a hardware flaw
-in the EFM32 (ref needed).
+in the EFM32\citer{EnergyMicroErata2012}.
 
 
-\subsubsection{DataLink Module}
+\subsubsection{\acf{DL} Module}
 This module initialises and configures the \ac{NRF24} radio, uploads and downloads the packet data from
 the network modules to the radio and manages radio power and state.
 
 \begin{figure}
-  \vspace{-10pt}
   \begin{center}
-    \includegraphics[width=0.9\textwidth, keepaspectratio=true]{images/nrf24_state.png}
+    \includegraphics[width=1\textwidth, keepaspectratio=true]{images/nrf24_state.png}
   \end{center}
   \caption[\ac{NRF24} State Machine]{\ac{NRF24} State Machine \cite{NRF24Spec}}
-  \vspace{-10pt}
+  \label{fig:nrf24spec}
 \end{figure}
-
-Insert code snippet
-
-
-Insert table
-
 
 During development it was found that there were many issues related to the correct
 communication, state control, and timing of the \ac{NRF24} radio. Throughout development, consistent
@@ -254,18 +256,18 @@ issues arose concerning the radio as it did not perform as suggested by the devi
 During discussions with the designer of the Respire, Janick Mann, several interpretations of the
 NRF24 specification were considered. Several simple test applications were implemented using 4
 separate \ac{NRF24} radios on 2 different EFM32 development boards. One such test configured the
-radio to broadcast an unmodulated carrier signal, the manufacturer's recommended testing method
-(Ref Constant carrier wave output for testing) which required specialized radio spectrum analysers
+radio to broadcast an unmodulated carrier signal, the manufacturer's recommended testing
+method\citer{NRF24Spec} which required specialized radio spectrum analysers
 to detect and analyse the signal. Initially the \ac{NRF24} hardware was found to behave as expected, but
-when more complex interactions with the radio were tested (e.g. a ping-pong firmware application)
+when more complex interactions with the radio were tested (\eg a ping-pong firmware application)
 the receive-transmit functions became problematic and no reliable solution was found.
 Furthermore, during this testing we discovered that high frequency changes exacerbated the issue
 and unfortunately high frequency transitioning is required for \ac{TDMA}. Both myself and Janick Mann
 concluded that the most plausible cause of this problem was due to the \ac{NRF24} entering the
-'standby- II' state. Within this state it is only possible to transition to a receive state through a
+``Standby-II'' state (Figure \ref{fig:nrf24spec}). Within this state it is only possible to transition to a receive state through a
 lengthy reset process or by transmitting a new packet (which is unacceptable for \ac{TDMA}). Several
 modifications of the firmware were produced attempting either to prevent the \ac{NRF24} entering the
-'standby- II' state or to progress it out of this state through a reset procedure. No permanent
+``Standby-II'' state or to progress it out of this state through a reset procedure. No permanent
 solution was found within the time constraints of this project.
 
 
@@ -281,23 +283,45 @@ system to provide a clock reference down to 30.518 μseconds (discussed in \ref{
 implementation will also track time over successive RTC overflow events every 1.52days and
 minimises interrupts from low-power states.
 
-
 \subsubsection{SysTick}
+
 The SysTick feature of the Cortex-M3 enables a dedicated priority interrupt connected to the MCU
 clock. By setting an appropriate prescaler to the SysTick, a predictable periodic interrupt is created.
-This periodic 'tick' is aimed at supporting pre-emptive \ac{RTOS}\cite{RTOS2011} but for this project
+This periodic ``tick'' is aimed at supporting pre-emptive \ac{RTOS}\citer{RTOS2011} but for this project
 it was utilised to produce a more efficient delay function.
 
+\begin{figure}
+  \begin{center}
+    \lstset{language=[ANSI]C, frame=single, caption={Original delay}, label=lst:originaldelay}
+    \begin{lstlisting}
+void Delay(uint8_t dlyTicks) {
+  uint8_t till;
+  /* Setup SysTick Timer for
+   * 1 msec interrupt
+   */
+  SysTick_Config(
+    (SystemCoreClock/HFRCO_FREQUENCY)*1000
+  );
+  till = (msTicks + dlyTicks);
+  while (msTicks != till) {
+    __WFI();
+  }
+  SysTick->CTRL = 0x00;
+  NVIC_DisableIRQ(SysTick_IRQn);
+}
+    \end{lstlisting}
+    \label{lst:newdelay}
+  \end{center}
+\end{figure}
 
-In low-power systems, any delay run on the MCU should be avoided, as it wastes power on 'empty'
+In low-power systems, any delay run on the MCU should be avoided, as it wastes power on ``empty''
 cycles. However during firmware development, this feature is highly desirable. To enable delays with
 power efficiency in mind, the SysTick was used to allow 1msecond increments of the delay to be run
 in a lower energy state.
 
 \begin{figure}
-  \vspace{-10pt}
   \begin{center}
-    \lstset{language=[ANSI]C}
+    \lstset{language=[ANSI]C, frame=single, caption={New delay}, label=lst:newdelay}
     \begin{lstlisting}
 void Delay(uint32_t dlyTicks) {
   uint32_t curTicks;
@@ -308,49 +332,26 @@ void Delay(uint32_t dlyTicks) {
 /* delay 10ms */
 delay(10);
     \end{lstlisting}
-    \caption[ToDo]{ToDo\cite{EFM32STK}}
+    \label{lst:originadelay}
   \end{center}
-  \vspace{-10pt}
 \end{figure}
 
 By utilising the Energy Micro's Energy Profiler, I discovered that the example SysTick function
-provided by Energy Micro was negatively impacting on the duty cycle. By modifying this function to
+provided by Energy Micro was negatively impacting on the duty cycle (Listing \ref{lst:originaldelay}). By modifying this function to
 enabling the SysTick only during delays, I produced an effective solution to overcome this issue
-without having to sacrifice the lower power delay.
+without having to sacrifice the lower power delay (Listing \ref{lst:newdelay}).
 
-
-\begin{figure}
-  \vspace{-10pt}
-  \begin{center}
-    \lstset{language=[ANSI]C}
-    \begin{lstlisting}
-void Delay(uint8_t dlyTicks) {
-  uint8_t till;
-  /* Setup SysTick Timer for 1 msec interrupt  */
-  SysTick_Config((SystemCoreClock/HFRCO_FREQUENCY)*1000);
-  till = (msTicks + dlyTicks);
-  while (msTicks != till) {
-    __WFI();
-  }
-  SysTick->CTRL = 0x00;
-  NVIC_DisableIRQ(SysTick_IRQn);
-}
-    \end{lstlisting}
-    \caption[ToDo]{ToDo\cite{EFM32STK}}
-  \end{center}
-  \vspace{-10pt}
-\end{figure}
 
 \subsubsection{Debug}
 I implemented a debug module on the device to assist in the development process. This included full
 support for interacting with the digital probe to produce and test accurate timings and
 communications. I also developed an extended version of the Energy Micro \ac{SWO} code to add
-support for printing to the console of the development PC, linked to the produced \ac{SWO} viewer.
+support for printing to the console of the development PC, linked to the produced \ac{SWO} viewer (Listing \ref{lst:printf}).
 
 \begin{figure}
   \vspace{-10pt}
   \begin{center}
-    \lstset{language=[ANSI]C}
+    \lstset{language=[ANSI]C, frame=single, caption={printf support}, label=lst:printf}
     \begin{lstlisting}
 /**
  * Support a 'file system'.
@@ -373,7 +374,6 @@ int _write(int file, char *ptr, int len) {
 /* Print through the debugger */
 write(STDOUT, "This helps debugging\n", 21);
     \end{lstlisting}
-    \caption[printf Support]{printf Support}
   \end{center}
   \vspace{-10pt}
 \end{figure}
@@ -385,14 +385,14 @@ use of many of these functions however are application specific in \acp{MCU} (\e
 console go and how to query the device for the time?) and therefore need to be written for the
 device used. Newlib is a collection of many optimised implementations for a large number of
 platforms, however it did not have specific functions for the EFM32. I chose to implement a subset
-of these functions to allow the use of advanced features such as dynamic memory (\ie malloc). The
+of these functions to allow the use of advanced features such as dynamic memory (\ie malloc) (Listing \ref{lst:malloc}). The
 choice of Newlib was made as it already included a core set of features generic to all Coretx-M3
 processors and was the library supported by the compiler.
 
 \begin{figure}
   \vspace{-10pt}
   \begin{center}
-    \lstset{language=[ANSI]C}
+    \lstset{language=[ANSI]C, frame=single, caption={malloc support}, label=lst:malloc}
     \begin{lstlisting}
 static unsigned char heap[HEAP_SIZE];
 static unsigned char *heap_end = heap;
@@ -414,7 +414,6 @@ caddr_t _sbrk(int incr) {
 /* malloc and free */
 free(malloc(1));
     \end{lstlisting}
-    \caption[printf Support]{printf Support}
   \end{center}
   \vspace{-10pt}
 \end{figure}

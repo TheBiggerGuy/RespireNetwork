@@ -5,8 +5,58 @@
 \chapter{\ac{NRF24} Recive and Transmit only Test}
 
 To test and trubleshoot radio communicatiom issues, a radio test mosule was implemented that
-contaided code to test simle functions. This module was built utilising the underliying code
-
+contaided code to test simle functions. This module was built utilising the underliying modules
+tested to be correct using the digital probe.
 
 \section{Transmit Only}
+\lstset{language=[ANSI]C, frame=single, caption={Radio test TX}}
+\begin{lstlisting}
+struct net_packet_broadcast p;
+
+Radio_init(&local, &broadcast);
+Radio_enable(false);
+Radio_setMode(Radio_Mode_TX, false);
+
+p.hello[0] = 'h';
+p.hello[1] = 'e';
+p.hello[2] = 'l';
+p.hello[3] = 'l';
+p.hello[4] = 'o';
+
+while(true) {
+  DBG_probe_on(DBG_Probe_1);
+  p.time = RTC_getTime();
+  p.tick = RTC_getTickCount();
+  Radio_loadbuf_broadcast(&p);
+  Radio_enable(true);
+  for(volatile uint8_t i=0; i < 9; ++i) {
+    __NOP();
+  }
+  Radio_enable(false);
+  while(radio_has_packets_to_sent()){
+    __WFI();
+  }
+  DBG_probe_off(DBG_Probe_1);
+  delay(250);
+  delay(250); 
+}
+\end{lstlisting}
+
+\section{Recive Only}
+
+\lstset{language=[ANSI]C, frame=single, caption={Radio test RX}}
+\begin{lstlisting}
+Radio_init(&local, &broadcast);
+Radio_enable(false);
+Radio_setMode(Radio_Mode_RX, false);
+Radio_enable(true);
+while(true){
+  if(Radio_available() > 0) {
+    struct net_packet_broadcast buf;
+    Radio_recive((uint8_t *) &buf, sizeof(struct net_packet_broadcast));
+    DBG_probe_toggle(DBG_Probe_1);
+  }
+}
+\end{lstlisting}
+
 

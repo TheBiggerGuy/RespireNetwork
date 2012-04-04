@@ -5,28 +5,106 @@
 \chapter{Discussion}
 
 \section{The Respire radio}
-For this project a disproportionate amount of time was spent trying to troubleshoot and work
-around the problems originating from the NRF24 radio component of the Respire device. This radio
-was chosen for the Respire due to its low power utilisation and its apparent ease of use. My initial
-development prototyping of the NRF24 used an FTDI MPSSE to allow use of SPI on a PC. I did not
-encounter any problems with the radio using this setup and the Python language on a connected PC.
-Subsequently, it proved difficult to diagnose apparent problems with the radio due to a lack of
-hardware debugging and the inability to easily monitor any radio communications. I attempted to
-monitor radio communications both through the use of an Ubertooth spectrum analyser1 and the
-production of a radio sniffer using an NRF24 linked to a FTDI MPSSE2. Neither of these attempts
-were able to detect nFR24 radio signals under any conditions, probably because they were operating
-outside the limits of their specifications. Latterly (in collaboration with Janick Mann) I was able to
-detect test NRF24 transmissions using specialised spectrum analysers in the Dept of Informatics at
-Edinburgh University. This testing validated sections of my firmware including the SPI
-communications and showed that my development environment could compile, flash and
-run/debug successfully. It also identified a possible reason for my implementation problems. Both
-myself and Janick Mann concluded from these tests that the most plausible cause of the problem
-was due to the NRF24 entering the ‘standby- II’ state. Within this state it is only possible to
-transition to a receive state through a lengthy reset process or by transmitting a new packet (which
-is unacceptable for TDMA). I produced several modifications of the firmware to attempt either (a) to
-prevent the NRF24 entering the ‘standby- II’ state or (b) to progress it out of this state through a
-reset procedure. We tested these modifications using a digital probe linked to the SPI bus but no
-permanent solution was found within the time constraints of this project.
+The \ac{NRF24} radio was chosen for the Respire due to its low power utilisation
+and its reduced complexity compared with competitors. Unfortunately for my specific
+requirements in implementing \ac{TDMA}, the latter advantage was found to hinder
+development. As a result of its basic interface it proved difficult to diagnose
+apparent problems with the radio through a lack of status information and the
+inability to easily monitor any radio communications.
+
+
+As a result of this unforeseen project issue, significantly more time was spent
+troubleshooting during development, thus reducing the time available to produce
+an analysis of the network design. In hindsight, implementation of a non \ac{TDMA}
+network (mainly \ac{FDMA} as it is still suitable for larger networks) would
+circumvent the requirement for a final resolution of the discussed \ac{TDMA}
+issue (section x). This alternative network design using \ac{FDMA}, although less
+efficient, would have allowed the project to progress into the analysis of power
+and network efficiency, not achieved in this project. This data would have then
+allowed a cost-benefit analysis of additional complexity caused by a larger network
+implementation. This would have allowed a discussion into the feasibility of
+further development of this approach in later Respire versions.
+
+
+My original approach to the implementation of the project was based around my
+previous work with a sister device with a similar aim. More specifically, a
+wireless sensor network using the ProSpeckz IIK, containing a CC2420 IEEE 802.15.4
+radio configuration resembling that found in the Respire. This experience however,
+was not sufficient to address the challenges impeding the progress of this project,
+leading me to assume that the source of the difficulty lay out-with my implementation.
+Of course, it is dangerous to assume that one's implementation is not flawed, so
+with this in mind, over the course of the project, I designed several strategies
+to isolate any possible issues. Working to a design methodology which promotes
+reusability, I have outlined some of the relevant strategies below so that they
+might be used to inform future development:
+\begin{description}
+  \item[\ac{NRF24} -- \ac{MCU} Communication Monitoring] \hfill \\
+    Utilising an Open Bench Logic Sniffer digital probe (section {4.1.4}) to
+    monitor the shared pins between the \ac{MCU} and radio was used throughout the
+    project to validate firmware. Vital to the correct working of the \ac{NRF24} is
+    both the correct configuration of its registers and accurate timing (in both
+    communications and signalling). To address issues that arose during the first
+    half of the project an effective methodology to measure and analyse the probe's
+    data was developed. It was found that continuous analysis of the probe traces
+    is key to effective testing in this situation. This continuous testing allowed
+    changes with adverse effects, which may even not yet be noticed, to be identified
+    and rectified early.
+    
+    An additional hardware circuit (section x) was used in a strategy to originally
+    test if the \ac{LETIMER} was causing unknown signalling problems when a state is
+    forced by direct \ac{GPIO} control. A secondary pin's signal was merged and
+    monitored confirming this was not causing the issue being tested. Further use
+    of this on other multiuse pins showed however that the \ac{SPI} \ac{CS} pin
+    produced glitches when manually controlled whilst routed to the \ac{SPI},
+    this was then simply fixed. As this circuit allowed multiple devices to be
+    probed accurately at the same time it was utilised at the end of the project
+    to allow accurate timing of transmissions.
+  
+  \item[Serial Console Printing via \ac{SWO}] \hfill \\
+    As \ac{TDMA} and the radio itself is highly sensitive to timing constraints
+    it was found single-stepping or break-point debugging produces its own effects
+    on the results. To enable good debugging whilst maintaining normal code flow
+    the \ac{SWO} pin was utilised. This was further simplified by adapting Newlib
+    to support the use of \ac{SWO} through printf. (section {4.1.3})
+  
+  \item[Modular Testing] \hfill \\
+    To identify if ``Standby-II'' state within the \ac{NRF24} was causing the issue
+    (ref) in radio communications, or any other, many strategies where devised.
+    By utilising the modular system, many rapid prototypes of solutions could be
+    produced including: transmit and receive only solutions, ping-pong transfers,
+    shortened chip enable periods, and \ac{MCU} only radio control. The results
+    of these test demonstrated that there was an issue with transitioning between
+    receive and transmit states however several other tests demonstrated the source
+    of the problem due to a ``Standby-II'' state where proven to be inconclusive.
+  
+  \item[Hardware Testing] \hfill \\
+    Utilising specialised spectrum analysers in the Dept of Informatics at
+    Edinburgh University, the \ac{NRF24} test radios where placed into unmodulated
+    carrier signal mode, the manufacturer's recommended testing method
+    (Ref Constant carrier wave output for testing). None were found to be defective,
+    removing the probability of defective hardware. This testing is combined with
+    multiple use of all hardware (2xdevelopment board and 4xradio) during normal
+    development.
+  
+  \item[Radio ``Sniffing''] \hfill \\
+    I attempted to monitor radio communications both through the use of an
+    Ubertooth spectrum analyser  in the addition to production of a radio sniffer
+    using an \ac{NRF24} linked to a FTDI \ac{MPSSE}. Neither of these attempts 
+    was able to detect \ac{NRF24} radio signals under any conditions, this is most
+    likely due to the operation outside the devices specifications combined with
+    unusual \ac{PHY} radio layer. However this should be further looked at as the
+    ability to monitor radio traffic ``in the air'' would vastly improve troubleshooting.
+\end{description}
+
+Unfortunately the \ac{NRF24} radio is a fixed component of the Respire and could
+not be replaced for testing of alternative radios. Therefore in my opinion, in order
+for \ac{TDMA} to be applied successfully to a Respire network these problems with
+the \ac{NRF24} will have to be overcome. This has recently become a greater priority
+for the Respire section of the Speckled Computing group at Edinburgh University
+because they are reaching the limitations of the simpler type of wireless system
+currently in use.  I hope that this document detailing the issues around \ac{TDMA}
+with the \ac{NRF24} will be of use to further developing the Respire and other
+\ac{NRF24} products.
 
 \begin{figure}[htb]
   \centering
@@ -35,41 +113,24 @@ permanent solution was found within the time constraints of this project.
   \label{fig:git_work_time}
 \end{figure}
 
-Concurrent to this project, I assisted in the successful production of a wireless sensor network using
-the ProSpeckz IIK (your ref) which contained a CC2420 IEEE 802.15.4 radio with a chip configuration
-similar to that on the Respire (ref). Unlike the NRF24 radio, I had few difficulties programming the
-CC2420 (at least in its configuration on the ProSpeckz IIK), even though it has a more complex
-interface. Unfortunately the NRF24 radio is a fixed component of the Respire and could not be
-replaced for testing of alternative radios. For TDMA to be applied successfully to a Respire network,
-I am of the opinion that these problems with the NRF24 will have to be overcome. This has recently
-become a greater priority for the Respire section of the Speckled Computing group at Edinburgh
-University because they are reaching the limitations of the simpler type of wireless system currently
-in use.
-
-
-External to Edinburgh University, the NRF24 radio is currently used principally for use in wireless
+External to Edinburgh University, the \ac{NRF24} radio is currently used principally for use in wireless
 keyboards and mice, with a maximum of 6 devices in each network. The recent family of Logitech
-Unifying(r) devices, which allows these devices to to communicate with a single USB dongle, is one
-of the NRF24’s largest known implementation. Within this type of configuration, devices do not need
+Unifying\textregistered devices, which allows these devices to to communicate with a single \ac{USB}
+dongle, is one of the \ac{NRF24}'s largest known implementation. Within this type of configuration, devices do not need
 to transition between transmit and receive states often and do not require synchronisation. I am
 aware of two articles reporting successful implementation of a TDMA-based wireless sensor network
-using the NRF24 family of radios (refs) in other devices, which suggest that it should be possible to
+using the \ac{NRF24} family of radios \cite{GossipingMAC, DecentralizedTDMA} in other devices, which suggest that it should be possible to
 use it within the requirements of the Respire project. From the information included in these
 publications, I could not identify any significant differences between their approach and mine to
-programming the NRF24, although in both papers the NRF24L01 was used where as the Respire
-contains the NRF24L01+. The stated difference between these two generations of NRF24 is that the
+programming the \ac{NRF24}, although in both papers the NRF24L01 was used where as the Respire
+contains the NRF24L01+. The stated difference between these two generations of \ac{NRF24} is that the
 Respire version includes several hardware-accelerated networking features. I tested my system with
 these features both enabled and disabled without any improvement.
-
-
-(Analyzing Energy Consumption in a Gossiping MAC Protocol) and (Decentralized frame
-synchronization of aTDMA-based wireless sensor network) REFS
-
 
 \section{The Respire MCU}
 The EFM32 appears to be an excellent choice for the Respire which, although not fully utilised in this
 project, enables substantial power and lower energy improvements over the previous generations of
-hardware. The consistency of the EMF32’s pin configurations throughout its family of chipsalso
+hardware. The consistency of the EMF32's pin configurations throughout its family of chipsalso
 allows the MCU in the Respire to be replaced without need for a redesigned circuit board. This was
 an an active design choice, as it allows the future Respire to use the EFM32 Cortex-M4, soon-to-be-
 released, again reducing energy needs whilst improving performance by use ofa hardware floating-
@@ -156,11 +217,11 @@ under utilised by the use of a single buffer. I attempted To fix this issue with
 buffer but was unsuccessful due to a hardware flaw in the EFM32 (ref needed), where if the double
 buffer and single buffer are used in the same application it is not reflected in the status of the buffer
 free register. The issue was not overcome by the prescribed fix as the initial issue absorbed the time
-allocated for the feature and therefore would be a good candidate for improving the system’s
+allocated for the feature and therefore would be a good candidate for improving the system's
 energy use. A secondary, and preferred, final solution for longer transfers would be to enable the
 DMA and fully enable the EFM32 to power down the entire length of the transfer. I decided that the
 DMA solution was out with the time constraints afforded to this section of the project and therefore
-would also be a key step in improving the system’s energy usage.
+would also be a key step in improving the system's energy usage.
 As many people believe strongly in their privacy, especially when concerning their medical records, it
 should be considered if cryptography should be implemented on the system. This feature should not
 impose as big an effect on the energy efficiency as most devices as the EFM32 has hardware

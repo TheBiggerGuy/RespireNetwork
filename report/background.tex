@@ -7,7 +7,7 @@
 \section{Background}
 Initial trials at the University of Edinburgh established that breathing movements and respiratory
 frequencies could be measured accurately and reproducibly using accelerometers attached to the
-chest of human subjects (including hospital patients), reaching levels of 96\% accuracy\cite{BatesLingMannArvind2010}.
+chest of human subjects (including hospital patients), reaching levels of 96\% accuracy\citer{BatesLingMannArvind2010}.
 It was therefore decided to produce a custom piece of hardware dedicated
 to this task that might be suitable for longer-term clinical use. The accelerometer device used in the
 trial was a prototype based on the Orient-3 wireless sensor platform originally designed for use in
@@ -19,7 +19,7 @@ transceiver but instead used off-line analysis.
   \begin{center}
     \includegraphics[width=0.35\textwidth, keepaspectratio=true]{images/respire_block.png}
   \end{center}
-  \caption[Respire Block Diagram]{Respire Block Diagram}
+  \caption[Respire Block Diagram]{Respire block diagram}
   \vspace{-10pt}
 \end{wrapfigure}
 
@@ -34,17 +34,17 @@ emphasis on reducing the power requirements of the system.
 
 \section{Power Management}
 To calculate the power needed to run a device you first need to measure the power use during
-active use \(P_(active)\), power use during sleeping \(P_(sleep)\) and the percentage of time in a state of
+active use \(P_{active}\), power use during sleeping \(P_{sleep}\) and the percentage of time in a state of
 activity \(Duty\).
 \[
-  P_(average) = D x P_(active) + (1-D) x P_(sleep)
+  P_{average} = D x P_{active} + (1-D) x P_{sleep}
 \]
 \[
-  P_(active) >> P_(sleep)
+  P_{active} \gg P_{sleep}
 \]
-It is most common however that \(P_(active)\) and \(P_(sleep)\) are fixed or only small reductions can be
+It is most common however that \(P_{active}\) and \(P_{sleep}\) are fixed or only small reductions can be
 made. It is therefore most effective in normal applications to reduce the duty, this reduction is most
-assisted by faster wake up periods.
+assisted by faster wake up periods\citer{Edgar2003}.
 
 
 \begin{wrapfigure}{l}{0.5\textwidth}
@@ -52,15 +52,15 @@ assisted by faster wake up periods.
   \begin{center}
     \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/lowenergysystemsoverview_croped.jpg}
   \end{center}
-  \caption[Sleep Graph]{Sleep Graph \cite{EFM32Tech}}
+  \caption[Duty Graph]{Duty graph\citer{EFM32Tech}}
   \vspace{-10pt}
 \end{wrapfigure}
 
 In any small wireless devices the main power consumer is the radio during use, therefore it is key to
 minimise its duty cycle. Mediation devices exist between the edge nodes and the core of a network,
 allowing data to be buffered and processed away from the edge. This mediation allows the edge
-devices to "sleep" more predictably and with greater duration and depth, decreasing the edge
-power needs\cite{Edgar2003}. % TODO
+devices to ``sleep'' more predictably and with greater duration and depth, decreasing the edge
+power needs\citer{Edgar2003}.
 
 
 This system of moving the power towards the centre of the network is more effective in hierarchical networks
@@ -77,7 +77,7 @@ longer without the battery expectancy of the global networks decreasing.
   \begin{center}
     \includegraphics[width=0.7\textwidth, keepaspectratio=true]{images/efm32_block_croped.jpg}
   \end{center}
-  \caption[EFM32 Block Diagram]{EFM32 Block Diagram \cite{EFM32Tech}}
+  \caption[EFM32 Block Diagram]{EFM32 block diagram\citer{EFM32Tech}}
   \vspace{-10pt}
 \end{wrapfigure}
 
@@ -106,7 +106,7 @@ subsystem, with optional in-circuit emulator, accessible via a new 2 to 3 pin in
 size on the device and thus allowing debugging be kept in the production layout. This new debugging
 interface, \ac{SWD}, has a built in ability to directly communicate back to the
 debugger using the optimal 3rd, \ac{SWO}, pin. With the \ac{SWO} the programmer can use
-standard consoles printing techniques without disruption of the program flow.
+standard consoles printing techniques without disruption of the program flow.\citer{EnergyMicro2011}
 
 
 The Thumb reduced instruction set is a 16-bit wide subset of the main ARM set that allows multiple
@@ -114,7 +114,7 @@ instructions to be compressed into a single instruction read, thus reducing \ac{
 instruction set extend thumb set by the utilising 32-bit instructions and thus provide more
 functionality and packing, thus providing a 30\% improvement. This combination lowers the speed to
 power ratio and also the program memory needed. This performance is also achieved with the
-simple, false always, branch speculation within the three stage pipeline.
+simple, false always, branch speculation within the three stage pipeline.\citer{Arm2012}
 
 
 The Cortex-M3's most important improvements are the new interrupt system and single bit
@@ -123,15 +123,12 @@ sleep and also allows chaining, with priority. chaining of interrupts significan
 latency in instances where interrupts are likely to happen simultaneously. The priority system allows
 key events to be reordered reducing the chance of delay, producing a more deterministic system. A
 new bit manipulation system allows individual bits to be changed without reading, modifying and
-writing the whole byte, reducing \ac{IO}. The "bit-banding" is also combined with the previous
+writing the whole byte, reducing \ac{IO}. The ``bit-banding'' is also combined with the previous
 generation unaligned memory system allowing single bit, byte, half word and the full 32-bit word to
-be uniquely addressed.
+be uniquely addressed.\citer{EnergyMicro2011}
 
-
-Throughout all ARM architecture there is the CIMIS standardisation.....
-
-\cite{Sadasivan 2006} \cite{Arm2012, EnergyMicro2011}
-
+% TODO
+% Throughout all ARM architecture there is the CIMIS standardisation.....
 
 \subsection{\acf{PRS}}
 
@@ -140,14 +137,14 @@ Throughout all ARM architecture there is the CIMIS standardisation.....
   \begin{center}
     \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/peripheralreflexsystem_croped.jpg}
   \end{center}
-  \caption[EFM32 \ac{PRS} Diagram]{EFM32 \ac{PRS} Diagram \cite{EFM32Tech}}
+  \caption[EFM32 \ac{PRS} Diagram]{EFM32 \ac{PRS} diagram\citer{EFM32Tech}}
   \vspace{-10pt}
 \end{wrapfigure}
 
 The \ac{PRS} is a technology that allows the peripherals in the system-on-a-
 chip, external to the \ac{MCU}, to independently interact and thus not force the \ac{MCU} to wake from
 sleep. To enable such control, the system has predefined production and consumption interfaces on
-each module, these range from automated ADC every second triggered by the \ac{RTC} to using receipt
+each module, these range from automated \ac{ADC} every second triggered by the \ac{RTC} to using receipt
 of \ac{USART} data to trigger switching of a device pin. Many of these peripherals clock independently of
 the \ac{MCU} so this system can even work in the deepest sleep states.
 
@@ -158,7 +155,7 @@ the \ac{MCU} so this system can even work in the deepest sleep states.
   \begin{center}
     \includegraphics[width=0.3\textwidth, keepaspectratio=true]{images/efm32_sleep_states.png}
   \end{center}
-  \caption[EFM32 \ac{EMU} Diagram]{EFM32 \ac{EMU} Diagram \cite{EFM32Ref}}
+  \caption[EFM32 \ac{EMU} Diagram]{EFM32 \ac{EMU} diagram\citer{EFM32Ref}}
   \vspace{-10pt}
 \end{wrapfigure}
 

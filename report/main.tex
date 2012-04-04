@@ -20,6 +20,9 @@
 \usepackage{bytefield}
 %\usepackage{hyperref}
 
+\newcommand{\citer}[1]{\textsuperscript{\cite{#1}}}
+\newcommand{\listofabbreviations}{\chapter*{List of Abbreviations}}
+
 %% information about the doc
 \title{Design and Implemenation of a Low Power Wireless Medical Respirotory Network}
 \author{Guy Taylor}
@@ -32,20 +35,14 @@ The Respire device provides unobtrusive respiratory monitoring of patients by us
 accelerometers to detect breathing movements. Implementation of a wireless networking capability
 for this device will facilitate its widespread use in diagnosis and clinical management of respiratory
 disease.
-The aim of this project was to develop Respire network firmware based on the \acf{TDMA} to
+The aim of this project was to develop Respire network firmware based on TDMA to
 allow use in large hospital environments.
 I produced, tested and debugged firmware for project, which led to identification
-of problems implementing \ac{TDMA} with the Send-Receive function of the low-power
-\acf{NRF24} onboard the Respire device. This has precluded testing of my design with the Respire
+of problems implementing TDMA with the Send-Receive function of the low-power
+nRF24L01+ onboard the Respire device. This has precluded testing of my design with the Respire
 devices in a large-network environment.
 A base of reusable system modules was produced which will be able to support later
 development of the Respire platform.
-
-%An important aspect of firmware development was to include power-saving features
-%where possible (\eg x\% reduction in power use when implementing delays relative to
-%code provided by the manufacturer). The project material (firmware, debugging and
-%testing systems) provides a basis for future development and application of the
-%Respire family of devices.
 }
 
 %% Now we start with the actual document.
@@ -59,7 +56,11 @@ development of the Respire platform.
 
 %% Acknowledgements
 \begin{acknowledgements}
-  Todo
+  First of all, I want like to thank family and flat mates, without whom this document would not exist.
+  
+  I would like to express gratitude for the help Janek Mann provided.
+  
+  My supervisor Professor D K Arvind.
 \end{acknowledgements}
 
 %% Next we need to have the declaration.
@@ -70,7 +71,8 @@ development of the Respire platform.
 
 %% If you want a list of figures or tables, uncomment the appropriate line(s)
 \listoffigures
-\listoftables
+%\listoftables
+\listofabbreviations
 
 \begin{acronym}
 \acro{TDMA}[TDMA]{Time Division Multiple Access}
@@ -112,6 +114,11 @@ development of the Respire platform.
 \acro{WFI}[WFI]{Wait For Interrupt}
 \acro{WFE}[WFE]{Wait For Event}
 \acro{SEV}[SEV]{Set Event}
+\acro{USB}[USB]{Universal Serial Bus}
+\acro{CS}[CS]{Chip Select}
+\acro{ADC}[ADC]{Analog-to-Digital Converter}
+\acro{GUI}[GUI]{Graphical User Interface}
+\acro{JTAG}[JTAG]{Joint Test Action Group}
 \end{acronym}
 
 \end{preliminary}

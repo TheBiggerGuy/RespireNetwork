@@ -57,35 +57,36 @@ The debugging backend is highly coupled with the debugging emulator hardware ada
 project. The Energy Micro development boards used have an embedded SEGGER J-Link debugger
 and therefore a SEGGER J-Link EDU debugger was chosen for consistency when an additional
 debugging device was needed. The J-Link platform was chosen as it is well supported by Energy
-Micro, works with GDB on both Windows(r) and Linux and supports the needed features. The Open
-On-Chip Debugger project was tested but found to be too immature in its SWD debugging support,
-as it could not correctly debug the system.
+Micro, works with \ac{GDB} on both Windows\textsuperscript{\textregistered} and Linux and supports
+the needed features. The Open On-Chip Debugger project was tested but
+found to be too immature in its \ac{SWD} debugging support, as it could not correctly
+debug the system.
 
 
-For additional ease of use, I produced a GDB proxy to implement a SWO viewer and work around
-issues as they arose. A Python TCP GDB proxy was produced as the project continued and new
+For additional ease of use, I produced a \ac{GDB} proxy to implement a \ac{SWO} viewer and work around
+issues as they arose. A Python TCP \ac{GDB} proxy was produced as the project continued and new
 features were needed, which included:-
 \begin{itemize}
-  \item Managing multiple GDB connections to a single backend. The system will cleanly terminate
+  \item Managing multiple \ac{GDB} connections to a single backend. The system will cleanly terminate
         the current connection allowing the new connection to take over. This is important as it
         prevents the Eclipse debugger from freezing for minutes at a time.
-  \item Viewing of the raw GDB communications. Important in diagnosing the location of
+  \item Viewing of the raw \ac{GDB} communications. Important in diagnosing the location of
         problematic events within the long opaque chain of systems.
-  \item Displaying SWO output when enabled, separating the different types of information (e.g.
+  \item Displaying \ac{SWO} output when enabled, separating the different types of information (e.g.
         printf, interrupts and timings). For the project environment using GDB, the system was
-        unable to read live SWO output due to the SEGGER GDB server not passing the values on.
+        unable to read live \ac{SWO} output due to the SEGGER \ac{GDB} server not passing the values on.
 \end{itemize}
 
 
 Integrating the powerful Eclipse debugging tool into this system allowed live code changes to be
-made on the device as well as a clean GUI, enabling single stepping, expressions, variables and
+made on the device as well as a clean \ac{GUI}, enabling single stepping, expressions, variables and
 advanced break point functions to be managed.
 
 
-At the hardware level, I produced a 20pin JTAG/SWO connector to the 9pin Respire header. This
+At the hardware level, I produced a 20pin \ac{JTAG}/\ac{SWO} connector to the 9pin Respire header. This
 allowed quick insertion and removal of connectors without damaging the fragile header pins, whilst
 also regulating the 5Volts supply to the required 3.3Volts. A small circuit was also produced to
-enable error-free monitoring of SPI communications.
+enable error-free monitoring of \ac{SPI} communications.
 
 % TODO
 {insert pic}
@@ -93,17 +94,18 @@ enable error-free monitoring of SPI communications.
 
 \subsection{Digital Logic Probe}
 
-\begin{wrapfigure}{r}{0.6\textwidth}
+\begin{figure}
   \vspace{-10pt}
   \begin{center}
-    \includegraphics[width=0.5\textwidth, keepaspectratio=true]{images/digital_probe.png}
+    \includegraphics[width=0.9\textwidth, keepaspectratio=true]{images/digital_probe.png}
   \end{center}
-  \caption[Digital Probe Trace]{Digital Probe Trace}
+  \caption[Digital Probe Trace]{Digital probe trace}
+  \label{digital_probe_example}
   \vspace{-10pt}
-\end{wrapfigure}
+\end{figure}
 
 Throughout the project implementation, it was important to be able to view the communications,
-states and timings of the devices pins. To achieve this, an Open Bench Logic Sniffer digital probe was
+states and timings of the devices pins (Figure \ref{digital_probe_example}). To achieve this, an Open Bench Logic Sniffer digital probe was
 used as it allowed:
 \begin{itemize}
   \item The high accuracy of timing required, down to 5 nanoseconds.
@@ -252,7 +254,7 @@ issues arose concerning the radio as it did not perform as suggested by the devi
 During discussions with the designer of the Respire, Janick Mann, several interpretations of the
 NRF24 specification were considered. Several simple test applications were implemented using 4
 separate \ac{NRF24} radios on 2 different EFM32 development boards. One such test configured the
-radio to broadcast an unmodulated carrier signal, the manufacturer’s recommended testing method
+radio to broadcast an unmodulated carrier signal, the manufacturer's recommended testing method
 (Ref Constant carrier wave output for testing) which required specialized radio spectrum analysers
 to detect and analyse the signal. Initially the \ac{NRF24} hardware was found to behave as expected, but
 when more complex interactions with the radio were tested (e.g. a ping-pong firmware application)
@@ -273,7 +275,7 @@ could not be adequately tested to the required levels because of the problems de
 
 
 \subsubsection{\acf{RTC}}
-The EFM32 has a built in 24-bit \ac{RTC} connected to the Respire’s 32.768KHz external
+The EFM32 has a built in 24-bit \ac{RTC} connected to the Respire's 32.768KHz external
 clock and so it was decided to use this to ensure that the system kept good time. I configured the
 system to provide a clock reference down to 30.518 μseconds (discussed in \ref{sec:PRS}). This
 implementation will also track time over successive RTC overflow events every 1.52days and

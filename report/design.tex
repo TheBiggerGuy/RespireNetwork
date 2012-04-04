@@ -10,14 +10,14 @@ My task was to design and implement a low power wireless network for the Respire
 network should be effective in both reducing the power consumption of the Respire device and
 allow the required data to be accessible in real-time. An extension of the design should allow bulk
 data upload if the device re-enters the network after a period of disconnection. The network should
-also allow a simple device initialisation within the network, so as to be as "plug-and-play" as possible
+also allow a simple device initialisation within the network, so as to be as ``plug-and-play'' as possible
 and also allow the device to actively maintain a connection as the patient moves between relays or
 networks. The network should allow relay devices to extend the signal from the data collection
 destination, so simplifying any wiring requirements.
 
 \section{Requirements}
 The Respire is intended to be used initially in a hospital environment but with the hope to later
-extend it for use in a patient’s residence. There is therefore a requirement for it to be legal for public
+extend it for use in a patient's residence. There is therefore a requirement for it to be legal for public
 use with no assumption of consistent infrastructure. Within hospitals it is required not to interact
 with other equipment or prevent use of required services.
 
@@ -42,15 +42,15 @@ The Respire consists of a single self contained \ac{PCB} with attached battery. 
 central microcontroller, low power radio with antenna, three-axis accelerometer and flash storage.
 At every level the Respire tries to reduce the power needs (\eg by reducing the chip count), and thus
 each device selected is designed to be used in low power environments. Attributes of the Respire
-include:-\\
-\large{Strengths}
+include:\\
+\textbf{Strengths}
 \begin{itemize}
-  \item A single 32bit ARM Cortex-M3 microcontroller, enabling local data processing.
+  \item A single 32-bit ARM Cortex-M3 microcontroller, enabling local data processing.
   \item All low power chips by design.
   \item Devices have low power sleep states, including four in the microcontroller.
   \item The radio transmits with a high bandwidth, allowing shortened duty cycles.
 \end{itemize}
-\large{Weaknesses}
+\textbf{Weaknesses}
 \begin{itemize}
   \item Proprietary radio \ac{PHY}/\ac{DL} layer, non-standard and sufficiently different to prevent implementation of a standard.
   \item Problematic state machines due to sleep states.
@@ -62,7 +62,7 @@ include:-\\
   \begin{center}
     \includegraphics[width=0.6\textwidth, keepaspectratio=true]{images/respire_network.png}
   \end{center}
-  \caption{Network Design}
+  \caption[Network Design]{Network design}
   \vspace{-10pt}
 \end{wrapfigure}
 In this project I will propose a design for a low power wireless network system, this will be laid out in
@@ -91,7 +91,7 @@ risk of noise on a single channel that \ac{TDMA} is susceptible to.
 transmit, first senses the spectrum to ascertain whether it is free to transmit and if so, transmits its
 data. The different variations diverge in respect to how they handle the situation if another device is
 transmitting or the situation where more than one device has transmitted at the same time.
-A key issue with \ac{CSMA} is the "hidden terminal problem", where two devices out of range of each
+A key issue with \ac{CSMA} is the ``hidden terminal problem'', where two devices out of range of each
 other but visible to a third compete for spectrum. One of the possible mitigation schemes is to use a
 mediation device to share node information more globally in the network without high memory
 costs, this could be achieved.
@@ -125,23 +125,29 @@ choose the least congested frequency band within the overcrowded \ac{ISM} bands 
 utilises Respires low power devices.
 
 %TODO 
-{discussion of why TDMA}
+%{discussion of why TDMA}
 
 
-\subsection{Physical layer}
-The \acf{PHY} layer of the \ac{NRF24} has many unique hardware features and to reduce power
+\subsection{\acf{PHY} layer}
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/nrf24_pipline.png}
+  \end{center}
+  \caption[\ac{NRF24} Pipline]{\ac{NRF24} pipline\citer{NRF24Spec}}
+  \vspace{-10pt}
+\end{wrapfigure}
+
+The \ac{PHY} layer of the \ac{NRF24} has many unique hardware features and to reduce power
 it was decided to attempt to integrate these as much as possible.
 
 
 The chip supports up to six separate receive pipelines each with its own address. This is designed to
-support a small, many transmitters to single receiver, network (\eg Logitech’s Unifying brand of
+support a small, many transmitters to single receiver, network (\eg Logitech's Unifying\textsuperscript{\textregistered} brand of
 wireless keyboards and mice). There are six separate receiving addresses but only two of these can 
 be independently configured. This solution was therefore not used as the restriction of a network
 size to six nodes per repeater was inadequate.
-
-%TODO 
-{add resspipline diagram}
-
 
 An unusual feature of the chip is the use of the address as the sync in the air. This increases the
 packet efficiency as it removes sections unused by the \ac{DL} layer and instead uses them instead. This
@@ -162,9 +168,9 @@ transition if needed to the correct state.
 The silicon had a built in \ac{CRC} generator and checker enabling good packer corruption checking
 during broadcast. The radio however does not attempt any forward correction and it was decided to
 implement this in software as it is shown to have a low effectiveness\cite{NetworkDesign1998}.
-The radio works within the 2.4GHz ISM band using a single or dual channel \ac{GFSK} modulated signal.
+The radio works within the 2.4GHz \ac{ISM} band using a single or dual channel \ac{GFSK} modulated signal.
 This provides 126 independent channels at 250kbps or 63 at 2Mbps and a speed-dependent
-sensitivity rage of -94dBm to -82dBm. This use of the 2.4GHz ISM band provides worldwide licensing
+sensitivity rage of -94dBm to -82dBm. This use of the 2.4GHz \ac{ISM} band provides worldwide licensing
 for use at the power required and without the need to device identification. However due to the
 relaxed licensing this region of the spectrum is highly noisy, with systems such as Bluetooth and
 microwave ovens effectively denying service.
@@ -182,26 +188,27 @@ address every device was chosen to both emulate the success of Ethernet and IEEE
 to simplify the higher link layer. This does require a globally unique address to be programmed
 during production, however this can be readily automated and is not problematic. In development
 the lower bytes of the microchips device ID were used, however if used in production this would
-restrict the later choice of microcontroller and also not be perfectly unique as it is not the full ID. The
+restrict the later choice of \ac{MCU} and also not be perfectly unique as it is not the full ID. The
 address width was chosen to be the maximum of 5 to both enhance the physical layer and expand
 the total number of devices possible.
 
 \subsubsection{Packet Assembly}
 At this low level only a packet based design is possible with the radio. Enabling the built-in packet
 assembly on the \ac{NRF24} was chosen to facilitate hardware \ac{CRC} checksums and reduce the
-microcontroller duty cycle. The automated packet assembly will prepend a single "magic number"
-byte along with the "to" address, length and a few command bits and then append a two byte CRC
-checksum. This also was chosen to allow dynamic packet sizes at the \ac{DL} layer to again reduce power
-at the radio by reducing broadcast time. The command bytes will not be used but cannot be
-removed. The commands consist of bit fields indicating if the receiver should acknowledge the
-packet and a short packet ID to assist in packet retransmission.
+microcontroller duty cycle. The automated packet assembly will prepend a single ``magic number''
+byte along with the ``to'' address, length and a few command bits and then append a 2byte CRC
+checksum. It was chosen not to enable dynamic packet sizes as the data transmitted is predicable and
+sufficiently fills the max 32byte packet size, outweighing the reduced broadcast time.
+The command bytes will not be used but cannot be removed. The commands consist of bit
+fields indicating if the receiver should acknowledge the packet and a short packet
+ID to assist in packet retransmission.
 
 \subsubsection{\acf{SPI}}
 The \ac{DL} layer is shared between the radio and microcontroller via a \ac{SPI} connection that is dedicated
 to the radio. This therefore provides more than sufficient bandwidth for the application. The latency
 is also low as there is no \ac{SPI} multiplexing and the radio provides an \ac{IRQ} signal to the \ac{MCU}.
 A known silicon flaw in the EFM32G series does however increases the complexity of using the
-double buffer, putting it beyond the scope of this project\cite{EnergyMicroErata2012}. The importance
+double buffer, putting it beyond the scope of this project\citer{EnergyMicroErata2012}. The importance
 of interrupts in \ac{TDMA} prevents the use of the popular FTDI \ac{MPSSE} series of chips due to the lack of
 interrupt support.
 
@@ -212,37 +219,65 @@ providing flexibility to the designer.
 The network topology chosen for the project is a clustered-tree as this best encapsulates the
 physical topology of a hospital; that is, many patients in many rooms with a few data collection
 points. This topology also encapsulates the ideas of a Mediation Device with the differing power
-availabilities (battery to larger battery or mains)\cite{4517407}.
+availabilities (battery to larger battery or mains)\citer{4517407}.
 
 \subsubsection{Connecting, Moving and Disconnecting to Networks}
+
+\begin{wrapfigure}{l}{0.4\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth, keepaspectratio=true]{images/Network_Connect.png}
+  \end{center}
+  \caption[Network Connection]{Network connection}
+  \label{fig:net_connect}
+  \vspace{-10pt}
+\end{wrapfigure}
+
 There are two main categories of address registration in networks. The first actively requests
 addresses from a central source using the DL layer broadcast (\eg \ac{DHCP}). The second listens to the
 network and tries to attempt to join using the information learned (\eg \ac{NDP}). It was decided to
 use a mixed model for the Respire network in an attempt to optimise the network.
 
+\begin{wrapfigure}{r}{0.3\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.2\textwidth, keepaspectratio=true]{images/Network_Disconnect.png}
+  \end{center}
+  \caption[Network Disconnect]{Network disconnect}
+  \label{fig:net_disconect}
+  \vspace{-10pt}
+\end{wrapfigure}
 
+% TODO Add info on the event if the address is taken on attempted use before first attempt
 Periodic broadcasts are sent with next available address to be used by a new child device. An
 unconnected node listens for a broadcast, by first-found or strongest-signal, and then randomly
 waits 1 to 16 more broadcasts from that relay, this prevent self denial of service on a full network
 reset. After the wait the node will then transmit a connection request in the \ac{TDMA} block defined by
-the address in the broadcast field (Add info on the event if the address is taken on attempted use
-before first attempt). The relay will reply with accept or deny, with the denial reason. In failure, due
+the address in the broadcast field. The relay will reply with accept or deny, with the denial reason. In failure, due
 to packet collision by another device trying to connect, the 1 to 16 delay is repeated. If the denial
 reason suggests an inability to connect to that relay, it should be blacklisted. This design allows
 nodes to know if a network is accepting connections, the address to use and the additional
 information in the broadcast (all before connecting) and also minimises denial of service and packet
 collisions. Again this design allows effective device sleeping as during the wait periods there is a
-known duration of sleep (Figure x). % TODO
+known duration of sleep (Figure \ref{fig:net_connect}).
 
+\begin{wrapfigure}{r}{0.4\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \includegraphics[width=0.3\textwidth, keepaspectratio=true]{images/Network_Move.png}
+  \end{center}
+  \caption[Network Move]{Network move}
+  \vspace{-10pt}
+\end{wrapfigure}
 
 On the device wishing to disconnect from the network, a simple disconnect request is sent. If the
 relay does not receive an accept, it should still disconnect and assume the relay will remove it
-through a timeout (Figure 2). This additional information sent to the parent allows fast reuse of the
+through a timeout (Figure \ref{fig:net_disconect}). This additional information sent to the parent allows fast reuse of the
 time division slot in situations, such as busy hospital wards, where the parent is at capacity.
 On the device wishing to transfer to a different relay in the same network, the device will first send a
 disconnect request- with intent to transfer- to the current relay. Whether the last packet is received
 or not, the device connects to the new relay. The last packet received from the previous relay
-provides the ability, currently not used, for quick switching (Figure x). % TODO
+provides the ability, currently not used, for quick switching.
 
 \subsubsection{Addressing}
 Along with a globally unique \ac{DL} Address the network layer will register for a transient network
@@ -259,7 +294,7 @@ devices.
 
 The \ac{TDMA} time slot is decided by the device address. The initial period is separated into 128 relay
 blocks which in turn are separated into 128 node blocks. This system guarantees that every device
-connected to the network, even across relays, has a unique time slot to transmit in. The nodes’ radio
+connected to the network, even across relays, has a unique time slot to transmit in. The nodes' radio
 use is then condensed into a short period, allowing long periods of uninterrupted sleep, reducing
 duty.
 
@@ -267,7 +302,7 @@ duty.
 \subsubsection{\acf{DL} Layer Monitoring}
 With more knowledge than the \ac{DL} layer, the network layer can make better decisions on power
 management and buffer control than the \ac{DL} layer. It is also important for the network layer to be
-aware of the \ac{DL} layer’s state in the project as it is so intertwined in the \ac{PHY} layer and the thus power
+aware of the \ac{DL} layer's state in the project as it is so intertwined in the \ac{PHY} layer and the thus power
 management.
 
 \subsubsection{Link Management}
@@ -281,10 +316,8 @@ This separation is based around the differing network patterns that are needed.
 
 
 \subsubsection{Real-time Data}
-Real-time data is buffered and transmitted with no retransmission or confirmation. This data has
-consciously been produced so any attempt to retransmit may overflow the buffers.
 
-\begin{figure}
+\begin{wrapfigure}{r}{0.6\textwidth}
   \vspace{-10pt}
   \begin{center}
     \begin{bytefield}{32}
@@ -297,13 +330,17 @@ consciously been produced so any attempt to retransmit may overflow the buffers.
       \bitbox{4}{} & \bitbox{14}{Sample 5 Y} & \bitbox{14}{Sample 5 Z} \\
     \end{bytefield}
   \end{center}
-\end{figure}
+  \caption[Real-Time Packet]{Real-time packet}
+  \label{rt_packet}
+\end{wrapfigure}
 
+Real-time data is buffered and transmitted with no retransmission or confirmation. This data has
+consciously been produced so any attempt to retransmit may overflow the buffers.
 As the requirement for this real-time data is 3x14bits at a minimum of 12.5Hz, I
 have decided to optimise the packet design to meet the specific characteristics of
 the \ac{NRF24} as it allows close alignment. With the \ac{NRF24}'s 3 packet pipeline
 and maximum packet size of 32bytes combined with the design for independent packets
-a value of 5 full samples a packet (less than 27bytes) was chosen. In addition,
+a value of 5 full samples a packet (less than 27bytes) was chosen (Figure \ref{rt_packet}). In addition,
 a 7-bit time field is included to allowing the receiver to determine the exact time
 the samples are valid, providing an accuracy of 63miliseconds within a 4 second period.
 
@@ -327,7 +364,7 @@ for. Thus reducing the power needed during use and/or reducing the period of use
 the requirements of a low-power device. The percentage of time on as a ratio of the total time is
 referred to as the duty cycle. In the Respire during use the radio is the main consumer of power,
 therefore reducing its duty cycle will best enable lower power needs. The use of \ac{TDMA} in the project
-assists in reducing the device’s duty cycle as it allows the radio to know when it is not required to
+assists in reducing the device's duty cycle as it allows the radio to know when it is not required to
 operate, and therefore permits prolonged use of the low power states.
 
 
@@ -338,16 +375,16 @@ between them, it is imperative that there is a clear and correct state machine f
 
 The EFM32 microcontroller contains 4 sleep states as well as independent clocks and individually
 enabled peripherals. This complexity brings great value with its low power but forces complex
-configuration and undefined errors if incorrectly implemented. As several sates (2, 3 and 4) in the
-microcontroller disable the \ac{SPI}'s clock, it is required that the SPI is reconfigured and the clock started
-manually again. The EFM32 however has a "Peripheral Reflex System" that enables peripherals on
-the chip to interact with each other when the microcontroller is off. This feature allows the radio
+configuration and undefined errors if incorrectly implemented. As several states (2, 3 and 4) in the
+\ac{MCU} disable the \ac{SPI}'s clock, it is required that the \ac{SPI} is reconfigured and the clock started
+manually again. The EFM32 however has a \ac{PRS} that enables peripherals on
+the chip to interact with each other when the \ac{MCU} is off. This feature allows the radio
 \ac{FIFO} transmit buffer to be loaded, the chip to sleep and then independently the
 \ac{RTC} to enable the \ac{GPIO} line to transmit the packet at the precise
-time without the need to wake the microcontroller. There are however several aspects of the design
-of the EFM32G series\cite{Energy Micro AS, 2012} that mean extra reconfiguration is needed entering
-and leaving sleep states (TODO in To do in code); these have caused many problems and
-complexities during development of the current project.
+time without the need to wake the \ac{MCU}. There are however several aspects of the design
+of the EFM32G series\cite{EFM32Ref} that mean extra reconfiguration is needed entering
+and leaving sleep states; these have caused many problems and complexities during
+development of the current project.
 
 
 An important feature on the \ac{NRF24} radio is that it can maintain its state allowing \ac{FIFO} accesses
